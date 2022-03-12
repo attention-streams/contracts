@@ -30,7 +30,7 @@ contract Arena {
         uint256 _choiceCreationFee,
         uint256 _topicCreationFee
     ) {
-        require(arenaFeePercentage <= 100);
+        require(_arenaFeePercentage <= 100);
         name = _name;
         token = _token;
         minContributionAmount = _minContribAmount;

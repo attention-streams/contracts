@@ -40,11 +40,10 @@ describe("Attention Stream Setup", () => {
   });
   it("Should fail to create arena with percentage fee more than 100%", async () => {
     const Arena = await ethers.getContractFactory("Arena");
-    arenaDeployParamsDict.arenaFeePercentage = BigNumber.from(10);
+    arenaDeployParamsDict.arenaFeePercentage = BigNumber.from(120);
     const arenaDeployParams = getFlatParamsFromDict(arenaDeployParamsDict);
     // @ts-ignore
     const arena = Arena.deploy(...arenaDeployParams);
-    // eslint-disable-next-line no-unused-expressions
-    expect(arena).to.be.reverted;
+    await expect(arena).to.reverted;
   });
 });
