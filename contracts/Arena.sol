@@ -7,13 +7,13 @@ contract Arena {
     uint256 public minContributionAmount;  // minimum amount of voting/contributing
     bool public allowChoiceFunds;   // can choices receive funding from votes
     bool public allowTopicFunds;    // can topics receive funding from votes
-    uint8 public arenaFeePercentage; // percentage of each vote that goes to the arena
+    uint16 public arenaFeePercentage; // percentage of each vote that goes to the arena, decimal places: 2
     uint256 public choiceCreationFee;  // to prevent spam choice creation
     uint256 public topicCreationFee;   // to prevent spam topic creation
 
     function info() public view returns(
         string memory, address, uint256,
-        bool, bool, uint, uint256, uint256
+        bool, bool, uint16, uint256, uint256
     ) {
         return (name,token, minContributionAmount,
                 allowTopicFunds, allowTopicFunds, arenaFeePercentage,
@@ -26,11 +26,11 @@ contract Arena {
         uint256 _minContribAmount,
         bool _allowChoiceFunds,
         bool _allowTopicFunds,
-        uint8 _arenaFeePercentage,
+        uint16 _arenaFeePercentage,
         uint256 _choiceCreationFee,
         uint256 _topicCreationFee
     ) {
-        require(_arenaFeePercentage <= 100);
+        require(_arenaFeePercentage <= 100 * 10**2);
         name = _name;
         token = _token;
         minContributionAmount = _minContribAmount;
