@@ -14,32 +14,34 @@ export interface ArenaParams {
 export interface TopicParams {
     arena: string; // arena contract address
 
-    cycleDuration: BigNumber;
-    sharePerCyclePercentage: BigNumber;
+    cycleDuration: Number;
+    sharePerCyclePercentage: Number;
 
-    prevContributorsFee: BigNumber;
-    topicFeePercentage: BigNumber;
+    prevContributorsFee: Number;
+    topicFeePercentage: Number;
 
-    maxChoiceFundFeePercentage: BigNumber;
+    maxChoiceFundFeePercentage: Number;
 
-    relativeSupportThreshold: BigNumber;
-    fundingPeriod: BigNumber;
-    fundingPercentage: BigNumber;
+    relativeSupportThreshold: Number;
+    fundingPeriod: Number;
+    fundingPercentage: Number;
+    hasExternalFunding: Boolean
 }
 
 export function getValidTopicParams(arenaAddress: string): TopicParams {
     return {
         arena: arenaAddress,
-        cycleDuration: BigNumber.from(100),
-        sharePerCyclePercentage: BigNumber.from(100 * 10 ** 2),
-        prevContributorsFee: BigNumber.from(10 * 10 ** 2),
-        topicFeePercentage: BigNumber.from(5 * 10 ** 2),
+        cycleDuration: 100, // 100 cycles
+        sharePerCyclePercentage: 100 * 10 ** 2,
+        prevContributorsFee: 10 * 10 ** 2,
+        topicFeePercentage: 5 * 10 ** 2,
 
-        maxChoiceFundFeePercentage: BigNumber.from(25 * 10 ** 2),
+        maxChoiceFundFeePercentage: 25 * 10 ** 2,
 
-        relativeSupportThreshold: BigNumber.from(0),
-        fundingPeriod: BigNumber.from(0),
-        fundingPercentage: BigNumber.from(0)
+        relativeSupportThreshold: 0,
+        fundingPeriod: 0,
+        fundingPercentage: 0,
+        hasExternalFunding: false
     }
 }
 

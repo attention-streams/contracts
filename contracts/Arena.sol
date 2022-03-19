@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-contract Arena {
+contract AttentionStreams {
     string public name; // arena name
 
     address public token; // this is the token that is used to vote in this arena
