@@ -1,6 +1,6 @@
 import { BigNumber } from "ethers";
 
-interface ArenaParams {
+export interface ArenaParams {
     name: string;
     token: string;
     minContributionAmount: BigNumber;
@@ -11,7 +11,7 @@ interface ArenaParams {
     topicCreationFee: BigNumber;
 };
 
-interface TopicParams {
+export interface TopicParams {
     arena: string; // arena contract address
 
     cycleDuration: BigNumber;

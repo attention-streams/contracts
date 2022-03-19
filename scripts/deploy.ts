@@ -4,19 +4,19 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { ethers } from "hardhat";
-import { getValidArenaParams, getFlatParamsFromDict } from "../test/mock.data";
+import { getValidArenaParams, getFlatParamsFromDict, ArenaParams } from "../test/mock.data";
 
-async function deployArena() {
+export async function deployArena(params: ArenaParams) {
   const Arena = await ethers.getContractFactory("Arena");
-  let params = getFlatParamsFromDict(getValidArenaParams());
+  let _params = getFlatParamsFromDict(params);
 
   //@ts-ignore
-  const arena = await Arena.deploy(...getFlatParamsFromDict(params));
+  const arena = await Arena.deploy(...getFlatParamsFromDict(_params));
   return arena
 }
 
 async function main() {
-  await deployArena();
+  await deployArena(getValidArenaParams());
 }
 
 // We recommend this pattern to be able to use async/await everywhere
