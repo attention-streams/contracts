@@ -11,6 +11,8 @@ import {
 describe("Attention Stream Setup", () => {
   it("should create arena", async () => {
     const arena = await deployArena(getValidArenaParams());
+    const arena_info = await arena.functions.info()
+    expect(arena_info).deep.include.members(getFlatParamsFromDict(getValidArenaParams()))
     expect(arena.address).not.null;
   })
 
@@ -19,7 +21,7 @@ describe("Attention Stream Setup", () => {
   });
 
   it("Should create topic", async () => {
-    let arena = await deployArena(getValidArenaParams());
+    const arena = await deployArena(getValidArenaParams());
   })
 
 });
