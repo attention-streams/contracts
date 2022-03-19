@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-contract AttentionStreams {
+import "./Topic.sol";
+
+contract Arena {
+    Topic[] public topics; // topics of this
+
     string public name; // arena name
 
     address public token; // this is the token that is used to vote in this arena
