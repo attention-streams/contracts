@@ -82,6 +82,10 @@ contract Arena {
         uint32 fundingPeriod,
         uint16 fundingPercentage
     ) public returns (uint256) {
+        require(
+            topicFeePercentage <= maxTopicFeePercentage,
+            "Max topic fee exceeded"
+        );
         topicData.nextTopicId += 1;
         uint256 newTopicId = topicData.nextTopicId;
 

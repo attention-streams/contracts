@@ -39,7 +39,10 @@ describe("Attention Stream Setup", () => {
     expect(nextId).to.be.equal(2)
   })
   it("Should fail to create topic with topic fee more than 5% (limited by arena)", async () => {
-
+    let params = getValidTopicParams();
+    params.topicFeePercentage = 1000 // 10 %
+    let tx = addTopic(arena, params);
+    await expect(tx).to.be.revertedWith("Max topic fee exceeded");
   })
 
 });
