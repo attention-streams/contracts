@@ -86,6 +86,16 @@ contract Arena {
             topicFeePercentage <= maxTopicFeePercentage,
             "Max topic fee exceeded"
         );
+        require(
+            _maxChoiceFeePercentage <= maxChoiceFeePercentage,
+            "Max choice fee exceeded"
+        );
+        require(
+            (arenaFeePercentage +
+                topicFeePercentage +
+                prevContributorsFeePercentage) <= 10000,
+            "arenaFee + topicFee + contributorFee exceeded 100%"
+        );
         topicData.nextTopicId += 1;
         uint256 newTopicId = topicData.nextTopicId;
 
