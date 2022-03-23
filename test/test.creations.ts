@@ -17,7 +17,7 @@ describe("Attention Stream Setup", () => {
   })
 
   it("Should fail to create arena with percentage fee more than 100%", async () => {
-    await expect(deployArena(getInvalidArenaParams())).to.reverted;
+    await expect(deployArena(getInvalidArenaParams())).to.be.reverted;
   });
 
   it("Should create topic", async () => {

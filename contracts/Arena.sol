@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 import "./Topic.sol";
 
 contract Arena {
-    Topic[] public topics; // topics of this
+    Topic[] public topics; // topics of this arena
 
     string public name; // arena name
 
