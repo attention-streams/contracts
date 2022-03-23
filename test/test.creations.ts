@@ -101,7 +101,7 @@ describe("Attention Stream Setup", () => {
 
       let tx = addTopic(arena, topicParams);
 
-      await expect(tx).to.be.revertedWith("arenaFee + topicFee + contributorFee exceeded 100%")
+      await expect(tx).to.be.revertedWith("accumulative fees exceeded 100%")
 
     })
   })

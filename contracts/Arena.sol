@@ -125,7 +125,7 @@ contract Arena {
                 topicFeePercentage +
                 prevContributorsFeePercentage <=
                 10000,
-            "arenaFee + topicFee + contributorFee exceeded 100%"
+            "accumulative fees exceeded 100%"
         );
         _topicData.nextTopicId += 1;
         uint256 newTopicId = _topicData.nextTopicId;
