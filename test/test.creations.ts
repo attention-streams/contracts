@@ -31,13 +31,13 @@ describe("Attention Stream Setup", () => {
     it("Should create the first valid topic", async () => {
       let tx = await addTopic(arena, getValidTopicParams());
       tx.wait(1);
-      let nextId = await arena.topicData.call('nextTopicId')
+      let nextId = await arena._topicData.call('nextTopicId')
       expect(nextId).to.be.equal(1)
     })
     it("Should create the second valid topic", async () => {
       let tx = await addTopic(arena, getValidTopicParams());
       tx.wait(1);
-      let nextId = await arena.topicData.call('nextTopicId')
+      let nextId = await arena._topicData.call('nextTopicId')
       expect(nextId).to.be.equal(2)
     })
     it("Should fail to create topic with topic fee more than 5% (limited by arena)", async () => {
@@ -49,7 +49,7 @@ describe("Attention Stream Setup", () => {
     })
     it("Should fail to create topic with choice fee exceeding max choice fee defined by arena", async () => {
       let params = getValidTopicParams();
-      params.maxChoiceFundFeePercentage = 3100 // 31 %
+      params.maxChoiceFeePercentage = 3100 // 31 %
       let tx = addTopic(arena, params);
       await expect(tx).to.be.revertedWith("Max choice fee exceeded");
     })
@@ -75,7 +75,7 @@ describe("Attention Stream Setup", () => {
 
       let topicParams = getValidTopicParams()
       topicParams.topicFeePercentage = 3000 // 30 %
-      topicParams.prevContributorsFee = 6500 // 65 %
+      topicParams.prevContributorsFeePercentage = 6500 // 65 %
 
       // current arrangement: 10(arena) + 30(topic) + 65(contributor) = 105 %
 

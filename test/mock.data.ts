@@ -15,10 +15,10 @@ export interface TopicParams {
     cycleDuration: Number;
     sharePerCyclePercentage: Number;
 
-    prevContributorsFee: Number;
+    prevContributorsFeePercentage: Number;
     topicFeePercentage: Number;
 
-    maxChoiceFundFeePercentage: Number;
+    maxChoiceFeePercentage: Number;
 
     relativeSupportThreshold: Number;
     fundingPeriod: Number;
@@ -30,10 +30,10 @@ export function getValidTopicParams(): TopicParams {
         cycleDuration: 100, // 100 blocks
         sharePerCyclePercentage: 100 * 10 ** 2, // 100%
 
-        prevContributorsFee: 10 * 10 ** 2, // 10 %
+        prevContributorsFeePercentage: 10 * 10 ** 2, // 10 %
         topicFeePercentage: 5 * 10 ** 2, // 5%
 
-        maxChoiceFundFeePercentage: 25 * 10 ** 2, // 25%
+        maxChoiceFeePercentage: 25 * 10 ** 2, // 25%
 
         relativeSupportThreshold: 0,
         fundingPeriod: 0,
