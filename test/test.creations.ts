@@ -51,7 +51,12 @@ describe("Attention Stream Setup", () => {
     let tx = addTopic(arena, params);
     await expect(tx).to.be.revertedWith("Max choice fee exceeded");
   })
-
+  it("should fail to create topic with fundingPercentage more than 100%", async () => {
+    let params = getValidTopicParams()
+    params.fundingPercentage = 10100;
+    let tx = addTopic(arena, params);
+    await expect(tx).to.be.revertedWith("funding percentage exceeded 100%");
+  })
   it("should fail to crate topic with arenaFee + topicFee + contributorFee > 100%", async () => {
     let arenaParams = getValidArenaParams()
     /* 

@@ -82,6 +82,7 @@ contract Arena {
         uint32 fundingPeriod,
         uint16 fundingPercentage
     ) public returns (uint256) {
+        require(fundingPercentage <= 10000, "funding percentage exceeded 100%");
         require(
             topicFeePercentage <= maxTopicFeePercentage,
             "Max topic fee exceeded"
