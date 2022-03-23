@@ -6,7 +6,8 @@ import {
   getInvalidArenaParams,
   getValidArenaParams,
   getFlatParamsFromDict,
-  getValidTopicParams
+  getValidTopicParams,
+  TopicParams
 } from "./mock.data";
 
 let arena: Arena;
@@ -33,12 +34,26 @@ describe("Attention Stream Setup", () => {
       tx.wait(1);
       let nextId = await arena._topicData.call('nextTopicId')
       expect(nextId).to.be.equal(1)
+
     })
     it("Should create the second valid topic", async () => {
-      let tx = await addTopic(arena, getValidTopicParams());
+      let params = getValidTopicParams()
+      params.cycleDuration = 10;
+      let tx = await addTopic(arena, params);
       tx.wait(1);
       let nextId = await arena._topicData.call('nextTopicId')
       expect(nextId).to.be.equal(2)
+    })
+    it("Should properly return topic 1 info", async () => {
+      let info = await arena.getTopicInfoById(1);
+      let params = getValidTopicParams()
+      expect(info).to.deep.include.members(getFlatParamsFromDict(params))
+    })
+    it("Should properly return topic 2 info", async () => {
+      let info = await arena.getTopicInfoById(2);
+      let params = getValidTopicParams()
+      params.cycleDuration = 10;
+      expect(info).to.deep.include.members(getFlatParamsFromDict(params))
     })
     it("Should fail to create topic with topic fee more than 5% (limited by arena)", async () => {
       let params = getValidTopicParams();
