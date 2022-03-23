@@ -29,14 +29,14 @@ contract Arena {
         public
         view
         returns (
-            string memory, // arena name
-            address, // voting token
-            uint256, // min contrib amount
-            uint16, // max choice funds
-            uint16, // max topic funds
-            uint16, // arena fee percentage
-            uint256, // choice creation fee
-            uint256 // topic creation fee
+            string memory name,
+            address token,
+            uint256 minContribAmount,
+            uint16 maxChoiceFeePercentage,
+            uint16 maxTopicFeePercentage,
+            uint16 arenaFeePercentage,
+            uint256 choiceCreationFee,
+            uint256 topicCreationFee
         )
     {
         return (

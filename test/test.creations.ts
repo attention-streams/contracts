@@ -18,7 +18,7 @@ describe("Attention Stream Setup", () => {
     arena = await deployArena(getValidArenaParams());
   })
   describe("Arena creation", () => {
-    it("should validate the default arena", async () => {
+    it("Should properly retrieve arena info", async () => {
       const arena_info = await arena.functions.info()
       expect(arena_info).deep.include.members(getFlatParamsFromDict(getValidArenaParams()))
       expect(arena.address).not.null;
