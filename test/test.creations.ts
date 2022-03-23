@@ -10,14 +10,13 @@ import {
   TopicParams
 } from "./mock.data";
 
-let arena: Arena;
 
 describe("Attention Stream Setup", () => {
-  before(async () => {
-    // create arena
-    arena = await deployArena(getValidArenaParams());
-  })
   describe("Arena creation", () => {
+    let arena: Arena;
+    it("Should create arena", async () => {
+      arena = await deployArena(getValidArenaParams());
+    })
     it("Should properly retrieve arena info", async () => {
       const arena_info = await arena.functions.info()
       expect(arena_info).deep.include.members(getFlatParamsFromDict(getValidArenaParams()))
@@ -29,6 +28,12 @@ describe("Attention Stream Setup", () => {
     });
   })
   describe("Topic Creation", () => {
+    let arena: Arena;
+    before(async () => {
+      // create arena
+      arena = await deployArena(getValidArenaParams());
+
+    })
     it("Should create the first valid topic", async () => {
       let tx = await addTopic(arena, getValidTopicParams());
       tx.wait(1);
