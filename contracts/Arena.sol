@@ -92,9 +92,10 @@ contract Arena {
             "Max choice fee exceeded"
         );
         require(
-            (arenaFeePercentage +
+            arenaFeePercentage +
                 topicFeePercentage +
-                prevContributorsFeePercentage) <= 10000,
+                prevContributorsFeePercentage <=
+                10000,
             "arenaFee + topicFee + contributorFee exceeded 100%"
         );
         topicData.nextTopicId += 1;
