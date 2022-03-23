@@ -4,7 +4,12 @@ pragma solidity ^0.8.4;
 import "./Topic.sol";
 
 contract Arena {
-    Topic[] public topics; // topics of this arena
+    struct TopicData {
+        mapping(uint256 => Topic) topicIdMap;
+        uint256 nextTopicId;
+    }
+
+    TopicData public topicData;
 
     string public name; // arena name
 
@@ -56,7 +61,7 @@ contract Arena {
         uint256 _choiceCreationFee,
         uint256 _topicCreationFee
     ) {
-        require(_arenaFeePercentage <= 100 * 10**2, "Arena fee exceeded 100%");
+        require((_arenaFeePercentage) <= 100 * 10**2, "Fees exceeded 100%");
         name = _name;
         token = _token;
         minContributionAmount = _minContribAmount;
@@ -65,5 +70,33 @@ contract Arena {
         arenaFeePercentage = _arenaFeePercentage;
         choiceCreationFee = _choiceCreationFee;
         topicCreationFee = _topicCreationFee;
+    }
+
+    function addTopic(
+        uint32 cycleDuration,
+        uint16 sharePerCyclePercentage,
+        uint16 prevContributorsFeePercentage,
+        uint16 topicFeePercentage,
+        uint16 _maxChoiceFeePercentage,
+        uint32 relativeSupportThreshold,
+        uint32 fundingPeriod,
+        uint16 fundingPercentage
+    ) public returns (uint256) {
+        topicData.nextTopicId += 1;
+        uint256 newTopicId = topicData.nextTopicId;
+
+        Topic memory newTopic = Topic(
+            newTopicId,
+            cycleDuration,
+            sharePerCyclePercentage,
+            prevContributorsFeePercentage,
+            topicFeePercentage,
+            _maxChoiceFeePercentage,
+            relativeSupportThreshold,
+            fundingPeriod,
+            fundingPercentage
+        );
+        topicData.topicIdMap[newTopicId] = newTopic;
+        return newTopicId;
     }
 }

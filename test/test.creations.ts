@@ -1,16 +1,22 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { deployArena } from "../scripts/deploy";
+import { addTopic, deployArena } from "../scripts/deploy";
+import { Arena } from "../typechain";
 import {
   getInvalidArenaParams,
   getValidArenaParams,
-  getFlatParamsFromDict
+  getFlatParamsFromDict,
+  getValidTopicParams
 } from "./mock.data";
 
+let arena: Arena;
 
 describe("Attention Stream Setup", () => {
-  it("should create arena", async () => {
-    const arena = await deployArena(getValidArenaParams());
+  before(async () => {
+    // create arena
+    arena = await deployArena(getValidArenaParams());
+  })
+  it("should validate the default arena", async () => {
     const arena_info = await arena.functions.info()
     expect(arena_info).deep.include.members(getFlatParamsFromDict(getValidArenaParams()))
     expect(arena.address).not.null;
@@ -20,8 +26,20 @@ describe("Attention Stream Setup", () => {
     await expect(deployArena(getInvalidArenaParams())).to.be.reverted;
   });
 
-  it("Should create topic", async () => {
-    const arena = await deployArena(getValidArenaParams());
+  it("Should create the first valid topic", async () => {
+    let tx = await addTopic(arena, getValidTopicParams());
+    tx.wait(1);
+    let nextId = await arena.topicData.call('nextTopicId')
+    expect(nextId).to.be.equal(1)
+  })
+  it("Should create the second valid topic", async () => {
+    let tx = await addTopic(arena, getValidTopicParams());
+    tx.wait(1);
+    let nextId = await arena.topicData.call('nextTopicId')
+    expect(nextId).to.be.equal(2)
+  })
+  it("Should fail to create topic with topic fee more than 5% (limited by arena)", async () => {
+
   })
 
 });

@@ -12,8 +12,6 @@ export interface ArenaParams {
 };
 
 export interface TopicParams {
-    arena: string; // arena contract address
-
     cycleDuration: Number;
     sharePerCyclePercentage: Number;
 
@@ -25,23 +23,21 @@ export interface TopicParams {
     relativeSupportThreshold: Number;
     fundingPeriod: Number;
     fundingPercentage: Number;
-    hasExternalFunding: Boolean
 }
 
-export function getValidTopicParams(arenaAddress: string): TopicParams {
+export function getValidTopicParams(): TopicParams {
     return {
-        arena: arenaAddress,
-        cycleDuration: 100, // 100 cycles
-        sharePerCyclePercentage: 100 * 10 ** 2,
-        prevContributorsFee: 10 * 10 ** 2,
-        topicFeePercentage: 5 * 10 ** 2,
+        cycleDuration: 100, // 100 blocks
+        sharePerCyclePercentage: 100 * 10 ** 2, // 100%
 
-        maxChoiceFundFeePercentage: 25 * 10 ** 2,
+        prevContributorsFee: 10 * 10 ** 2, // 10 %
+        topicFeePercentage: 5 * 10 ** 2, // 5%
+
+        maxChoiceFundFeePercentage: 25 * 10 ** 2, // 25%
 
         relativeSupportThreshold: 0,
         fundingPeriod: 0,
-        fundingPercentage: 0,
-        hasExternalFunding: false
+        fundingPercentage: 0
     }
 }
 
@@ -50,8 +46,8 @@ export function getValidArenaParams(): ArenaParams {
         name: "Test Arena",
         token: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
         minContributionAmount: BigNumber.from(10),
-        maxChoiceFeePercentage: 100, // 1 percent
-        maxTopicFeePercentage: 0,
+        maxChoiceFeePercentage: 3000, // 1 percent
+        maxTopicFeePercentage: 500, // 5 percent
         arenaFeePercentage: 1000, // 10 percent
         choiceCreationFee: BigNumber.from(10),
         topicCreationFee: BigNumber.from(10),

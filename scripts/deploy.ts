@@ -16,8 +16,11 @@ export async function deployArena(params: ArenaParams): Promise<Arena> {
   return Arena.deploy(...getFlatParamsFromDict(_params));
 }
 
-export async function addTopic(params: TopicParams) {
-
+export async function addTopic(arena: Arena, params: TopicParams) {
+  let _params = getFlatParamsFromDict(params);
+  //@ts-ignore
+  let topicId = await arena.functions.addTopic(..._params)
+  return topicId;
 }
 
 async function main() {
