@@ -5,7 +5,6 @@ import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
-import "solidity-coverage";
 
 dotenv.config();
 
@@ -30,7 +29,7 @@ const config: HardhatUserConfig = {
       accounts:
         [process.env.PRIVATE_KEY_OWNER!, process.env.PRIVATE_KEY_DEV!, process.env.PRIVATE_KEY_USER!],
       gas: "auto",
-      gasPrice: "auto"
+      gasPrice: "auto",
     }
   },
   gasReporter: {

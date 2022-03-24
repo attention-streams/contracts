@@ -68,6 +68,6 @@ export function getInvalidArenaParams(): ArenaParams {
 }
 
 
-export function getFlatParamsFromDict(paramsDict: any) {
+export function getFlatParamsFromDict(paramsDict: any): any[] {
     return Object.entries(paramsDict).map((e) => e[1]);
 }
