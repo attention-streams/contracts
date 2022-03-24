@@ -10,7 +10,6 @@ import { Arena } from "../typechain";
 export async function deployAttentionToken() {
   const At = await ethers.getContractFactory("Attention");
   const at = await At.deploy()
-
   return at;
 }
 

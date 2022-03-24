@@ -1,5 +1,4 @@
 import hre from "hardhat"
-import { getFlatParamsFromDict, getValidArenaParams } from "../test/mock.data"
 import deploy_config from "./config";
 
 // sleep time expects milliseconds
