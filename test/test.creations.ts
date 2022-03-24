@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { addTopic, deployArena } from "../scripts/deploy";
+import { addTopic, deployArena, deployAttentionToken } from "../scripts/deploy";
 import { Arena } from "../typechain";
 import {
   getInvalidArenaParams,
@@ -14,8 +14,9 @@ import {
 describe("Attention Stream Setup", () => {
   describe("Arena creation", () => {
     let arena: Arena;
-    it("Should create arena", async () => {
+    it("Should deploy arena", async () => {
       arena = await deployArena(getValidArenaParams());
+      expect(arena.address).to.not.be.null;
     })
     it("Should properly retrieve arena info", async () => {
       const arena_info = await arena.functions.info()
@@ -25,18 +26,19 @@ describe("Attention Stream Setup", () => {
 
     it("Should fail to create arena with percentage fee more than 100%", async () => {
       await expect(deployArena(getInvalidArenaParams())).to.be.reverted;
-    });
+    })
   })
   describe("Topic Creation", () => {
+    describe.skip("skipping", () => { });
+
     let arena: Arena;
     before(async () => {
       // create arena
       arena = await deployArena(getValidArenaParams());
-
     })
     it("Should create the first valid topic", async () => {
       let tx = await addTopic(arena, getValidTopicParams());
-      tx.wait(1);
+      await tx.wait(1);
       let nextId = await arena._topicData.call('nextTopicId')
       expect(nextId).to.be.equal(1)
 
@@ -45,7 +47,7 @@ describe("Attention Stream Setup", () => {
       let params = getValidTopicParams()
       params.cycleDuration = 10;
       let tx = await addTopic(arena, params);
-      tx.wait(1);
+      await tx.wait(1);
       let nextId = await arena._topicData.call('nextTopicId')
       expect(nextId).to.be.equal(2)
     })
@@ -85,7 +87,7 @@ describe("Attention Stream Setup", () => {
       setting max topic fee and choice fee to 100% means 
       arena should validate that 
       arenaFee + topicFee + contributorFee is less than 100 %
-  
+
       arena fee is 10%
       */
       arenaParams.maxTopicFeePercentage = 10000 // 100 %
