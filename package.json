@@ -1,22 +1,33 @@
 {
-  "name": "attention_streams",
-  "version": "0.0.1",
+  "name": "@attentionstreams/contracts",
   "description": "voting and governance system",
-  "main": "index.js",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "version": "0.0.1",
+  "keywords": [
+    "attentionstreams"
+  ],
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test"
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/spsina/attentionStream.git"
+    "url": "https://github.com/attention-streams/contracts"
   },
+  "files": [
+    "contracts/*.sol",
+    "artifacts/contracts/**/*.json",
+    "!artifacts/contracts/test",
+    "!artifacts/contracts/**/*.dbg.json"
+  ],
   "author": "Ali Parvizi",
-  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/spsina/attentionStream/issues"
+    "url": "https://github.com/attention-streams/contracts/issues"
   },
-  "homepage": "https://github.com/spsina/attentionStream#readme",
+  "homepage": "https://github.com/attention-streams/contracts#readme",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-etherscan": "^3.0.3",
@@ -51,5 +62,9 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.5.0"
+  },
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test"
   }
 }
