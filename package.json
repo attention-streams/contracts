@@ -5,7 +5,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "0.0.1",
+  "version": "0.0.2",
   "keywords": [
     "attentionstreams"
   ],
@@ -18,10 +18,9 @@
     "url": "https://github.com/attention-streams/contracts"
   },
   "files": [
-    "contracts/*.sol",
-    "artifacts/contracts/**/*.json",
-    "!artifacts/contracts/test",
-    "!artifacts/contracts/**/*.dbg.json"
+    "contracts/main",
+    "artifacts/contracts/main/**/*.json",
+    "!artifacts/contracts/main/**/*.dbg.json"
   ],
   "author": "Ali Parvizi",
   "bugs": {
