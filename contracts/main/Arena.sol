@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Topic.sol";
+import "hardhat/console.sol";
 
 contract Arena {
     struct TopicData {
@@ -112,7 +113,16 @@ contract Arena {
         uint32 fundingPeriod,
         uint16 fundingPercentage
     ) public {
-        require(fundingPercentage <= 10000, "funding percentage exceeded 100%");
+        if (_topicCreationFee > 0){
+            // check for sufficeint funds
+            if(uint256(_token.balanceOf(msg.sender)) < _topicCreationFee){
+                revert("not enough funds to pay fees");
+            }
+        }
+        
+        require(fundingPercentage <= 10000, 
+        "funding percentage exceeded 100%");
+        
         require(
             topicFeePercentage <= _maxTopicFeePercentage,
             "Max topic fee exceeded"

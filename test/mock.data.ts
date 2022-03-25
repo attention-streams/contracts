@@ -49,24 +49,10 @@ export function getValidArenaParams(): ArenaParams {
         maxChoiceFeePercentage: 3000, // 1 percent
         maxTopicFeePercentage: 500, // 5 percent
         arenaFeePercentage: 1000, // 10 percent
-        choiceCreationFee: BigNumber.from(10),
-        topicCreationFee: BigNumber.from(10),
+        choiceCreationFee: BigNumber.from(0),
+        topicCreationFee: BigNumber.from(0),
     };
 }
-
-export function getInvalidArenaParams(): ArenaParams {
-    return {
-        name: "Test Arena",
-        token: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
-        minContributionAmount: BigNumber.from(10),
-        maxChoiceFeePercentage: 0,
-        maxTopicFeePercentage: 0,
-        arenaFeePercentage: 10100,// more than 100% fee
-        choiceCreationFee: BigNumber.from(10),
-        topicCreationFee: BigNumber.from(10),
-    };
-}
-
 
 export function getFlatParamsFromDict(paramsDict: any): any[] {
     return Object.entries(paramsDict).map((e) => e[1]);

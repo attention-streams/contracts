@@ -3,6 +3,7 @@
 //
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ethers } from "hardhat";
 import { getValidArenaParams, getFlatParamsFromDict, ArenaParams, TopicParams } from "../test/mock.data";
 import { Arena } from "../typechain";
@@ -13,17 +14,23 @@ export async function deployAttentionToken() {
   return at;
 }
 
-export async function deployArena(params: ArenaParams): Promise<Arena> {
+export async function deployArena(params: ArenaParams, signer: SignerWithAddress | undefined = undefined): Promise<Arena> {
+  if (signer === undefined)
+    [signer] = await ethers.getSigners()
+  
   const Arena = await ethers.getContractFactory("Arena");
   let _params = getFlatParamsFromDict(params);
   //@ts-ignore
   return Arena.deploy(...getFlatParamsFromDict(_params));
 }
 
-export async function addTopic(arena: Arena, params: TopicParams) {
+export async function addTopic(arena: Arena, params: TopicParams, signer: SignerWithAddress | undefined = undefined) {
+  if (signer === undefined)
+    [signer] = await ethers.getSigners()
+  
   let _params = getFlatParamsFromDict(params);
   //@ts-ignore
-  let topicId = await arena.functions.addTopic(..._params)
+  let topicId = await arena.connect(signer).addTopic(..._params)
   topicId.wait(1);
   return topicId;
 }

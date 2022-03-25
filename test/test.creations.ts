@@ -1,14 +1,16 @@
-import { expect } from "chai";
-import { ethers } from "hardhat";
+import { expect, util } from "chai";
+import { utils } from "ethers";
+import helpers from '../scripts/helpers';
+
 import { addTopic, deployArena, deployAttentionToken } from "../scripts/deploy";
-import { Arena } from "../typechain";
+import { Arena, ERC20 } from "../typechain";
 import {
-  getInvalidArenaParams,
   getValidArenaParams,
   getFlatParamsFromDict,
   getValidTopicParams,
   TopicParams
 } from "./mock.data";
+import { ethers } from "hardhat";
 
 
 describe("Attention Stream Setup", () => {
@@ -25,7 +27,9 @@ describe("Attention Stream Setup", () => {
     })
 
     it("Should fail to create arena with percentage fee more than 100%", async () => {
-      await expect(deployArena(getInvalidArenaParams())).to.be.reverted;
+      let params = getValidArenaParams()
+      params.arenaFeePercentage = 10100
+      await expect(deployArena(params)).to.be.reverted;
     })
   })
   describe("Topic Creation", () => {
@@ -106,6 +110,33 @@ describe("Attention Stream Setup", () => {
       await expect(tx).to.be.revertedWith("accumulative fees exceeded 100%")
 
     })
+  })
+
+  describe("Topic Creation Fee", async () => {
+    let arena: Arena;
+    let token: ERC20;
+
+    it("Should create arena fee topic creation fee of 10 tokens", async () => {
+      let testVoteToken = await helpers.getTestVoteToken()
+      token = await ethers.getContractAt("ERC20", testVoteToken)
+      let params = getValidArenaParams();
+      params.topicCreationFee = utils.parseEther("10");
+      params.token = testVoteToken;
+      arena = await deployArena(params);
+      let info = await arena.info()
+      expect(info.topicCreationFee).to.be.equal(utils.parseEther("10"));
+    })
+
+    it("should fail to create topic without paying the fee", async () => {
+      let [owner, dev] = await ethers.getSigners()
+      let topicParams = getValidTopicParams()
+
+      console.log(await token.balanceOf(owner.address))
+      console.log(await token.balanceOf(dev.address))
+      let tx = addTopic(arena, topicParams, dev);
+      await expect(tx).to.be.revertedWith("not enough funds to pay fees");
+    })
+
   })
 
 });
