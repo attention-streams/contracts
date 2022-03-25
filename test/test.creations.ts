@@ -1,5 +1,5 @@
 import { expect, util } from "chai";
-import { utils } from "ethers";
+import { BigNumber, utils } from "ethers";
 import helpers from '../scripts/helpers';
 
 import { addTopic, deployArena, deployAttentionToken } from "../scripts/deploy";
@@ -127,14 +127,47 @@ describe("Attention Stream Setup", () => {
       expect(info.topicCreationFee).to.be.equal(utils.parseEther("10"));
     })
 
-    it("should fail to create topic without paying the fee", async () => {
+    it("should fail to create topic if contract can't spend funds", async () => {
       let [owner, dev] = await ethers.getSigners()
       let topicParams = getValidTopicParams()
-
-      console.log(await token.balanceOf(owner.address))
-      console.log(await token.balanceOf(dev.address))
       let tx = addTopic(arena, topicParams, dev);
-      await expect(tx).to.be.revertedWith("not enough funds to pay fees");
+      await expect(tx).to.be.revertedWith("ERC20: insufficient allowance");
+    })
+    it("should fail to create topic if balance is low", async () => {
+      let [owner, dev] = await ethers.getSigners();
+      let topicCreationFee: BigNumber = await arena._topicCreationFee();
+
+      // approve the contract to spend funds
+      await token.connect(dev).approve(arena.address, topicCreationFee);
+      let tx = addTopic(arena, getValidTopicParams(), dev);
+      await expect(tx).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+    
+    })
+    it("should subtract fee amount from creator and add it to arena funds", async () => {
+      let [owner, dev] = await ethers.getSigners();
+      let topicCreationFee: BigNumber = await arena._topicCreationFee();
+      
+      // transfer some funds from owner to dev
+      await token.connect(owner).transfer(dev.address, topicCreationFee);
+      
+      // approve the contract to spend funds
+      await token.connect(dev).approve(arena.address, topicCreationFee);
+
+      let devBalanceBefore: BigNumber = await token.balanceOf(dev.address);
+      let arenaBalanceBefore: BigNumber = await token.balanceOf(arena.address);
+
+      let topicParams = getValidTopicParams();
+      await addTopic(arena, topicParams, dev);
+
+      let devBalanceAfter: BigNumber = await token.balanceOf(dev.address);
+      let arenaBalanceAfter: BigNumber = await token.balanceOf(arena.address);
+
+      let deltaDevBalance: BigNumber = devBalanceBefore.sub(devBalanceAfter);
+      let deltaArenaBalance: BigNumber = arenaBalanceAfter.sub(arenaBalanceBefore);
+
+      expect(deltaDevBalance.eq(deltaArenaBalance)).to.be.true;
+      expect(deltaArenaBalance.eq(topicCreationFee)).to.be.true;
+
     })
 
   })

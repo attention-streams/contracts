@@ -114,10 +114,7 @@ contract Arena {
         uint16 fundingPercentage
     ) public {
         if (_topicCreationFee > 0){
-            // check for sufficeint funds
-            if(uint256(_token.balanceOf(msg.sender)) < _topicCreationFee){
-                revert("not enough funds to pay fees");
-            }
+            _token.transferFrom(msg.sender, address(this), _topicCreationFee);
         }
         
         require(fundingPercentage <= 10000, 
