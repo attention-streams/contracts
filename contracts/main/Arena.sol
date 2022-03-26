@@ -162,7 +162,7 @@ contract Arena {
             uint256 fundingTarget
         )
     {
-        Choice memory c = _topicChoices[topicId][choiceId];
+        Choice storage c = _topicChoices[topicId][choiceId];
         return (
             c._id,
             c._description,
@@ -179,6 +179,20 @@ contract Arena {
         uint16 feePercentage,
         uint256 fundingTarget
     ) public {
+        require(
+            feePercentage <= _topicIdMap[topicId]._maxChoiceFeePercentage,
+            "Fee percentage too high"
+        );
+
+        require(
+            feePercentage +
+                _arenaFeePercentage +
+                _topicIdMap[topicId]._topicFeePercentage +
+                _topicIdMap[topicId]._prevContributorsFeePercentage <=
+                10000,
+            "accumulative fees exceeded 100%"
+        );
+
         _topicChoiceNextId[topicId] += 1;
         uint256 choiceId = _topicChoiceNextId[topicId];
         Choice memory choice = Choice(

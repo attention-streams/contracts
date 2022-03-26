@@ -193,9 +193,9 @@ describe("Attention Stream Setup", () => {
     let topic: BigNumber;
     before(async () => {
       arena = await deployArena(getValidArenaParams());
-      topic = await arena._nextTopicId();
       const createTopic = await addTopic(arena, getValidTopicParams());
       await createTopic.wait(1);
+      topic = await arena._nextTopicId();
     });
     it("should create valid choice", async () => {
       const addChoiceTx = await addChoice(arena, topic, getValidChoiceParams());
@@ -208,6 +208,35 @@ describe("Attention Stream Setup", () => {
       let choiceInfo = await arena.choiceInfo(topic, 0);
       let params = getFlatParamsFromDict(getValidChoiceParams());
       expect(choiceInfo).to.deep.include.members(params);
+    });
+    it("should fail to create choice if fee is more than allowed by topic", async () => {
+      let params = getValidChoiceParams();
+      params.feePercentage = 2600;
+      let topicInfo = await arena.getTopicInfoById(topic);
+      let tx = addChoice(arena, topic, params);
+      await expect(tx).to.be.revertedWith("Fee percentage too high");
+    });
+    it("should fail to create choice if accumulative fee is more than 100%", async () => {
+      let arenaParams = getValidArenaParams(); // arena fee is 10%
+      arenaParams.maxChoiceFeePercentage = 10000;
+      arenaParams.maxTopicFeePercentage = 10000;
+
+      let topicParams = getValidTopicParams();
+      topicParams.maxChoiceFeePercentage = 10000;
+      topicParams.topicFeePercentage = 6000;
+
+      let choiceParams = getValidChoiceParams();
+      choiceParams.feePercentage = 4000;
+
+      // 10 + 60 + 40 = 110
+      let _arena = await deployArena(arenaParams);
+      let _topic = await addTopic(_arena, topicParams);
+      await _topic.wait(1);
+      let _choice = addChoice(_arena, BigNumber.from(1), choiceParams);
+
+      await expect(_choice).to.be.revertedWith(
+        "accumulative fees exceeded 100%"
+      );
     });
   });
 });
