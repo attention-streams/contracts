@@ -151,6 +151,20 @@ contract Arena {
         _topicIdMap[newTopicId] = newTopic;
     }
 
+    function choiceInfo(
+        uint256 topicId,
+        uint256 choiceId)
+    public view
+    returns(
+    uint256 id;
+string description;
+address fundsAddress; // fees are paid to this address
+uint16 feePercentage; // fees paid to choice from votes
+uint256 fundingTarget;
+    ) {
+
+}
+
     function addChoice(
         uint256 topicId,
         string memory description,
@@ -158,15 +172,15 @@ contract Arena {
         uint16 feePercentage,
         uint256 fundingTarget
     ) public {
-        // _nextChoiceId += 1;
-        // uint256 choiceId = _choiceData.nextChoiceId;
-        // Choice memory choice = Choice(
-        //     choiceId,
-        //     description,
-        //     fundsAddress,
-        //     feePercentage,
-        //     fundingTarget
-        // );
-        // _choiceData.topicChoices[topicId].push(choice);
+        _topicChoiceNextId[topicId] += 1;
+        uint256 choiceId = _topicChoiceNextId[topicId];
+        Choice memory choice = Choice(
+            choiceId,
+            description,
+            fundsAddress,
+            feePercentage,
+            fundingTarget
+        );
+        _topicChoices[topicId].push(choice);
     }
 }
