@@ -139,7 +139,9 @@ describe("Attention Stream Setup", () => {
       let topicCreationFee: BigNumber = await arena._topicCreationFee();
 
       // approve the contract to spend funds
-      await token.connect(dev).approve(arena.address, topicCreationFee);
+      let approveTx = await token.connect(dev).approve(arena.address, topicCreationFee);
+      await approveTx.wait(1);
+
       let tx = addTopic(arena, getValidTopicParams(), dev);
       await expect(tx).to.be.revertedWith("ERC20: transfer amount exceeds balance");
 
@@ -149,16 +151,20 @@ describe("Attention Stream Setup", () => {
       let topicCreationFee: BigNumber = await arena._topicCreationFee();
 
       // transfer some funds from owner to dev
-      await token.connect(owner).transfer(dev.address, topicCreationFee);
+      let transferTx = await token.connect(owner).transfer(dev.address, topicCreationFee);
+      await transferTx.wait(1);
 
       // approve the contract to spend funds
-      await token.connect(dev).approve(arena.address, topicCreationFee);
+      let approveTx = await token.connect(dev).approve(arena.address, topicCreationFee);
+      await approveTx.wait(1);
 
       let devBalanceBefore: BigNumber = await token.balanceOf(dev.address);
       let arenaBalanceBefore: BigNumber = await token.balanceOf(arena.address);
 
       let topicParams = getValidTopicParams();
-      await addTopic(arena, topicParams, dev);
+
+      let addTopicTx = await addTopic(arena, topicParams, dev);
+      await addTopicTx.wait(1);
 
       let devBalanceAfter: BigNumber = await token.balanceOf(dev.address);
       let arenaBalanceAfter: BigNumber = await token.balanceOf(arena.address);
