@@ -151,19 +151,19 @@ contract Arena {
         _topicIdMap[newTopicId] = newTopic;
     }
 
-    function choiceInfo(
-        uint256 topicId,
-        uint256 choiceId)
-    public view
-    returns(
-    uint256 id;
-string description;
-address fundsAddress; // fees are paid to this address
-uint16 feePercentage; // fees paid to choice from votes
-uint256 fundingTarget;
-    ) {
-
-}
+    function choiceInfo(uint256 topicId, uint256 choiceId)
+        public
+        view
+        returns (
+            uint256 id,
+            string memory description,
+            address fundsAddress, // fees are paid to this address
+            uint16 feePercentage, // fees paid to choice from votes
+            uint256 fundingTarget
+        )
+    {
+        return (0, "", address(this), 0, 0);
+    }
 
     function addChoice(
         uint256 topicId,

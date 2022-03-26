@@ -7,12 +7,18 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { any } from "hardhat/internal/core/params/argumentTypes";
-import { ArenaParams, getFlatParamsFromDict, getValidArenaParams, TopicParams, ChoiceParams } from "../test/mock.data";
+import {
+  ArenaParams,
+  getFlatParamsFromDict,
+  getValidArenaParams,
+  TopicParams,
+  ChoiceParams,
+} from "../test/mock.data";
 import { Arena } from "../typechain";
 
 export async function deployAttentionToken() {
   const At = await ethers.getContractFactory("Attention");
-  const at = await At.deploy()
+  const at = await At.deploy();
   return at;
 }
 
@@ -21,19 +27,24 @@ interface ParamsSigner {
   params: any[];
 }
 
-async function getSingerAndParamsArray(_params: any, _signer?: SignerWithAddress): Promise<ParamsSigner> {
-  if (_signer === undefined)
-    [_signer] = await ethers.getSigners()
+async function getSingerAndParamsArray(
+  _params: any,
+  _signer?: SignerWithAddress
+): Promise<ParamsSigner> {
+  if (_signer === undefined) [_signer] = await ethers.getSigners();
 
   let params = getFlatParamsFromDict(_params);
 
   return {
     signer: _signer,
-    params
-  }
+    params,
+  };
 }
 
-export async function deployArena(_params: ArenaParams, _signer?: SignerWithAddress): Promise<Arena> {
+export async function deployArena(
+  _params: ArenaParams,
+  _signer?: SignerWithAddress
+): Promise<Arena> {
   let { params, signer } = await getSingerAndParamsArray(_params, _signer);
   const Arena = await ethers.getContractFactory("Arena");
 
@@ -41,7 +52,11 @@ export async function deployArena(_params: ArenaParams, _signer?: SignerWithAddr
   return Arena.connect(signer).deploy(...getFlatParamsFromDict(params));
 }
 
-export async function addTopic(_arena: Arena, _params: TopicParams, _signer?: SignerWithAddress) {
+export async function addTopic(
+  _arena: Arena,
+  _params: TopicParams,
+  _signer?: SignerWithAddress
+) {
   let { params, signer } = await getSingerAndParamsArray(_params, _signer);
 
   //@ts-ignore
@@ -49,7 +64,12 @@ export async function addTopic(_arena: Arena, _params: TopicParams, _signer?: Si
   return tx;
 }
 
-export async function addChoice(_arena: Arena, _topicId: BigNumber, _params: ChoiceParams, _signer?: SignerWithAddress) {
+export async function addChoice(
+  _arena: Arena,
+  _topicId: BigNumber,
+  _params: ChoiceParams,
+  _signer?: SignerWithAddress
+) {
   let { params, signer } = await getSingerAndParamsArray(_params, _signer);
 
   //@ts-ignore
@@ -61,12 +81,10 @@ export async function deployMain() {
   let at = await deployAttentionToken();
   let arena = await deployArena(getValidArenaParams());
   console.log(at.address);
-  console.log(arena.address)
+  console.log(arena.address);
 }
 
-async function main() {
-
-}
+async function main() {}
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
