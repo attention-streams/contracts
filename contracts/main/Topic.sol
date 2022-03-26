@@ -14,5 +14,4 @@ struct Topic {
     uint32 _relativeSupportThreshold; // min support a choice needs to be eligible for external funding
     uint32 _fundingPeriod; // how often funds are distributed to leading choices, in terms of # of cycles. ignored if no external funding available
     uint16 _fundingPercentage; // percentage of funds transferred to leading choices
-    mapping(uint256 => Choice) _choices; // choices of this topic
 }

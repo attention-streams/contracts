@@ -11,6 +11,11 @@ contract Arena {
         uint256 nextTopicId;
     }
 
+    struct ChoiceData {
+        mapping(uint256 => Choice[]) topicChoices; // list of choices of each topic
+        uint256 nextChoiceId;
+    }
+
     TopicData public _topicData;
 
     string public _name; // arena name
@@ -89,7 +94,7 @@ contract Arena {
             uint16 fundingPercentage // percentage
         )
     {
-        Topic memory t = _topicData.topicIdMap[_id];
+        Topic storage t = _topicData.topicIdMap[_id];
         return (
             t._id,
             t._cycleDuration,
@@ -135,6 +140,7 @@ contract Arena {
             "accumulative fees exceeded 100%"
         );
         _topicData.nextTopicId += 1;
+
         uint256 newTopicId = _topicData.nextTopicId;
 
         Topic memory newTopic = Topic(
@@ -146,8 +152,7 @@ contract Arena {
             maxChoiceFeePercentage,
             relativeSupportThreshold,
             fundingPeriod,
-            fundingPercentage,
-            _choices
+            fundingPercentage
         );
         _topicData.topicIdMap[newTopicId] = newTopic;
     }
