@@ -201,6 +201,10 @@ describe("Attention Stream Setup", () => {
       const nextChoiceId = await arena._topicChoiceNextId(topic);
       expect(nextChoiceId).to.equal(BigNumber.from(1));
     });
-    it("should retrieve the first choices info", async () => {});
+    it("should retrieve the first choices info", async () => {
+      let choiceInfo = await arena.choiceInfo(topic, 0);
+      let params = getFlatParamsFromDict(getValidChoiceParams());
+      expect(choiceInfo).to.deep.include.members(params);
+    });
   });
 });

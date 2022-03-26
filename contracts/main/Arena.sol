@@ -162,7 +162,14 @@ contract Arena {
             uint256 fundingTarget
         )
     {
-        return (0, "", address(this), 0, 0);
+        Choice memory c = _topicChoices[topicId][choiceId];
+        return (
+            c._id,
+            c._description,
+            c._fundsAddress,
+            c._feePercentage,
+            c._fundingTarget
+        );
     }
 
     function addChoice(
