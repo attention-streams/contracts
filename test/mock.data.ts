@@ -25,6 +25,23 @@ export interface TopicParams {
     fundingPercentage: Number;
 }
 
+
+export interface ChoiceParams {
+    description: string;
+    fundsAddress: string;
+    feePercentage: Number;
+    fundingTarget: BigNumber;
+}
+
+export function getValidChoiceParams(): ChoiceParams {
+    return {
+        description: "choice A",
+        fundsAddress: "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+        feePercentage: 1000, // 10 %
+        fundingTarget: BigNumber.from("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+    }
+}
+
 export function getValidTopicParams(): TopicParams {
     return {
         cycleDuration: 100, // 100 blocks

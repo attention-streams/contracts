@@ -113,13 +113,12 @@ contract Arena {
         uint32 fundingPeriod,
         uint16 fundingPercentage
     ) public {
-        if (_topicCreationFee > 0){
+        if (_topicCreationFee > 0) {
             _token.transferFrom(msg.sender, address(this), _topicCreationFee);
         }
-        
-        require(fundingPercentage <= 10000, 
-        "funding percentage exceeded 100%");
-        
+
+        require(fundingPercentage <= 10000, "funding percentage exceeded 100%");
+
         require(
             topicFeePercentage <= _maxTopicFeePercentage,
             "Max topic fee exceeded"
@@ -147,7 +146,8 @@ contract Arena {
             maxChoiceFeePercentage,
             relativeSupportThreshold,
             fundingPeriod,
-            fundingPercentage
+            fundingPercentage,
+            _choices
         );
         _topicData.topicIdMap[newTopicId] = newTopic;
     }

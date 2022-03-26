@@ -14,7 +14,7 @@ export async function deployAttentionToken() {
   return at;
 }
 
-export async function deployArena(params: ArenaParams, signer: SignerWithAddress | undefined = undefined): Promise<Arena> {
+export async function deployArena(params: ArenaParams, signer?: SignerWithAddress): Promise<Arena> {
   if (signer === undefined)
     [signer] = await ethers.getSigners()
   
@@ -24,7 +24,7 @@ export async function deployArena(params: ArenaParams, signer: SignerWithAddress
   return Arena.deploy(...getFlatParamsFromDict(_params));
 }
 
-export async function addTopic(arena: Arena, params: TopicParams, signer: SignerWithAddress | undefined = undefined) {
+export async function addTopic(arena: Arena, params: TopicParams, signer?: SignerWithAddress) {
   if (signer === undefined)
     [signer] = await ethers.getSigners()
   

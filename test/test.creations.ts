@@ -8,7 +8,8 @@ import {
   getValidArenaParams,
   getFlatParamsFromDict,
   getValidTopicParams,
-  TopicParams
+  TopicParams,
+  getValidChoiceParams
 } from "./mock.data";
 import { ethers } from "hardhat";
 
@@ -141,15 +142,15 @@ describe("Attention Stream Setup", () => {
       await token.connect(dev).approve(arena.address, topicCreationFee);
       let tx = addTopic(arena, getValidTopicParams(), dev);
       await expect(tx).to.be.revertedWith("ERC20: transfer amount exceeds balance");
-    
+
     })
     it("should subtract fee amount from creator and add it to arena funds", async () => {
       let [owner, dev] = await ethers.getSigners();
       let topicCreationFee: BigNumber = await arena._topicCreationFee();
-      
+
       // transfer some funds from owner to dev
       await token.connect(owner).transfer(dev.address, topicCreationFee);
-      
+
       // approve the contract to spend funds
       await token.connect(dev).approve(arena.address, topicCreationFee);
 
@@ -170,6 +171,20 @@ describe("Attention Stream Setup", () => {
 
     })
 
+  })
+
+  describe("Choice Creation", async () => {
+    let arena: Arena;
+    let topic: BigNumber;
+    before(async () => {
+      arena = await deployArena(getValidArenaParams());
+      topic = await arena._topicData.call('nextTopicId')
+      let createTopic = await addTopic(arena, getValidTopicParams())
+      await createTopic.wait(1);
+    })
+    it("should create valid choice", async () => {
+      console.log(getValidChoiceParams())
+    })
   })
 
 });

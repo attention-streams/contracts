@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "./Choice.sol";
+
 struct Topic {
     uint256 _id;
     uint32 _cycleDuration; // share distribution cycle. in terms of # of blocks - ex. once every 100 blocks
@@ -12,4 +14,5 @@ struct Topic {
     uint32 _relativeSupportThreshold; // min support a choice needs to be eligible for external funding
     uint32 _fundingPeriod; // how often funds are distributed to leading choices, in terms of # of cycles. ignored if no external funding available
     uint16 _fundingPercentage; // percentage of funds transferred to leading choices
+    mapping(uint256 => Choice) _choices; // choices of this topic
 }
