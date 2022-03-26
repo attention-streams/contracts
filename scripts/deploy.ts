@@ -52,6 +52,9 @@ export async function addTopic(_arena: Arena, _params: TopicParams, _signer?: Si
 export async function addChoice(_arena: Arena, _topicId: BigNumber, _params: ChoiceParams, _signer?: SignerWithAddress) {
   let { params, signer } = await getSingerAndParamsArray(_params, _signer);
 
+  //@ts-ignore
+  let tx = _arena.connect(signer).addChoice(_topicId, ...params);
+  return tx;
 }
 
 export async function deployMain() {

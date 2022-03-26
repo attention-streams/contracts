@@ -6,17 +6,11 @@ import "./Topic.sol";
 import "hardhat/console.sol";
 
 contract Arena {
-    struct TopicData {
-        mapping(uint256 => Topic) topicIdMap;
-        uint256 nextTopicId;
-    }
+    mapping(uint256 => Topic) public _topicIdMap; // list of topics in arena
+    uint256 public _nextTopicId; // id of a new topic
 
-    struct ChoiceData {
-        mapping(uint256 => Choice[]) topicChoices; // list of choices of each topic
-        uint256 nextChoiceId;
-    }
-
-    TopicData public _topicData;
+    mapping(uint256 => Choice[]) public _topicChoices; // list of choices of each topic
+    mapping(uint256 => uint256) public _topicChoiceNextId; // next choice id in each topic
 
     string public _name; // arena name
 
@@ -94,7 +88,7 @@ contract Arena {
             uint16 fundingPercentage // percentage
         )
     {
-        Topic storage t = _topicData.topicIdMap[_id];
+        Topic storage t = _topicIdMap[_id];
         return (
             t._id,
             t._cycleDuration,
@@ -139,9 +133,9 @@ contract Arena {
                 10000,
             "accumulative fees exceeded 100%"
         );
-        _topicData.nextTopicId += 1;
+        _nextTopicId += 1;
 
-        uint256 newTopicId = _topicData.nextTopicId;
+        uint256 newTopicId = _nextTopicId;
 
         Topic memory newTopic = Topic(
             newTopicId,
@@ -154,6 +148,25 @@ contract Arena {
             fundingPeriod,
             fundingPercentage
         );
-        _topicData.topicIdMap[newTopicId] = newTopic;
+        _topicIdMap[newTopicId] = newTopic;
+    }
+
+    function addChoice(
+        uint256 topicId,
+        string memory description,
+        address fundsAddress,
+        uint16 feePercentage,
+        uint256 fundingTarget
+    ) public {
+        // _nextChoiceId += 1;
+        // uint256 choiceId = _choiceData.nextChoiceId;
+        // Choice memory choice = Choice(
+        //     choiceId,
+        //     description,
+        //     fundsAddress,
+        //     feePercentage,
+        //     fundingTarget
+        // );
+        // _choiceData.topicChoices[topicId].push(choice);
     }
 }

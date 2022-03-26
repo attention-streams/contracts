@@ -2,7 +2,7 @@ import { expect, util } from "chai";
 import { BigNumber, utils } from "ethers";
 import helpers from '../scripts/helpers';
 
-import { addTopic, deployArena, deployAttentionToken } from "../scripts/deploy";
+import { addChoice, addTopic, deployArena, deployAttentionToken } from "../scripts/deploy";
 import { Arena, ERC20 } from "../typechain";
 import {
   getValidArenaParams,
@@ -44,7 +44,7 @@ describe("Attention Stream Setup", () => {
     it("Should create the first valid topic", async () => {
       let tx = await addTopic(arena, getValidTopicParams());
       await tx.wait(1);
-      let nextId = await arena._topicData.call('nextTopicId')
+      let nextId = await arena._nextTopicId();
       expect(nextId).to.be.equal(1)
 
     })
@@ -53,7 +53,7 @@ describe("Attention Stream Setup", () => {
       params.cycleDuration = 10;
       let tx = await addTopic(arena, params);
       await tx.wait(1);
-      let nextId = await arena._topicData.call('nextTopicId')
+      let nextId = await arena._nextTopicId();
       expect(nextId).to.be.equal(2)
     })
     it("Should properly return topic 1 info", async () => {
@@ -92,7 +92,7 @@ describe("Attention Stream Setup", () => {
       setting max topic fee and choice fee to 100% means 
       arena should validate that 
       arenaFee + topicFee + contributorFee is less than 100 %
-
+  
       arena fee is 10%
       */
       arenaParams.maxTopicFeePercentage = 10000 // 100 %
@@ -143,8 +143,8 @@ describe("Attention Stream Setup", () => {
       await approveTx.wait(1);
 
       let tx = addTopic(arena, getValidTopicParams(), dev);
-      await expect(tx).to.be.revertedWith("ERC20: transfer amount exceeds balance");
 
+      await expect(tx).to.be.revertedWith("ERC20: transfer amount exceeds balance");
     })
     it("should subtract fee amount from creator and add it to arena funds", async () => {
       let [owner, dev] = await ethers.getSigners();
@@ -184,11 +184,16 @@ describe("Attention Stream Setup", () => {
     let topic: BigNumber;
     before(async () => {
       arena = await deployArena(getValidArenaParams());
-      topic = await arena._topicData.call('nextTopicId')
+      topic = await arena._nextTopicId();
       let createTopic = await addTopic(arena, getValidTopicParams())
       await createTopic.wait(1);
     })
     it("should create valid choice", async () => {
+      // let addChoiceTx = await addChoice(arena, topic, getValidChoiceParams());
+      // await addChoiceTx.wait(1);
+
+      // let nextTopicId = await arena._choiceData.call('nextChoiceId');
+      // expect(nextTopicId).to.equal(BigNumber.from(1));
 
     })
   })
