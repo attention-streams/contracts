@@ -13,9 +13,6 @@ import {
 import { ethers } from "hardhat";
 
 describe("Attention Stream Setup", () => {
-  it("should kill time", (done) => {
-    setTimeout(done, 2000);
-  });
   describe("Arena creation", () => {
     let arena: Arena;
     it("Should deploy arena", async () => {
@@ -118,11 +115,10 @@ describe("Attention Stream Setup", () => {
     let token: ERC20;
 
     it("Should create arena fee topic creation fee of 10 tokens", async () => {
-      const testVoteToken = await helpers.getTestVoteToken();
-      token = await ethers.getContractAt("ERC20", testVoteToken);
+      token = await helpers.getTestVoteToken();
       const params = getValidArenaParams();
       params.topicCreationFee = utils.parseEther("10");
-      params.token = testVoteToken;
+      params.token = token.address;
       arena = await deployArena(params);
       const info = await arena.info();
       expect(info.topicCreationFee).to.be.equal(utils.parseEther("10"));
@@ -189,31 +185,59 @@ describe("Attention Stream Setup", () => {
   });
 
   describe("Choice Creation", async () => {
-    let arena: Arena;
+    let arenaNoFee: Arena;
+    let arenaWithFee: Arena;
+    let token: ERC20;
     let topic: BigNumber;
+
+    async function deployNoFeeArena() {
+      arenaNoFee = await deployArena(getValidArenaParams());
+      const createTopic1 = await addTopic(arenaNoFee, getValidTopicParams());
+      await createTopic1.wait(1);
+    }
+
+    async function deployTestVoteToken() {
+      let withFeeParams = getValidArenaParams();
+      token = await helpers.getTestVoteToken();
+      return withFeeParams;
+    }
+
+    async function deployWithFeeArena() {
+      let withFeeParams = await deployTestVoteToken();
+      withFeeParams.choiceCreationFee = ethers.utils.parseEther("10"); // 10 tokens as fee
+      withFeeParams.token = token.address;
+      arenaWithFee = await deployArena(withFeeParams);
+      const createTopic2 = await addTopic(arenaWithFee, getValidTopicParams());
+      await createTopic2.wait(1);
+    }
+
     before(async () => {
-      arena = await deployArena(getValidArenaParams());
-      const createTopic = await addTopic(arena, getValidTopicParams());
-      await createTopic.wait(1);
-      topic = await arena._nextTopicId();
+      await deployNoFeeArena();
+      await deployTestVoteToken();
+      await deployWithFeeArena();
+
+      topic = await arenaNoFee._nextTopicId();
     });
     it("should create valid choice", async () => {
-      const addChoiceTx = await addChoice(arena, topic, getValidChoiceParams());
+      const addChoiceTx = await addChoice(
+        arenaNoFee,
+        topic,
+        getValidChoiceParams()
+      );
       await addChoiceTx.wait(1);
 
-      const nextChoiceId = await arena._topicChoiceNextId(topic);
+      const nextChoiceId = await arenaNoFee._topicChoiceNextId(topic);
       expect(nextChoiceId).to.equal(BigNumber.from(1));
     });
     it("should retrieve the first choices info", async () => {
-      let choiceInfo = await arena.choiceInfo(topic, 0);
+      let choiceInfo = await arenaNoFee.choiceInfo(topic, 0);
       let params = getFlatParamsFromDict(getValidChoiceParams());
       expect(choiceInfo).to.deep.include.members(params);
     });
     it("should fail to create choice if fee is more than allowed by topic", async () => {
       let params = getValidChoiceParams();
       params.feePercentage = 2600;
-      let topicInfo = await arena.getTopicInfoById(topic);
-      let tx = addChoice(arena, topic, params);
+      let tx = addChoice(arenaNoFee, topic, params);
       await expect(tx).to.be.revertedWith("Fee percentage too high");
     });
     it("should fail to create choice if accumulative fee is more than 100%", async () => {
@@ -237,6 +261,10 @@ describe("Attention Stream Setup", () => {
       await expect(_choice).to.be.revertedWith(
         "accumulative fees exceeded 100%"
       );
+    });
+    it("should fail to create choice if contract can't spend funds", async () => {
+      let tx = addChoice(arenaWithFee, topic, getValidChoiceParams());
+      await expect(tx).to.be.revertedWith("ERC20: insufficient allowance");
     });
   });
 });

@@ -1,6 +1,7 @@
-import hre from "hardhat";
+import hre, { ethers } from "hardhat";
 import config from "../networks.config";
 import { deployAttentionToken } from "./deploy";
+import { ERC20 } from "../typechain";
 
 function isLocalNetwork() {
   return (
@@ -8,11 +9,17 @@ function isLocalNetwork() {
   );
 }
 
-async function getTestVoteToken(): Promise<string> {
+async function getTestVoteTokenAddress(): Promise<string> {
   if (hre.network.name === "rinkeby") return config.rinkeby.voting_token;
   return (await deployAttentionToken()).address;
 }
 
+async function getTestVoteToken(): Promise<ERC20> {
+  let tokenAddress = await getTestVoteTokenAddress();
+  return await ethers.getContractAt("ERC20", tokenAddress);
+}
+
 export default {
+  getTestVoteTokenAddress,
   getTestVoteToken,
 };

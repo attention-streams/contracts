@@ -179,6 +179,10 @@ contract Arena {
         uint16 feePercentage,
         uint256 fundingTarget
     ) public {
+        if (_choiceCreationFee > 0) {
+            _token.transferFrom(msg.sender, fundsAddress, _choiceCreationFee);
+        }
+
         require(
             feePercentage <= _topicIdMap[topicId]._maxChoiceFeePercentage,
             "Fee percentage too high"
