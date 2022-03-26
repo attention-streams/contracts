@@ -21,35 +21,34 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
-let accounts: string[] = []
+let accounts: string[] = [];
 
 function setAccountIfExists(account: string | undefined) {
-  if (account !== undefined)
-    accounts.push(account)
+  if (account !== undefined) accounts.push(account);
 }
 
-setAccountIfExists(process.env.PRIVATE_KEY_OWNER)
-setAccountIfExists(process.env.PRIVATE_KEY_DEV)
-setAccountIfExists(process.env.PRIVATE_KEY_USER)
+setAccountIfExists(process.env.PRIVATE_KEY_OWNER);
+setAccountIfExists(process.env.PRIVATE_KEY_DEV);
+setAccountIfExists(process.env.PRIVATE_KEY_USER);
 
 const config: HardhatUserConfig = {
   solidity: "0.8.4",
   networks: {
     rinkeby: {
-      url: process.env.RINKEBY_URL !== undefined ? process.env.RINKEBY_URL : '',
+      url: process.env.RINKEBY_URL !== undefined ? process.env.RINKEBY_URL : "",
       accounts: accounts,
       gas: "auto",
       gasPrice: "auto",
-    }
+    },
   },
   gasReporter: {
-    enabled: process.env.REPORT_GAS !== undefined,
+    enabled: true,
     currency: "USD",
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
-  mocha: { timeout: 10 * 60 * 1000, }
+  mocha: { timeout: 10 * 60 * 1000 },
 };
 
 export default config;

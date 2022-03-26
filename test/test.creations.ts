@@ -13,6 +13,9 @@ import {
 import { ethers } from "hardhat";
 
 describe("Attention Stream Setup", () => {
+  it("should kill time", (done) => {
+    setTimeout(done, 2000);
+  });
   describe("Arena creation", () => {
     let arena: Arena;
     it("Should deploy arena", async () => {
