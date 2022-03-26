@@ -11,6 +11,8 @@ import {
   getValidChoiceParams,
 } from "./mock.data";
 import { ethers } from "hardhat";
+import { getSigners } from "@nomiclabs/hardhat-ethers/internal/helpers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 describe("Attention Stream Setup", () => {
   describe("Arena creation", () => {
@@ -265,6 +267,76 @@ describe("Attention Stream Setup", () => {
     it("should fail to create choice if contract can't spend funds", async () => {
       let tx = addChoice(arenaWithFee, topic, getValidChoiceParams());
       await expect(tx).to.be.revertedWith("ERC20: insufficient allowance");
+    });
+    it("should fail to create choice if balance is too low", async () => {
+      let [, dev] = await ethers.getSigners();
+      await token
+        .connect(dev)
+        .approve(arenaWithFee.address, await arenaWithFee._choiceCreationFee());
+      let tx = addChoice(arenaWithFee, topic, getValidChoiceParams(), dev);
+      await expect(tx).to.be.revertedWith(
+        "ERC20: transfer amount exceeds balance"
+      );
+    });
+
+    async function fundDevAccountAndApproveArenaToSpendFunds(
+      owner: SignerWithAddress,
+      dev: SignerWithAddress,
+      fee: BigNumber
+    ) {
+      let transfer = await token.connect(owner).transfer(dev.address, fee);
+      await transfer.wait(1);
+      let approve = await token.connect(dev).approve(arenaWithFee.address, fee);
+      await approve.wait(1);
+    }
+
+    async function snapshot() {
+      let [, dev] = await ethers.getSigners();
+      let devBalanceBefore = await token.balanceOf(dev.address);
+      let choiceFundsBalanceBefore = await token.balanceOf(
+        getValidChoiceParams().fundsAddress
+      );
+      return [devBalanceBefore, choiceFundsBalanceBefore];
+    }
+
+    async function _addChoice() {
+      let [, dev] = await ethers.getSigners();
+      let tx = await addChoice(
+        arenaWithFee,
+        topic,
+        getValidChoiceParams(),
+        dev
+      );
+      await tx.wait(1);
+    }
+
+    async function prepareAccounts() {
+      let [owner, dev] = await ethers.getSigners();
+      await fundDevAccountAndApproveArenaToSpendFunds(
+        owner,
+        dev,
+        await arenaWithFee._choiceCreationFee()
+      );
+    }
+
+    async function addChoiceAndGetDelta() {
+      await prepareAccounts();
+      let [devBalanceBefore, choiceFundsBalanceBefore] = await snapshot();
+      await _addChoice();
+      let [devBalanceAfter, choiceFundsBalanceAfter] = await snapshot();
+
+      return [
+        devBalanceBefore.sub(devBalanceAfter),
+        choiceFundsBalanceAfter.sub(choiceFundsBalanceBefore),
+      ];
+    }
+
+    it("should create choice and subtract fee", async () => {
+      let [deltaDevBalance, deltaChoiceFundsBalance] =
+        await addChoiceAndGetDelta();
+
+      expect(deltaDevBalance).to.equal(deltaChoiceFundsBalance);
+      expect(deltaDevBalance).to.equal(await arenaWithFee._choiceCreationFee());
     });
   });
 });
