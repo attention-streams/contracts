@@ -4,8 +4,10 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { getValidArenaParams, getFlatParamsFromDict, ArenaParams, TopicParams } from "../test/mock.data";
+import { any } from "hardhat/internal/core/params/argumentTypes";
+import { ArenaParams, getFlatParamsFromDict, getValidArenaParams, TopicParams, ChoiceParams } from "../test/mock.data";
 import { Arena } from "../typechain";
 
 export async function deployAttentionToken() {
@@ -14,25 +16,45 @@ export async function deployAttentionToken() {
   return at;
 }
 
-export async function deployArena(params: ArenaParams, signer?: SignerWithAddress): Promise<Arena> {
-  if (signer === undefined)
-    [signer] = await ethers.getSigners()
-  
-  const Arena = await ethers.getContractFactory("Arena");
-  let _params = getFlatParamsFromDict(params);
-  //@ts-ignore
-  return Arena.deploy(...getFlatParamsFromDict(_params));
+interface ParamsSigner {
+  signer: SignerWithAddress;
+  params: any[];
 }
 
-export async function addTopic(arena: Arena, params: TopicParams, signer?: SignerWithAddress) {
-  if (signer === undefined)
-    [signer] = await ethers.getSigners()
-  
-  let _params = getFlatParamsFromDict(params);
+async function getSingerAndParamsArray(_params: any, _signer?: SignerWithAddress): Promise<ParamsSigner> {
+  if (_signer === undefined)
+    [_signer] = await ethers.getSigners()
+
+  let params = getFlatParamsFromDict(_params);
+
+  return {
+    signer: _signer,
+    params
+  }
+}
+
+export async function deployArena(_params: ArenaParams, _signer?: SignerWithAddress): Promise<Arena> {
+  let { params, signer } = await getSingerAndParamsArray(_params, _signer);
+
+  const Arena = await ethers.getContractFactory("Arena");
+
   //@ts-ignore
-  let topicId = await arena.connect(signer).addTopic(..._params)
+  return Arena.connect(signer).deploy(...getFlatParamsFromDict(params));
+}
+
+export async function addTopic(_arena: Arena, _params: TopicParams, _signer?: SignerWithAddress) {
+
+  let { params, signer } = await getSingerAndParamsArray(_params, _signer);
+
+  //@ts-ignore
+  let topicId = await _arena.connect(signer).addTopic(...params)
   topicId.wait(1);
   return topicId;
+}
+
+export async function addChoice(_arena: Arena, _topicId: BigNumber, _params: ChoiceParams, _signer?: SignerWithAddress) {
+  let { params, signer } = await getSingerAndParamsArray(_params, _signer);
+
 }
 
 export async function deployMain() {

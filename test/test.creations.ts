@@ -183,7 +183,7 @@ describe("Attention Stream Setup", () => {
       await createTopic.wait(1);
     })
     it("should create valid choice", async () => {
-      console.log(getValidChoiceParams())
+
     })
   })
 
