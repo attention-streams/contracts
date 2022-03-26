@@ -35,7 +35,6 @@ async function getSingerAndParamsArray(_params: any, _signer?: SignerWithAddress
 
 export async function deployArena(_params: ArenaParams, _signer?: SignerWithAddress): Promise<Arena> {
   let { params, signer } = await getSingerAndParamsArray(_params, _signer);
-
   const Arena = await ethers.getContractFactory("Arena");
 
   //@ts-ignore
@@ -43,13 +42,11 @@ export async function deployArena(_params: ArenaParams, _signer?: SignerWithAddr
 }
 
 export async function addTopic(_arena: Arena, _params: TopicParams, _signer?: SignerWithAddress) {
-
   let { params, signer } = await getSingerAndParamsArray(_params, _signer);
 
   //@ts-ignore
-  let topicId = await _arena.connect(signer).addTopic(...params)
-  topicId.wait(1);
-  return topicId;
+  let tx = _arena.connect(signer).addTopic(...params);
+  return tx;
 }
 
 export async function addChoice(_arena: Arena, _topicId: BigNumber, _params: ChoiceParams, _signer?: SignerWithAddress) {
