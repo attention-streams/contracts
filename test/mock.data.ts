@@ -58,7 +58,7 @@ export function getValidTopicParams(): TopicParams {
     relativeSupportThreshold: 0,
     fundingPeriod: 0,
     fundingPercentage: 0,
-    funds: "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+    funds: "0x71bE63f3384f5fb98995898A86B02Fb2426c5788",
   };
 }
 
@@ -72,7 +72,7 @@ export function getValidArenaParams(): ArenaParams {
     arenaFeePercentage: 1000, // 10 percent
     choiceCreationFee: BigNumber.from(0),
     topicCreationFee: BigNumber.from(0),
-    funds: "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+    funds: "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a",
   };
 }
 

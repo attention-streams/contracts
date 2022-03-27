@@ -26,7 +26,7 @@ contract Arena {
     uint256 public _choiceCreationFee; // to prevent spam choice creation
     uint256 public _topicCreationFee; // to prevent spam topic creation
 
-    address payable _funds; // arena funds location
+    address payable public _funds; // arena funds location
 
     function info()
         public
@@ -122,7 +122,7 @@ contract Arena {
         address payable funds
     ) public {
         if (_topicCreationFee > 0) {
-            _token.transferFrom(msg.sender, address(this), _topicCreationFee);
+            _token.transferFrom(msg.sender, _funds, _topicCreationFee);
         }
 
         require(fundingPercentage <= 10000, "funding percentage exceeded 100%");
@@ -190,7 +190,7 @@ contract Arena {
         uint256 fundingTarget
     ) public {
         if (_choiceCreationFee > 0) {
-            _token.transferFrom(msg.sender, funds, _choiceCreationFee);
+            _token.transferFrom(msg.sender, _funds, _choiceCreationFee);
         }
 
         require(

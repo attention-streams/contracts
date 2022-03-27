@@ -163,7 +163,9 @@ describe("Attention Stream Setup", () => {
     async function snapshot() {
       let [, dev] = await ethers.getSigners();
       const devBalance: BigNumber = await token.balanceOf(dev.address);
-      const arenaFundsBalance: BigNumber = await token.balanceOf(arena.address);
+      const arenaFundsBalance: BigNumber = await token.balanceOf(
+        await arena._funds()
+      );
       return [devBalance, arenaFundsBalance];
     }
 
@@ -308,7 +310,7 @@ describe("Attention Stream Setup", () => {
       let [, dev] = await ethers.getSigners();
       let devBalanceBefore = await token.balanceOf(dev.address);
       let choiceFundsBalanceBefore = await token.balanceOf(
-        getValidChoiceParams().funds
+        await arenaWithFee._funds()
       );
       return [devBalanceBefore, choiceFundsBalanceBefore];
     }
@@ -326,13 +328,13 @@ describe("Attention Stream Setup", () => {
 
     async function addChoiceAndGetDelta() {
       await fundDevAccountAndApprove();
-      let [devBalanceBefore, choiceFundsBalanceBefore] = await snapshot();
+      let [devBalanceBefore, arenaFundsBalanceBefore] = await snapshot();
       await _addChoice();
-      let [devBalanceAfter, choiceFundsBalanceAfter] = await snapshot();
+      let [devBalanceAfter, arenaFundsBalanceAfter] = await snapshot();
 
       return [
         devBalanceBefore.sub(devBalanceAfter),
-        choiceFundsBalanceAfter.sub(choiceFundsBalanceBefore),
+        arenaFundsBalanceAfter.sub(arenaFundsBalanceBefore),
       ];
     }
 
