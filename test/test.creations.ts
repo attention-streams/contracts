@@ -12,14 +12,14 @@ import {
 } from "./mock.data";
 import { ethers } from "hardhat";
 
-describe("Attention Stream Setup", () => {
+describe("Attention Streams Setup", () => {
   describe("Arena creation", () => {
     let arena: Arena;
-    it("Should deploy arena", async () => {
+    it("should deploy arena with valid configuration", async () => {
       arena = await deployArena(getValidArenaParams());
       expect(arena.address).to.not.be.null;
     });
-    it("Should properly retrieve arena info", async () => {
+    it("should properly retrieve the deployed arena info", async () => {
       const arena_info = await arena.functions.info();
       expect(arena_info).deep.include.members(
         getFlatParamsFromDict(getValidArenaParams())
@@ -27,27 +27,25 @@ describe("Attention Stream Setup", () => {
       expect(arena.address).not.null;
     });
 
-    it("Should fail to create arena with percentage fee more than 100%", async () => {
+    it("should fail to create arena with fee percentage more than 100%", async () => {
       const params = getValidArenaParams();
       params.arenaFeePercentage = 10100;
       await expect(deployArena(params)).to.be.reverted;
     });
   });
   describe("Topic Creation", () => {
-    describe.skip("skipping", () => {});
-
     let arena: Arena;
     before(async () => {
       // create arena
       arena = await deployArena(getValidArenaParams());
     });
-    it("Should create the first valid topic", async () => {
+    it("should create the first valid topic with id of #1", async () => {
       const tx = await addTopic(arena, getValidTopicParams());
       await tx.wait(1);
       const nextId = await arena._nextTopicId();
       expect(nextId).to.be.equal(1);
     });
-    it("Should create the second valid topic", async () => {
+    it("should create the second valid topic with id of #2", async () => {
       const params = getValidTopicParams();
       params.cycleDuration = 10;
       const tx = await addTopic(arena, params);
@@ -55,30 +53,30 @@ describe("Attention Stream Setup", () => {
       const nextId = await arena._nextTopicId();
       expect(nextId).to.be.equal(2);
     });
-    it("Should properly return topic 1 info", async () => {
+    it("should properly retrieve topic #1 info", async () => {
       const info = await arena.getTopicInfoById(1);
       const params = getValidTopicParams();
       expect(info).to.deep.include.members(getFlatParamsFromDict(params));
     });
-    it("Should properly return topic 2 info", async () => {
+    it("should properly retrieve topic 2 info", async () => {
       const info = await arena.getTopicInfoById(2);
       const params = getValidTopicParams();
       params.cycleDuration = 10;
       expect(info).to.deep.include.members(getFlatParamsFromDict(params));
     });
-    it("Should fail to create topic with topic fee more than 5% (limited by arena)", async () => {
+    it("Should fail to create topic with topic fee percentage more than 5% (limited by arena)", async () => {
       const params = getValidTopicParams();
       params.topicFeePercentage = 1000; // 10 %
       const tx = addTopic(arena, params);
       await expect(tx).to.be.revertedWith("Max topic fee exceeded");
     });
-    it("Should fail to create topic with choice fee exceeding max choice fee defined by arena", async () => {
+    it("Should fail to create topic with max choice fee percentage exceeding max choice fee percentage defined by arena", async () => {
       const params = getValidTopicParams();
       params.maxChoiceFeePercentage = 3100; // 31 %
       const tx = addTopic(arena, params);
       await expect(tx).to.be.revertedWith("Max choice fee exceeded");
     });
-    it("Should fail to create topic with fundingPercentage more than 100%", async () => {
+    it("should fail to create topic with fundingPercentage more than 100%", async () => {
       const params = getValidTopicParams();
       params.fundingPercentage = 10100;
       const tx = addTopic(arena, params);
@@ -101,7 +99,7 @@ describe("Attention Stream Setup", () => {
       return addTopic(arena, topicParams);
     }
 
-    it("Should fail to crate topic with arenaFee + topicFee + contributorFee > 100%", async () => {
+    it("should fail to create topic with arenaFee + topicFee + contributorFee > 100%", async () => {
       const tx = deployTopicWithExceedingFees();
       await expect(tx).to.be.revertedWith("accumulative fees exceeded 100%");
     });
@@ -119,7 +117,7 @@ describe("Attention Stream Setup", () => {
       arena = await deployArena(params);
     }
 
-    it("Should create arena fee topic creation fee of 10 tokens", async () => {
+    it("should create an arena with with topicCreationFee of 10 tokens", async () => {
       await deployArenaWithTestVoteTokenAndFee();
       const info = await arena.info();
       expect(info.topicCreationFee).to.be.equal(utils.parseEther("10"));
@@ -176,15 +174,11 @@ describe("Attention Stream Setup", () => {
       await addTopicTx.wait(1);
     }
 
-    it("should subtract fee amount from creator and add it to arena funds", async () => {
+    it("should subtract topicCreationFee amount from creator and add it to arena funds", async () => {
       await fundDevAccountAndApprove();
-
       const [devBalanceBefore, arenaBalanceBefore] = await snapshot();
-
       await configureAndAddTopic();
-
       const [devBalanceAfter, arenaBalanceAfter] = await snapshot();
-
       const deltaDevBalance: BigNumber = devBalanceBefore.sub(devBalanceAfter);
       const deltaArenaBalance: BigNumber =
         arenaBalanceAfter.sub(arenaBalanceBefore);
@@ -228,7 +222,7 @@ describe("Attention Stream Setup", () => {
 
       topic = await arenaNoFee._nextTopicId();
     });
-    it("should create valid choice", async () => {
+    it("should create valid choice with id #1", async () => {
       const addChoiceTx = await addChoice(
         arenaNoFee,
         topic,
@@ -244,7 +238,7 @@ describe("Attention Stream Setup", () => {
       let params = getFlatParamsFromDict(getValidChoiceParams());
       expect(choiceInfo).to.deep.include.members(params);
     });
-    it("should fail to create choice if fee is more than allowed by topic", async () => {
+    it("should fail to create choice if fee percentage is more than allowed by topic", async () => {
       let params = getValidChoiceParams();
       params.feePercentage = 2600;
       let tx = addChoice(arenaNoFee, topic, params);
@@ -288,9 +282,10 @@ describe("Attention Stream Setup", () => {
     });
     it("should fail to create choice if balance is too low", async () => {
       let [, dev] = await ethers.getSigners();
-      await token
+      let approve = await token
         .connect(dev)
         .approve(arenaWithFee.address, await arenaWithFee._choiceCreationFee());
+      await approve.wait(1);
       let tx = addChoice(arenaWithFee, topic, getValidChoiceParams(), dev);
       await expect(tx).to.be.revertedWith(
         "ERC20: transfer amount exceeds balance"
@@ -338,7 +333,7 @@ describe("Attention Stream Setup", () => {
       ];
     }
 
-    it("should create choice and subtract fee", async () => {
+    it("should create choice and subtract choiceCreationFee amount", async () => {
       let [deltaDevBalance, deltaChoiceFundsBalance] =
         await addChoiceAndGetDelta();
 
