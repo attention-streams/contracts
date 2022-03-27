@@ -308,7 +308,7 @@ describe("Attention Stream Setup", () => {
       let [, dev] = await ethers.getSigners();
       let devBalanceBefore = await token.balanceOf(dev.address);
       let choiceFundsBalanceBefore = await token.balanceOf(
-        getValidChoiceParams().fundsAddress
+        getValidChoiceParams().funds
       );
       return [devBalanceBefore, choiceFundsBalanceBefore];
     }

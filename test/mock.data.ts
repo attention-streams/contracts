@@ -9,6 +9,7 @@ export interface ArenaParams {
   arenaFeePercentage: Number;
   choiceCreationFee: BigNumber;
   topicCreationFee: BigNumber;
+  funds: string;
 }
 
 export interface TopicParams {
@@ -23,11 +24,12 @@ export interface TopicParams {
   relativeSupportThreshold: Number;
   fundingPeriod: Number;
   fundingPercentage: Number;
+  funds: string;
 }
 
 export interface ChoiceParams {
   description: string;
-  fundsAddress: string;
+  funds: string;
   feePercentage: Number;
   fundingTarget: BigNumber;
 }
@@ -35,7 +37,7 @@ export interface ChoiceParams {
 export function getValidChoiceParams(): ChoiceParams {
   return {
     description: "choice A",
-    fundsAddress: "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+    funds: "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
     feePercentage: 1000, // 10 %
     fundingTarget: BigNumber.from(
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
@@ -56,6 +58,7 @@ export function getValidTopicParams(): TopicParams {
     relativeSupportThreshold: 0,
     fundingPeriod: 0,
     fundingPercentage: 0,
+    funds: "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
   };
 }
 
@@ -69,6 +72,7 @@ export function getValidArenaParams(): ArenaParams {
     arenaFeePercentage: 1000, // 10 percent
     choiceCreationFee: BigNumber.from(0),
     topicCreationFee: BigNumber.from(0),
+    funds: "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
   };
 }
 

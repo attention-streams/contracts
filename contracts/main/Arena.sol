@@ -26,6 +26,8 @@ contract Arena {
     uint256 public _choiceCreationFee; // to prevent spam choice creation
     uint256 public _topicCreationFee; // to prevent spam topic creation
 
+    address payable _funds; // arena funds location
+
     function info()
         public
         view
@@ -37,7 +39,8 @@ contract Arena {
             uint16 maxTopicFeePercentage,
             uint16 arenaFeePercentage,
             uint256 choiceCreationFee,
-            uint256 topicCreationFee
+            uint256 topicCreationFee,
+            address funds
         )
     {
         return (
@@ -48,7 +51,8 @@ contract Arena {
             _maxTopicFeePercentage,
             _arenaFeePercentage,
             _choiceCreationFee,
-            _topicCreationFee
+            _topicCreationFee,
+            _funds
         );
     }
 
@@ -60,7 +64,8 @@ contract Arena {
         uint16 maxTopicFeePercentage,
         uint16 arenaFeePercentage,
         uint256 choiceCreationFee,
-        uint256 topicCreationFee
+        uint256 topicCreationFee,
+        address payable funds
     ) {
         require((arenaFeePercentage) <= 100 * 10**2, "Fees exceeded 100%");
         _name = name;
@@ -71,6 +76,7 @@ contract Arena {
         _arenaFeePercentage = arenaFeePercentage;
         _choiceCreationFee = choiceCreationFee;
         _topicCreationFee = topicCreationFee;
+        _funds = funds;
     }
 
     function getTopicInfoById(uint256 _id)
@@ -85,7 +91,8 @@ contract Arena {
             uint16 maxChoiceFeePercentage, // percentage of a vote given to the choice
             uint32 relativeSupportThreshold, // min support a choice needs to be eligible for external funding
             uint32 fundingPeriod, // how often funds are distributed to leading choices, in terms of # of cycles. ignored if no external funding available
-            uint16 fundingPercentage // percentage
+            uint16 fundingPercentage, // percentage
+            address payable funds
         )
     {
         Topic storage t = _topicIdMap[_id];
@@ -98,7 +105,8 @@ contract Arena {
             t._maxChoiceFeePercentage,
             t._relativeSupportThreshold,
             t._fundingPeriod,
-            t._fundingPercentage
+            t._fundingPercentage,
+            t._funds
         );
     }
 
@@ -110,7 +118,8 @@ contract Arena {
         uint16 maxChoiceFeePercentage,
         uint32 relativeSupportThreshold,
         uint32 fundingPeriod,
-        uint16 fundingPercentage
+        uint16 fundingPercentage,
+        address payable funds
     ) public {
         if (_topicCreationFee > 0) {
             _token.transferFrom(msg.sender, address(this), _topicCreationFee);
@@ -146,7 +155,8 @@ contract Arena {
             maxChoiceFeePercentage,
             relativeSupportThreshold,
             fundingPeriod,
-            fundingPercentage
+            fundingPercentage,
+            funds
         );
         _topicIdMap[newTopicId] = newTopic;
     }
@@ -157,7 +167,7 @@ contract Arena {
         returns (
             uint256 id,
             string memory description,
-            address fundsAddress, // fees are paid to this address
+            address funds, // fees are paid to this address
             uint16 feePercentage, // fees paid to choice from votes
             uint256 fundingTarget
         )
@@ -166,7 +176,7 @@ contract Arena {
         return (
             c._id,
             c._description,
-            c._fundsAddress,
+            c._funds,
             c._feePercentage,
             c._fundingTarget
         );
@@ -175,12 +185,12 @@ contract Arena {
     function addChoice(
         uint256 topicId,
         string memory description,
-        address fundsAddress,
+        address payable funds,
         uint16 feePercentage,
         uint256 fundingTarget
     ) public {
         if (_choiceCreationFee > 0) {
-            _token.transferFrom(msg.sender, fundsAddress, _choiceCreationFee);
+            _token.transferFrom(msg.sender, funds, _choiceCreationFee);
         }
 
         require(
@@ -202,7 +212,7 @@ contract Arena {
         Choice memory choice = Choice(
             choiceId,
             description,
-            fundsAddress,
+            funds,
             feePercentage,
             fundingTarget
         );
