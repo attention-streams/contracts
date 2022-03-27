@@ -2,6 +2,29 @@
 
 This project is an implementation of [Attention Streams](https://docs.google.com/document/d/1TKA-K8YadRdgz-Qek01TUcCkRaI9CKCXGtJ31AbVWIU/edit?usp=sharing).
 
+## Quick start
+clone this repo in desired location:
+```shell
+git clone https://github.com/attention-streams/contracts.git
+```
+cd into the repo
+```shell
+cd contracts
+```
+install dependencies
+```shell
+npm install
+```
+generate types from contracts for tests
+```shell
+npx hardhat typechain
+```
+run test in a local hardhat blockchain
+```shell
+npx hardhat test
+```
+
+
 Try running some of the following tasks:
 
 ```shell

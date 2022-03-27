@@ -1,0 +1,31 @@
+Attention Streams Setup (rinkeby)
+Arena creation
+  ✔ should deploy arena with valid configuration (7756ms)
+  ✔ should properly retrieve the deployed arena info (11267ms)
+  ✔ should fail to create arena with fee percentage more than 100% (1269ms)
+Topic Creation
+  ✔ should create the first valid topic with id of #1 (26534ms)
+  ✔ should create the second valid topic with id of #2 (12881ms)
+  ✔ should properly retrieve topic #1 info (905ms)
+  ✔ should properly retrieve topic 2 info (899ms)
+  ✔ Should fail to create topic with topic fee percentage more than 5% (limited by arena) (1689ms)
+  ✔ Should fail to create topic with max choice fee percentage exceeding max choice fee percentage defined by arena (2317ms)
+  ✔ should fail to create topic with fundingPercentage more than 100% (1965ms)
+  ✔ should fail to create topic with arenaFee + topicFee + contributorFee > 100% (24638ms)
+Topic Creation Fee
+  ✔ should create an arena with with topicCreationFee of 10 tokens (15197ms)
+  ✔ should fail to create topic if contract can't spend funds (872ms)
+  ✔ should fail to create topic if balance is low (13719ms)
+  ✔ should subtract topicCreationFee amount from creator and add it to arena funds (45854ms)
+Choice Creation
+  ✔ should create valid choice with id #1 (13580ms)
+  ✔ should retrieve the first choices info (830ms)
+  ✔ should fail to create choice if fee percentage is more than allowed by topic (897ms)
+  ✔ should fail to create choice if accumulative fee is more than 100% (28551ms)
+  ✔ should fail to create choice if contract can't spend funds (1270ms)
+  ✔ should fail to create choice if balance is too low (15097ms)
+  ✔ should create choice and subtract choiceCreationFee amount (44490ms)
+
+
+22 passing (6m)
+
