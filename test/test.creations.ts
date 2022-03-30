@@ -9,7 +9,7 @@ import {
   getValidArenaParams,
   getValidChoiceParams,
   getValidTopicParams,
-} from "./mock.data";
+} from "./test.creations.data";
 import { ethers } from "hardhat";
 
 describe("Attention Streams Setup", () => {

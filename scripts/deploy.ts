@@ -13,7 +13,7 @@ import {
   getValidArenaParams,
   TopicParams,
   ChoiceParams,
-} from "../test/mock.data";
+} from "../test/test.creations.data";
 import { Arena } from "../typechain";
 
 export async function deployAttentionToken() {
