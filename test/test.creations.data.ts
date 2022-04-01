@@ -45,12 +45,23 @@ export function getValidChoiceParams(): ChoiceParams {
   };
 }
 
+export function getValidChoiceBParams(): ChoiceParams {
+  return {
+    description: "choice B",
+    funds: "0xdD2FD4581271e230360230F9337D5c0430Bf44C0",
+    feePercentage: 1500, // 15 %
+    fundingTarget: BigNumber.from(
+      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    ),
+  };
+}
+
 export function getValidTopicParams(): TopicParams {
   return {
     cycleDuration: 100, // 100 blocks
     sharePerCyclePercentage: 100 * 10 ** 2, // 100%
 
-    prevContributorsFeePercentage: 10 * 10 ** 2, // 10 %
+    prevContributorsFeePercentage: 12 * 10 ** 2, // 10 %
     topicFeePercentage: 5 * 10 ** 2, // 5%
 
     maxChoiceFeePercentage: 25 * 10 ** 2, // 25%
