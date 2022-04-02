@@ -14,7 +14,7 @@ import {
 } from "../test/test.creations.data";
 import { Arena } from "../typechain";
 
-export async function deployAttentionToken() {
+async function deployAttentionToken() {
   const At = await ethers.getContractFactory("Attention");
   return await At.deploy();
 }
@@ -23,7 +23,6 @@ interface ParamsSigner {
   signer: SignerWithAddress;
   params: any[];
 }
-
 async function getSingerAndParamsArray(
   _params: any,
   _signer?: SignerWithAddress
@@ -38,7 +37,7 @@ async function getSingerAndParamsArray(
   };
 }
 
-export async function deployArena(
+async function deployArena(
   _params: ArenaParams,
   _signer?: SignerWithAddress
 ): Promise<Arena> {
@@ -49,7 +48,7 @@ export async function deployArena(
   return Arena.connect(signer).deploy(...getFlatParamsFromDict(params));
 }
 
-export async function addTopic(
+async function addTopic(
   _arena: Arena,
   _params: TopicParams,
   _signer?: SignerWithAddress
@@ -60,7 +59,7 @@ export async function addTopic(
   return _arena.connect(signer).addTopic(...params);
 }
 
-export async function addChoice(
+async function addChoice(
   _arena: Arena,
   _topicId: BigNumber,
   _params: ChoiceParams,
@@ -71,6 +70,14 @@ export async function addChoice(
   // @ts-ignore
   return _arena.connect(signer).addChoice(_topicId, ...params);
 }
+
+export {
+  deployAttentionToken,
+  getSingerAndParamsArray,
+  deployArena,
+  addTopic,
+  addChoice,
+};
 
 async function main() {}
 

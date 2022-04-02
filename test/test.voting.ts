@@ -55,9 +55,25 @@ describe("Test Voting", async () => {
     await _deployTwoChoices();
   }
 
+  async function _fundVoters() {
+    const _tx1 = await token.transfer(
+      voter1.address,
+      ethers.utils.parseEther("100")
+    );
+    await _tx1.wait(1);
+    const _tx2 = await token.transfer(
+      voter2.address,
+      ethers.utils.parseEther("20")
+    );
+    await _tx2.wait(1);
+  }
+
   before(async () => {
     await _setupAttentionStreams();
+    await _fundVoters();
   });
 
-  it("should put a 12 tokens ");
+  it("voter 1 should put a 1 token on choice a", async () => {
+    // await voteOnChoice();
+  });
 });

@@ -20,8 +20,8 @@ describe("Attention Streams Setup", () => {
       expect(arena.address).to.not.be.null;
     });
     it("should properly retrieve the deployed arena info", async () => {
-      const arena_info = await arena.functions.info();
-      expect(arena_info).deep.include.members(
+      const arenaInfo = await arena.functions.info();
+      expect(arenaInfo).deep.include.members(
         getFlatParamsFromDict(getValidArenaParams())
       );
       expect(arena.address).not.null;
@@ -84,7 +84,7 @@ describe("Attention Streams Setup", () => {
     });
 
     async function deployArenaWithNoFeeLimits() {
-      let arenaParams = getValidArenaParams();
+      const arenaParams = getValidArenaParams();
       arenaParams.maxTopicFeePercentage = 10000; // 100 %
       arenaParams.maxChoiceFeePercentage = 10000; // 100 %
       return await deployArena(arenaParams);
@@ -147,8 +147,8 @@ describe("Attention Streams Setup", () => {
     });
 
     async function fundDevAccountAndApprove() {
-      let [owner, dev] = await ethers.getSigners();
-      let fee = await arena._topicCreationFee();
+      const [owner, dev] = await ethers.getSigners();
+      const fee = await arena._topicCreationFee();
       // transfer some funds from owner to dev
       const transferTx = await token.connect(owner).transfer(dev.address, fee);
       await transferTx.wait(1);
@@ -159,7 +159,7 @@ describe("Attention Streams Setup", () => {
     }
 
     async function snapshot() {
-      let [, dev] = await ethers.getSigners();
+      const [, dev] = await ethers.getSigners();
       const devBalance: BigNumber = await token.balanceOf(dev.address);
       const arenaFundsBalance: BigNumber = await token.balanceOf(
         await arena._funds()
@@ -168,7 +168,7 @@ describe("Attention Streams Setup", () => {
     }
 
     async function configureAndAddTopic() {
-      let [, dev] = await ethers.getSigners();
+      const [, dev] = await ethers.getSigners();
       const topicParams = getValidTopicParams();
       const addTopicTx = await addTopic(arena, topicParams, dev);
       await addTopicTx.wait(1);
@@ -201,13 +201,13 @@ describe("Attention Streams Setup", () => {
     }
 
     async function deployTestVoteToken() {
-      let withFeeParams = getValidArenaParams();
+      const withFeeParams = getValidArenaParams();
       token = await helpers.getTestVoteToken();
       return withFeeParams;
     }
 
     async function deployWithFeeArena() {
-      let withFeeParams = await deployTestVoteToken();
+      const withFeeParams = await deployTestVoteToken();
       withFeeParams.choiceCreationFee = ethers.utils.parseEther("10"); // 10 tokens as fee
       withFeeParams.token = token.address;
       arenaWithFee = await deployArena(withFeeParams);
@@ -234,85 +234,87 @@ describe("Attention Streams Setup", () => {
       expect(nextChoiceId).to.equal(BigNumber.from(1));
     });
     it("should retrieve the first choices info", async () => {
-      let choiceInfo = await arenaNoFee.choiceInfo(topic, 0);
-      let params = getFlatParamsFromDict(getValidChoiceParams());
+      const choiceInfo = await arenaNoFee.choiceInfo(topic, 0);
+      const params = getFlatParamsFromDict(getValidChoiceParams());
       expect(choiceInfo).to.deep.include.members(params);
     });
     it("should fail to create choice if fee percentage is more than allowed by topic", async () => {
-      let params = getValidChoiceParams();
+      const params = getValidChoiceParams();
       params.feePercentage = 2600;
-      let tx = addChoice(arenaNoFee, topic, params);
+      const tx = addChoice(arenaNoFee, topic, params);
       await expect(tx).to.be.revertedWith("Fee percentage too high");
     });
 
     async function ConfigureAndDeployArena() {
-      let arenaParams = getValidArenaParams(); // arena fee is 10%
+      const arenaParams = getValidArenaParams(); // arena fee is 10%
       arenaParams.maxChoiceFeePercentage = 10000;
       arenaParams.maxTopicFeePercentage = 10000;
       return await deployArena(arenaParams);
     }
 
     async function configureAndAddTopic(_arena: Arena) {
-      let topicParams = getValidTopicParams();
+      const topicParams = getValidTopicParams();
       topicParams.maxChoiceFeePercentage = 10000;
       topicParams.topicFeePercentage = 6000;
-      let _topic = await addTopic(_arena, topicParams);
+      const _topic = await addTopic(_arena, topicParams);
       await _topic.wait(1);
       return _topic;
     }
 
     async function configureAndAddChoice(_arena: Arena) {
-      let choiceParams = getValidChoiceParams();
+      const choiceParams = getValidChoiceParams();
       choiceParams.feePercentage = 4000;
       return addChoice(_arena, BigNumber.from(1), choiceParams);
     }
 
     it("should fail to create choice if accumulative fee is more than 100%", async () => {
-      let _arena = await ConfigureAndDeployArena();
+      const _arena = await ConfigureAndDeployArena();
       await configureAndAddTopic(_arena);
-      let _choice = configureAndAddChoice(_arena);
+      const _choice = configureAndAddChoice(_arena);
 
       await expect(_choice).to.be.revertedWith(
         "accumulative fees exceeded 100%"
       );
     });
     it("should fail to create choice if contract can't spend funds", async () => {
-      let tx = addChoice(arenaWithFee, topic, getValidChoiceParams());
+      const tx = addChoice(arenaWithFee, topic, getValidChoiceParams());
       await expect(tx).to.be.revertedWith("ERC20: insufficient allowance");
     });
     it("should fail to create choice if balance is too low", async () => {
-      let [, dev] = await ethers.getSigners();
-      let approve = await token
+      const [, dev] = await ethers.getSigners();
+      const approve = await token
         .connect(dev)
         .approve(arenaWithFee.address, await arenaWithFee._choiceCreationFee());
       await approve.wait(1);
-      let tx = addChoice(arenaWithFee, topic, getValidChoiceParams(), dev);
+      const tx = addChoice(arenaWithFee, topic, getValidChoiceParams(), dev);
       await expect(tx).to.be.revertedWith(
         "ERC20: transfer amount exceeds balance"
       );
     });
 
     async function fundDevAccountAndApprove() {
-      let [owner, dev] = await ethers.getSigners();
-      let fee = await arenaWithFee._choiceCreationFee();
-      let transfer = await token.connect(owner).transfer(dev.address, fee);
+      const [owner, dev] = await ethers.getSigners();
+      const fee = await arenaWithFee._choiceCreationFee();
+      const transfer = await token.connect(owner).transfer(dev.address, fee);
       await transfer.wait(1);
-      let approve = await token.connect(dev).approve(arenaWithFee.address, fee);
+      const approve = await token
+        .connect(dev)
+        .approve(arenaWithFee.address, fee);
       await approve.wait(1);
     }
 
     async function snapshot() {
-      let [, dev] = await ethers.getSigners();
-      let devBalanceBefore = await token.balanceOf(dev.address);
-      let choiceFundsBalanceBefore = await token.balanceOf(
+      const [, dev] = await ethers.getSigners();
+      const devBalanceBefore = await token.balanceOf(dev.address);
+      const choiceFundsBalanceBefore = await token.balanceOf(
         await arenaWithFee._funds()
       );
       return [devBalanceBefore, choiceFundsBalanceBefore];
     }
 
     async function _addChoice() {
-      let [, dev] = await ethers.getSigners();
-      let tx = await addChoice(
+      const [, dev] = await ethers.getSigners();
+      const tx = await addChoice(
         arenaWithFee,
         topic,
         getValidChoiceParams(),
@@ -323,9 +325,9 @@ describe("Attention Streams Setup", () => {
 
     async function addChoiceAndGetDelta() {
       await fundDevAccountAndApprove();
-      let [devBalanceBefore, arenaFundsBalanceBefore] = await snapshot();
+      const [devBalanceBefore, arenaFundsBalanceBefore] = await snapshot();
       await _addChoice();
-      let [devBalanceAfter, arenaFundsBalanceAfter] = await snapshot();
+      const [devBalanceAfter, arenaFundsBalanceAfter] = await snapshot();
 
       return [
         devBalanceBefore.sub(devBalanceAfter),
@@ -334,7 +336,7 @@ describe("Attention Streams Setup", () => {
     }
 
     it("should create choice and subtract choiceCreationFee amount", async () => {
-      let [deltaDevBalance, deltaChoiceFundsBalance] =
+      const [deltaDevBalance, deltaChoiceFundsBalance] =
         await addChoiceAndGetDelta();
 
       expect(deltaDevBalance.eq(deltaChoiceFundsBalance)).to.be.true;
