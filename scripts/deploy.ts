@@ -83,9 +83,12 @@ async function vote(
   _arena: Arena,
   _topicId: BigNumber,
   _choiceId: BigNumber,
+  _amount: BigNumber,
   _signer?: SignerWithAddress
 ) {
-  const _theSigner = await getSigner(_signer);
+  return _arena
+    .connect(await getSigner(_signer))
+    .vote(_topicId, _choiceId, _amount);
 }
 
 export {
@@ -94,6 +97,7 @@ export {
   deployArena,
   addTopic,
   addChoice,
+  vote,
 };
 
 async function main() {}

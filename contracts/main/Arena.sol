@@ -3,6 +3,8 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Topic.sol";
+import "./Choice.sol";
+
 import "hardhat/console.sol";
 
 contract Arena {
@@ -217,5 +219,9 @@ contract Arena {
             fundingTarget
         );
         _topicChoices[topicId].push(choice);
+    }
+
+    function vote(uint256 topicId, uint256 choiceId, uint256 amount) public {
+        require(amount >= _minContributionAmount, "Less than min contribution amount");
     }
 }

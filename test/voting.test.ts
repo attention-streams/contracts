@@ -1,6 +1,6 @@
 import { BigNumber } from "ethers";
 import helpers from "../scripts/helpers";
-import { addChoice, addTopic, deployArena } from "../scripts/deploy";
+import { addChoice, addTopic, deployArena, vote } from "../scripts/deploy";
 import { Arena, ERC20 } from "../typechain";
 import {
   getValidArenaParams,
@@ -9,15 +9,26 @@ import {
   getValidTopicParams,
 } from "./test.creations.data";
 import { ethers } from "hardhat";
+import { expect } from "chai";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
+describe("test test", async () => {
+  it("should pass", async () => {
+    expect(1).to.equal(1);
+  });
+});
 describe("Test Voting", async () => {
   let arena: Arena;
   let token: ERC20;
-  const [, arenaFunds, topicFunds, choiceAFunds, choiceBFunds, voter1, voter2] =
-    await ethers.getSigners();
+  let arenaFunds: SignerWithAddress;
+  let topicFunds: SignerWithAddress;
+  let choiceAFunds: SignerWithAddress;
+  let choiceBFunds: SignerWithAddress;
+  let voter1: SignerWithAddress;
+  let voter2: SignerWithAddress;
   const topic: BigNumber = BigNumber.from(1);
-  const choice_a: BigNumber = BigNumber.from(1);
-  const choice_b: BigNumber = BigNumber.from(2);
+  const choiceA: BigNumber = BigNumber.from(1);
+  const choiceB: BigNumber = BigNumber.from(2);
 
   async function _deployArena() {
     const arenaParams = getValidArenaParams();
@@ -69,11 +80,14 @@ describe("Test Voting", async () => {
   }
 
   before(async () => {
+    [, arenaFunds, topicFunds, choiceAFunds, choiceBFunds, voter1, voter2] =
+      await ethers.getSigners();
     await _setupAttentionStreams();
     await _fundVoters();
   });
 
-  it("voter 1 should put a 1 token on choice a", async () => {
-    // await voteOnChoice();
+  it("should fail to vote with less than min contribution amount", async () => {
+    const tx = vote(arena, topic, choiceA, BigNumber.from(5), voter1);
+    await expect(tx).to.be.revertedWith("Less than min contribution amount");
   });
 });
