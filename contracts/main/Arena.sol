@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Topic.sol";
 import "./Choice.sol";
 
@@ -16,7 +16,7 @@ contract Arena {
 
     string public _name; // arena name
 
-    ERC20 public _token; // this is the token that is used to vote in this arena
+    IERC20 public _token; // this is the token that is used to vote in this arena
 
     uint256 public _minContributionAmount; // minimum amount of voting/contributing
 
@@ -71,7 +71,7 @@ contract Arena {
     ) {
         require((arenaFeePercentage) <= 100 * 10**2, "Fees exceeded 100%");
         _name = name;
-        _token = ERC20(token);
+        _token = IERC20(token);
         _minContributionAmount = minContribAmount;
         _maxChoiceFeePercentage = maxChoiceFeePercentage;
         _maxTopicFeePercentage = maxTopicFeePercentage;
