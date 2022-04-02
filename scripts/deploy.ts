@@ -23,16 +23,24 @@ interface ParamsSigner {
   signer: SignerWithAddress;
   params: any[];
 }
+
+async function getSigner(
+  _signer: SignerWithAddress | undefined
+): Promise<SignerWithAddress> {
+  if (_signer === undefined) {
+    const [_theSigner] = await ethers.getSigners();
+    return _theSigner;
+  }
+  return _signer;
+}
+
 async function getSingerAndParamsArray(
   _params: any,
   _signer?: SignerWithAddress
 ): Promise<ParamsSigner> {
-  if (_signer === undefined) [_signer] = await ethers.getSigners();
-
   const params = getFlatParamsFromDict(_params);
-
   return {
-    signer: _signer,
+    signer: await getSigner(_signer),
     params,
   };
 }
@@ -69,6 +77,15 @@ async function addChoice(
 
   // @ts-ignore
   return _arena.connect(signer).addChoice(_topicId, ...params);
+}
+
+async function vote(
+  _arena: Arena,
+  _topicId: BigNumber,
+  _choiceId: BigNumber,
+  _signer?: SignerWithAddress
+) {
+  const _theSigner = await getSigner(_signer);
 }
 
 export {
