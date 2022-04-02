@@ -8,26 +8,55 @@ import {
   getValidChoiceParams,
   getValidTopicParams,
 } from "./test.creations.data";
+import { ethers } from "hardhat";
 
 describe("Test Voting", async () => {
   let arena: Arena;
   let token: ERC20;
-  let topic: BigNumber = BigNumber.from(1);
-  let choice_a: BigNumber = BigNumber.from(1);
-  let choice_b: BigNumber = BigNumber.from(2);
+  const [, arenaFunds, topicFunds, choiceAFunds, choiceBFunds, voter1, voter2] =
+    await ethers.getSigners();
+  const topic: BigNumber = BigNumber.from(1);
+  const choice_a: BigNumber = BigNumber.from(1);
+  const choice_b: BigNumber = BigNumber.from(2);
 
-  before(async () => {
-    token = await helpers.getTestVoteToken();
-    let arenaParams = getValidArenaParams();
+  async function _deployArena() {
+    const arenaParams = getValidArenaParams();
     arenaParams.token = token.address;
+    arenaParams.funds = arenaFunds.address;
     arena = await deployArena(arenaParams);
     await arena.deployed();
-    let _topicTx = await addTopic(arena, getValidTopicParams());
+  }
+
+  async function _deployTopic() {
+    const topicParams = getValidTopicParams();
+    topicParams.funds = topicFunds.address;
+    const _topicTx = await addTopic(arena, topicParams);
     await _topicTx.wait(1);
-    let _choiceATx = await addChoice(arena, topic, getValidChoiceParams());
+  }
+
+  async function _deployTwoChoices() {
+    const choiceAParams = getValidChoiceParams();
+    choiceAParams.funds = choiceAFunds.address;
+
+    const choiceBParams = getValidChoiceBParams();
+    choiceBParams.funds = choiceBFunds.address;
+
+    const _choiceATx = await addChoice(arena, topic, choiceAParams);
+    const _choiceBTx = await addChoice(arena, topic, choiceBParams);
+
     await _choiceATx.wait(1);
-    let _choiceBTx = await addChoice(arena, topic, getValidChoiceBParams());
     await _choiceBTx.wait(1);
+  }
+
+  async function _setupAttentionStreams() {
+    token = await helpers.getTestVoteToken();
+    await _deployArena();
+    await _deployTopic();
+    await _deployTwoChoices();
+  }
+
+  before(async () => {
+    await _setupAttentionStreams();
   });
 
   it("should put a 12 tokens ");
