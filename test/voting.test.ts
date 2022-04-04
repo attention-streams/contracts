@@ -94,12 +94,14 @@ describe("Test Voting", async () => {
   it("voter one puts 11 tokens on choice a", async () => {
     const tx = await vote(arena, topic, choiceA, BigNumber.from(11), voter1);
     await tx.wait(1);
-    const positionInfo = await arena.choicePositionSummery(
-      topic,
-      choiceA,
-      voter1.address
-    );
+    const positionInfo = await arena.choicePositionSummery(topic, choiceA);
     expect(positionInfo.tokens).to.equal(BigNumber.from(11));
-    expect(positionInfo.shares).to.equal(BigNumber.from(0));
+  });
+
+  it("voter two puts 10 tokens on choice a, overall there hase to be 21 votes on choice a", async () => {
+    const tx = await vote(arena, topic, choiceA, BigNumber.from(10), voter2);
+    await tx.wait(1);
+    const positionInfo = await arena.choicePositionSummery(topic, choiceA);
+    expect(positionInfo.tokens).to.equal(BigNumber.from(21));
   });
 });

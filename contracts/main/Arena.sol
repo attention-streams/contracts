@@ -231,20 +231,37 @@ contract Arena {
         _topicChoices[topicId].push(choice);
     }
 
-    function vote(uint256 topicId, uint256 choiceId, uint256 amount) public {
-        require(amount >= _minContributionAmount, "Less than min contribution amount");
-        Position memory newPosition = Position(address(msg.sender), amount, 0, 0, block.number);
+    function vote(
+        uint256 topicId,
+        uint256 choiceId,
+        uint256 amount
+    ) public {
+        require(
+            amount >= _minContributionAmount,
+            "Less than min contribution amount"
+        );
+        Position memory newPosition = Position(
+            address(msg.sender),
+            amount,
+            0,
+            0,
+            block.number
+        );
         _choicePositions[topicId][choiceId].push(newPosition);
     }
 
-    function choicePositionSummery(uint256 topicId, uint256 choiceId, address voter) public view
-    returns(
-    uint256 tokens,
-    uint256 shares
-    ) {
+    function choicePositionSummery(uint256 topicId, uint256 choiceId)
+        public
+        view
+        returns (uint256 tokens, uint256 shares)
+    {
         uint256 totalTokens = 0;
         uint256 totalShares = 0;
-        for (uint256 i =0 ;i < _choicePositions[topicId][choiceId].length; i++){
+        for (
+            uint256 i = 0;
+            i < _choicePositions[topicId][choiceId].length;
+            i++
+        ) {
             totalTokens += _choicePositions[topicId][choiceId][i].tokens;
         }
 
