@@ -277,7 +277,7 @@ contract Arena {
 
         // update choice summery position data
         _choicePosition.checkPointShares = calculateSharesOfPosition(
-            _userPosition,
+            _choicePosition,
             _topicIdMap[topicId]
         );
         _choicePosition.tokens += amount;
