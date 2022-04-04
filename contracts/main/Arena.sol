@@ -231,6 +231,22 @@ contract Arena {
         _topicChoices[topicId].push(choice);
     }
 
+    function calculateSharesOfPosition(Position memory p, Topic memory t)
+        public
+        view
+        returns (uint256)
+    {
+        // cycles passed
+        uint256 shares;
+        uint256 cyclesPassed = (block.number - p.blockNumber) /
+            t._cycleDuration;
+        shares =
+            (p.tokens * cyclesPassed * t._sharePerCyclePercentage) /
+            10000 +
+            p.checkPointShares;
+        return shares;
+    }
+
     function vote(
         uint256 topicId,
         uint256 choiceId,
@@ -238,16 +254,34 @@ contract Arena {
     ) public {
         require(
             amount >= _minContributionAmount,
-            "Less than min contribution amount"
+            "contribution amount too low"
         );
-        Position memory newPosition = Position(
-            address(msg.sender),
-            amount,
-            0,
-            0,
-            block.number
+
+        Position storage _position = _addressPositions[address(msg.sender)][
+            topicId
+        ][choiceId];
+
+        _position.checkPointShares = calculateSharesOfPosition(
+            _position,
+            _topicIdMap[topicId]
         );
-        _choicePositions[topicId][choiceId].push(newPosition);
+        _position.tokens = amount;
+        _position.blockNumber = block.number;
+        _choicePositions[topicId][choiceId].push(_position);
+    }
+
+    function getVoterPositionOnChoice(
+        uint256 topicId,
+        uint256 choiceId,
+        address voter
+    ) public view returns (uint256 tokens, uint256 shares) {
+        Position storage _position = _addressPositions[voter][topicId][
+            choiceId
+        ];
+        return (
+            _position.tokens,
+            calculateSharesOfPosition(_position, _topicIdMap[topicId])
+        );
     }
 
     function choicePositionSummery(uint256 topicId, uint256 choiceId)

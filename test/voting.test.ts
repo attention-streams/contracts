@@ -12,11 +12,6 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-describe("test test", async () => {
-  it("should pass", async () => {
-    expect(1).to.equal(1);
-  });
-});
 describe("Test Voting", async () => {
   let arena: Arena;
   let token: ERC20;
@@ -88,7 +83,7 @@ describe("Test Voting", async () => {
 
   it("should fail to vote with less than min contribution amount", async () => {
     const tx = vote(arena, topic, choiceA, BigNumber.from(5), voter1);
-    await expect(tx).to.be.revertedWith("Less than min contribution amount");
+    await expect(tx).to.be.revertedWith("contribution amount too low");
   });
 
   it("voter one puts 11 tokens on choice a", async () => {
@@ -97,7 +92,16 @@ describe("Test Voting", async () => {
     const positionInfo = await arena.choicePositionSummery(topic, choiceA);
     expect(positionInfo.tokens).to.equal(BigNumber.from(11));
   });
+  it("should correctly retrieve voter 1 position info on choice a, before the new cycle", async () => {
+    const info = await arena.getVoterPositionOnChoice(
+      topic,
+      choiceA,
+      voter1.address
+    );
 
+    expect(info.shares).to.equal(BigNumber.from(0));
+    expect(info.tokens).to.equal(BigNumber.from(11));
+  });
   it("voter two puts 10 tokens on choice a, overall there hase to be 21 votes on choice a", async () => {
     const tx = await vote(arena, topic, choiceA, BigNumber.from(10), voter2);
     await tx.wait(1);
