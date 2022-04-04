@@ -12,7 +12,7 @@ import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-describe("Test Voting", async () => {
+describe("Test Voting mechanism", async () => {
   let arena: Arena;
   let token: ERC20;
   let arenaFunds: SignerWithAddress;
@@ -85,14 +85,13 @@ describe("Test Voting", async () => {
     const tx = vote(arena, topic, choiceA, BigNumber.from(5), voter1);
     await expect(tx).to.be.revertedWith("contribution amount too low");
   });
-
-  it("voter one puts 11 tokens on choice a", async () => {
+  it("voter one puts 11 tokens on choice A", async () => {
     const tx = await vote(arena, topic, choiceA, BigNumber.from(11), voter1);
     await tx.wait(1);
     const positionInfo = await arena.choicePositionSummery(topic, choiceA);
     expect(positionInfo.tokens).to.equal(BigNumber.from(11));
   });
-  it("should correctly retrieve voter 1 position info on choice a, before the new cycle", async () => {
+  it("should correctly retrieve voter 1 position info on choice A before the new cycle", async () => {
     const info = await arena.getVoterPositionOnChoice(
       topic,
       choiceA,
@@ -102,7 +101,7 @@ describe("Test Voting", async () => {
     expect(info.shares).to.equal(BigNumber.from(0));
     expect(info.tokens).to.equal(BigNumber.from(11));
   });
-  it("should retrieve correct shares info of voter 1 on choice a, after one cycle", async () => {
+  it("should retrieve correct shares info of voter 1 on choice A after one cycle", async () => {
     // current topic defines a cycle duration of 100 block
     // mine 100 blocks
     for (let i = 0; i < 100; i++) {
@@ -118,8 +117,7 @@ describe("Test Voting", async () => {
     expect(info.shares).to.equal(BigNumber.from(11));
     expect(info.tokens).to.equal(BigNumber.from(11));
   });
-
-  it("voter 1 puts another 20 votes on choice a", async () => {
+  it("voter 1 puts another 20 votes on choice A", async () => {
     const tx = await vote(arena, topic, choiceA, BigNumber.from(20), voter1);
     await tx.wait(1);
     const info = await arena.getVoterPositionOnChoice(
@@ -129,7 +127,7 @@ describe("Test Voting", async () => {
     );
     expect(info.tokens).to.equal(31);
   });
-  it("voter two puts 10 tokens on choice a, overall there has to be 41 votes on choice a", async () => {
+  it("voter two puts 10 tokens on choice A overall there have to be 41 votes on choice a", async () => {
     const tx = await vote(arena, topic, choiceA, BigNumber.from(10), voter2);
     await tx.wait(1);
     const positionInfo = await arena.choicePositionSummery(topic, choiceA);
@@ -161,7 +159,7 @@ describe("Test Voting", async () => {
     expect(position2.tokens).to.equal(10);
     expect(position2.shares).to.equal(20);
   });
-  it("voter 2 puts another 20 tokens on choice a", async () => {
+  it("voter 2 puts another 20 tokens on choice A", async () => {
     const tx = await vote(arena, topic, choiceA, BigNumber.from(20), voter2);
     await tx.wait(1);
     const position2 = await arena.getVoterPositionOnChoice(
@@ -195,7 +193,6 @@ describe("Test Voting", async () => {
     expect(positionInfo.tokens).to.equal(0);
     expect(positionInfo.shares).to.equal(0);
   });
-
   it("should allow voter one to vote 12 tokens on choice B", async () => {
     const tx = await vote(arena, topic, choiceB, BigNumber.from(20), voter1);
     tx.wait();
@@ -206,7 +203,6 @@ describe("Test Voting", async () => {
     );
     expect(position1OnB.tokens).to.equal(20);
   });
-
   it("should retrieve correct choice A and B info after one more cycle", async () => {
     for (let i = 0; i < 100; i++) {
       await network.provider.send("evm_mine");
