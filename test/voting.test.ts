@@ -90,4 +90,16 @@ describe("Test Voting", async () => {
     const tx = vote(arena, topic, choiceA, BigNumber.from(5), voter1);
     await expect(tx).to.be.revertedWith("Less than min contribution amount");
   });
+
+  it("voter one puts 11 tokens on choice a", async () => {
+    const tx = await vote(arena, topic, choiceA, BigNumber.from(11), voter1);
+    await tx.wait(1);
+    const positionInfo = await arena.choicePositionSummery(
+      topic,
+      choiceA,
+      voter1.address
+    );
+    expect(positionInfo.tokens).to.equal(BigNumber.from(11));
+    expect(positionInfo.shares).to.equal(BigNumber.from(0));
+  });
 });

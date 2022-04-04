@@ -6,13 +6,23 @@ import "./Topic.sol";
 import "./Choice.sol";
 
 import "hardhat/console.sol";
+import "./Position.sol";
 
 contract Arena {
     mapping(uint256 => Topic) public _topicIdMap; // list of topics in arena
     uint256 public _nextTopicId; // id of a new topic
 
-    mapping(uint256 => Choice[]) public _topicChoices; // list of choices of each topic
-    mapping(uint256 => uint256) public _topicChoiceNextId; // next choice id in each topic
+    // list of choices of each topic
+    mapping(uint256 => Choice[]) public _topicChoices;
+    // next choice id in each topic
+    mapping(uint256 => uint256) public _topicChoiceNextId;
+
+    // topicId => (choiceId => listOfPositions)
+    mapping(uint256 => mapping(uint256 => Position[])) _choicePositions;
+
+    // position of each user in each choice of each topic
+    // address => (topicId => (choiceId => Position))
+    mapping(address => mapping(uint256 => mapping(uint256 => Position))) _addressPositions;
 
     string public _name; // arena name
 
@@ -223,5 +233,21 @@ contract Arena {
 
     function vote(uint256 topicId, uint256 choiceId, uint256 amount) public {
         require(amount >= _minContributionAmount, "Less than min contribution amount");
+        Position memory newPosition = Position(address(msg.sender), amount, 0, 0, block.number);
+        _choicePositions[topicId][choiceId].push(newPosition);
+    }
+
+    function choicePositionSummery(uint256 topicId, uint256 choiceId, address voter) public view
+    returns(
+    uint256 tokens,
+    uint256 shares
+    ) {
+        uint256 totalTokens = 0;
+        uint256 totalShares = 0;
+        for (uint256 i =0 ;i < _choicePositions[topicId][choiceId].length; i++){
+            totalTokens += _choicePositions[topicId][choiceId][i].tokens;
+        }
+
+        return (totalTokens, totalShares);
     }
 }
