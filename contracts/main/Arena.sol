@@ -18,7 +18,7 @@ contract Arena {
     mapping(uint256 => uint256) public _topicChoiceNextId;
 
     // topicId => (choiceId => listOfPositions)
-    mapping(uint256 => mapping(uint256 => Position[])) _choicePositions;
+    mapping(uint256 => mapping(uint256 => Position)) _choicePositionSummery;
 
     // position of each user in each choice of each topic
     // address => (topicId => (choiceId => Position))
@@ -241,9 +241,11 @@ contract Arena {
         uint256 cyclesPassed = (block.number - p.blockNumber) /
             t._cycleDuration;
         shares =
-            (p.tokens * cyclesPassed * t._sharePerCyclePercentage) /
-            10000 +
+            p.tokens *
+            cyclesPassed *
+            (t._sharePerCyclePercentage / 10000) +
             p.checkPointShares;
+
         return shares;
     }
 
@@ -257,17 +259,29 @@ contract Arena {
             "contribution amount too low"
         );
 
-        Position storage _position = _addressPositions[address(msg.sender)][
+        Position storage _userPosition = _addressPositions[address(msg.sender)][
             topicId
         ][choiceId];
 
-        _position.checkPointShares = calculateSharesOfPosition(
-            _position,
+        Position storage _choicePosition = _choicePositionSummery[topicId][
+            choiceId
+        ];
+
+        // update user postion data
+        _userPosition.checkPointShares = calculateSharesOfPosition(
+            _userPosition,
             _topicIdMap[topicId]
         );
-        _position.tokens = amount;
-        _position.blockNumber = block.number;
-        _choicePositions[topicId][choiceId].push(_position);
+        _userPosition.tokens += amount;
+        _userPosition.blockNumber = block.number;
+
+        // update choice summery position data
+        _choicePosition.checkPointShares = calculateSharesOfPosition(
+            _userPosition,
+            _topicIdMap[topicId]
+        );
+        _choicePosition.tokens += amount;
+        _choicePosition.blockNumber = block.number;
     }
 
     function getVoterPositionOnChoice(
@@ -289,16 +303,12 @@ contract Arena {
         view
         returns (uint256 tokens, uint256 shares)
     {
-        uint256 totalTokens = 0;
-        uint256 totalShares = 0;
-        for (
-            uint256 i = 0;
-            i < _choicePositions[topicId][choiceId].length;
-            i++
-        ) {
-            totalTokens += _choicePositions[topicId][choiceId][i].tokens;
-        }
-
-        return (totalTokens, totalShares);
+        return (
+            _choicePositionSummery[topicId][choiceId].tokens,
+            calculateSharesOfPosition(
+                _choicePositionSummery[topicId][choiceId],
+                _topicIdMap[topicId]
+            )
+        );
     }
 }
