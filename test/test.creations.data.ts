@@ -1,15 +1,15 @@
 import { BigNumber } from "ethers";
 
 export interface ArenaParams {
-  name: string;
-  token: string;
-  minContributionAmount: BigNumber;
-  maxChoiceFeePercentage: number;
-  maxTopicFeePercentage: number;
-  arenaFeePercentage: number;
-  choiceCreationFee: BigNumber;
-  topicCreationFee: BigNumber;
-  funds: string;
+  _name: string;
+  _token: string;
+  _minContributionAmount: BigNumber;
+  _maxChoiceFeePercentage: number;
+  _maxTopicFeePercentage: number;
+  _arenaFeePercentage: number;
+  _choiceCreationFee: BigNumber;
+  _topicCreationFee: BigNumber;
+  _funds: string;
 }
 
 export interface TopicParams {
@@ -75,15 +75,15 @@ export function getValidTopicParams(): TopicParams {
 
 export function getValidArenaParams(): ArenaParams {
   return {
-    name: "Test Arena",
-    token: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
-    minContributionAmount: BigNumber.from(10),
-    maxChoiceFeePercentage: 3000, // 1 percent
-    maxTopicFeePercentage: 500, // 5 percent
-    arenaFeePercentage: 1000, // 10 percent
-    choiceCreationFee: BigNumber.from(0),
-    topicCreationFee: BigNumber.from(0),
-    funds: "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a",
+    _name: "Test Arena",
+    _token: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+    _minContributionAmount: BigNumber.from(10),
+    _maxChoiceFeePercentage: 3000, // 1 percent
+    _maxTopicFeePercentage: 500, // 5 percent
+    _arenaFeePercentage: 1000, // 10 percent
+    _choiceCreationFee: BigNumber.from(0),
+    _topicCreationFee: BigNumber.from(0),
+    _funds: "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a",
   };
 }
 

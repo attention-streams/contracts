@@ -28,8 +28,8 @@ describe("Test Voting mechanism", async () => {
 
   async function _deployArena() {
     const arenaParams = getValidArenaParams();
-    arenaParams.token = token.address;
-    arenaParams.funds = arenaFunds.address;
+    arenaParams._token = token.address;
+    arenaParams._funds = arenaFunds.address;
     arena = await deployArena(arenaParams);
     await arena.deployed();
   }

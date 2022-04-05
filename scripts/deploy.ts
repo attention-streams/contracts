@@ -1,8 +1,3 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// When running the script with `npx hardhat run <script>` you'll find the Hardhat
-// Runtime Environment's members available in the global scope.
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
@@ -49,11 +44,9 @@ async function deployArena(
   _params: ArenaParams,
   _signer?: SignerWithAddress
 ): Promise<Arena> {
-  const { params, signer } = await getSingerAndParamsArray(_params, _signer);
+  const signer = await getSigner(_signer);
   const Arena = await ethers.getContractFactory("Arena");
-
-  // @ts-ignore
-  return Arena.connect(signer).deploy(...getFlatParamsFromDict(params));
+  return Arena.connect(signer).deploy(_params);
 }
 
 async function addTopic(
@@ -61,8 +54,7 @@ async function addTopic(
   _params: TopicParams,
   _signer?: SignerWithAddress
 ) {
-  const { params, signer } = await getSingerAndParamsArray(_params, _signer);
-
+  const signer = await getSigner(_signer);
   return _arena.connect(signer).addTopic(_params);
 }
 
@@ -72,7 +64,7 @@ async function addChoice(
   _params: ChoiceParams,
   _signer?: SignerWithAddress
 ) {
-  const { params, signer } = await getSingerAndParamsArray(_params, _signer);
+  const signer = await getSigner(_signer);
   return _arena.connect(signer).addChoice(_topicId, _params);
 }
 

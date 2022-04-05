@@ -34,27 +34,12 @@ contract Arena {
         internal _addressPositions; // address => (topicId => (choiceId => Position))
     mapping(address => uint256) internal claimableBalance; // amount of "info._token" that an address can withdraw from the arena
 
-    constructor(
-        string memory name,
-        address token,
-        uint256 minContribAmount,
-        uint16 maxChoiceFeePercentage,
-        uint16 maxTopicFeePercentage,
-        uint16 arenaFeePercentage,
-        uint256 choiceCreationFee,
-        uint256 topicCreationFee,
-        address payable funds
-    ) {
-        require((arenaFeePercentage) <= 100 * 10**2, "Fees exceeded 100%");
-        info._name = name;
-        info._token = IERC20(token);
-        info._minContributionAmount = minContribAmount;
-        info._maxChoiceFeePercentage = maxChoiceFeePercentage;
-        info._maxTopicFeePercentage = maxTopicFeePercentage;
-        info._arenaFeePercentage = arenaFeePercentage;
-        info._choiceCreationFee = choiceCreationFee;
-        info._topicCreationFee = topicCreationFee;
-        info._funds = funds;
+    constructor(ArenaInfo memory _info) {
+        require(
+            (_info._arenaFeePercentage) <= 100 * 10**2,
+            "Fees exceeded 100%"
+        );
+        info = _info;
     }
 
     function _nextTopicId() public view returns (uint256) {

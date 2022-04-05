@@ -29,7 +29,7 @@ describe("Attention Streams Setup", () => {
 
     it("should fail to create arena with fee percentage more than 100%", async () => {
       const params = getValidArenaParams();
-      params.arenaFeePercentage = 10100;
+      params._arenaFeePercentage = 10100;
       await expect(deployArena(params)).to.be.reverted;
     });
   });
@@ -85,8 +85,8 @@ describe("Attention Streams Setup", () => {
 
     async function deployArenaWithNoFeeLimits() {
       const arenaParams = getValidArenaParams();
-      arenaParams.maxTopicFeePercentage = 10000; // 100 %
-      arenaParams.maxChoiceFeePercentage = 10000; // 100 %
+      arenaParams._maxTopicFeePercentage = 10000; // 100 %
+      arenaParams._maxChoiceFeePercentage = 10000; // 100 %
       return await deployArena(arenaParams);
     }
 
@@ -112,8 +112,8 @@ describe("Attention Streams Setup", () => {
     async function deployArenaWithTestVoteTokenAndFee() {
       token = await helpers.getTestVoteToken();
       const params = getValidArenaParams();
-      params.topicCreationFee = utils.parseEther("10");
-      params.token = token.address;
+      params._topicCreationFee = utils.parseEther("10");
+      params._token = token.address;
       arena = await deployArena(params);
     }
 
@@ -212,8 +212,8 @@ describe("Attention Streams Setup", () => {
 
     async function deployWithFeeArena() {
       const withFeeParams = await deployTestVoteToken();
-      withFeeParams.choiceCreationFee = ethers.utils.parseEther("10"); // 10 tokens as fee
-      withFeeParams.token = token.address;
+      withFeeParams._choiceCreationFee = ethers.utils.parseEther("10"); // 10 tokens as fee
+      withFeeParams._token = token.address;
       arenaWithFee = await deployArena(withFeeParams);
       const createTopic2 = await addTopic(arenaWithFee, getValidTopicParams());
       await createTopic2.wait(1);
@@ -250,8 +250,8 @@ describe("Attention Streams Setup", () => {
 
     async function ConfigureAndDeployArena() {
       const arenaParams = getValidArenaParams(); // arena fee is 10%
-      arenaParams.maxChoiceFeePercentage = 10000;
-      arenaParams.maxTopicFeePercentage = 10000;
+      arenaParams._maxChoiceFeePercentage = 10000;
+      arenaParams._maxTopicFeePercentage = 10000;
       return await deployArena(arenaParams);
     }
 
