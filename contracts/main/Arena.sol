@@ -33,46 +33,6 @@ contract Arena {
         public _addressPositions; // address => (topicId => (choiceId => Position))
     mapping(address => uint256) public claimableBalance; // amount of "_info._token" that an address can withdraw from the arena
 
-    function _nextTopicId() public view returns (uint256) {
-        return _topics.length;
-    }
-
-    function _nextChoiceIdInTopic(uint256 topicId)
-        public
-        view
-        returns (uint256)
-    {
-        return _topicChoices[topicId].length;
-    }
-
-    function info()
-        public
-        view
-        returns (
-            string memory name,
-            address token,
-            uint256 minContribAmount,
-            uint16 maxChoiceFeePercentage,
-            uint16 maxTopicFeePercentage,
-            uint16 arenaFeePercentage,
-            uint256 choiceCreationFee,
-            uint256 topicCreationFee,
-            address funds
-        )
-    {
-        return (
-            _info._name,
-            address(_info._token),
-            _info._minContributionAmount,
-            _info._maxChoiceFeePercentage,
-            _info._maxTopicFeePercentage,
-            _info._arenaFeePercentage,
-            _info._choiceCreationFee,
-            _info._topicCreationFee,
-            _info._funds
-        );
-    }
-
     constructor(
         string memory name,
         address token,
@@ -96,48 +56,27 @@ contract Arena {
         _info._funds = funds;
     }
 
-    function getTopicInfoById(uint256 _id)
-        public
-        view
-        returns (
-            uint256 id,
-            uint32 cycleDuration, // share distribution cycle. in terms of # of blocks - ex. once every 100 blocks
-            uint16 sharePerCyclePercentage, // percentage of a position given as "shares" in each cycle
-            uint16 prevContributorsFeePercentage, // percentage of a vote given to the previous voters
-            uint16 topicFeePercentage, // percentage of a vote given to the topic
-            uint16 maxChoiceFeePercentage, // percentage of a vote given to the choice
-            uint32 relativeSupportThreshold, // min support a choice needs to be eligible for external funding
-            uint32 fundingPeriod, // how often funds are distributed to leading choices, in terms of # of cycles. ignored if no external funding available
-            uint16 fundingPercentage, // percentage
-            address payable funds
-        )
-    {
-        Topic storage t = _topics[_id];
-        return (
-            t._id,
-            t._cycleDuration,
-            t._sharePerCyclePercentage,
-            t._prevContributorsFeePercentage,
-            t._topicFeePercentage,
-            t._maxChoiceFeePercentage,
-            t._relativeSupportThreshold,
-            t._fundingPeriod,
-            t._fundingPercentage,
-            t._funds
-        );
+    function _nextTopicId() public view returns (uint256) {
+        return _topics.length;
     }
 
-    function addTopic(
-        uint32 cycleDuration,
-        uint16 sharePerCyclePercentage,
-        uint16 prevContributorsFeePercentage,
-        uint16 topicFeePercentage,
-        uint16 maxChoiceFeePercentage,
-        uint32 relativeSupportThreshold,
-        uint32 fundingPeriod,
-        uint16 fundingPercentage,
-        address payable funds
-    ) public {
+    function _nextChoiceIdInTopic(uint256 topicId)
+        public
+        view
+        returns (uint256)
+    {
+        return _topicChoices[topicId].length;
+    }
+
+    function info() public view returns (ArenaInfo memory) {
+        return _info;
+    }
+
+    function getTopicInfoById(uint256 _id) public view returns (Topic memory) {
+        return _topics[_id];
+    }
+
+    function addTopic(Topic memory topic) public {
         if (_info._topicCreationFee > 0) {
             _info._token.transferFrom(
                 msg.sender,
@@ -146,37 +85,29 @@ contract Arena {
             );
         }
 
-        require(fundingPercentage <= 10000, "funding percentage exceeded 100%");
+        require(
+            topic._fundingPercentage <= 10000,
+            "funding percentage exceeded 100%"
+        );
 
         require(
-            topicFeePercentage <= _info._maxTopicFeePercentage,
+            topic._topicFeePercentage <= _info._maxTopicFeePercentage,
             "Max topic fee exceeded"
         );
         require(
-            maxChoiceFeePercentage <= _info._maxChoiceFeePercentage,
+            topic._maxChoiceFeePercentage <= _info._maxChoiceFeePercentage,
             "Max choice fee exceeded"
         );
         require(
             _info._arenaFeePercentage +
-                topicFeePercentage +
-                prevContributorsFeePercentage <=
+                topic._topicFeePercentage +
+                topic._prevContributorsFeePercentage <=
                 10000,
             "accumulative fees exceeded 100%"
         );
 
-        Topic memory newTopic = Topic(
-            _topics.length,
-            cycleDuration,
-            sharePerCyclePercentage,
-            prevContributorsFeePercentage,
-            topicFeePercentage,
-            maxChoiceFeePercentage,
-            relativeSupportThreshold,
-            fundingPeriod,
-            fundingPercentage,
-            funds
-        );
-        _topics.push(newTopic);
+        topic._id = _topics.length;
+        _topics.push(topic);
     }
 
     function choiceInfo(uint256 topicId, uint256 choiceId)

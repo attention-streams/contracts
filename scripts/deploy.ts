@@ -63,8 +63,7 @@ async function addTopic(
 ) {
   const { params, signer } = await getSingerAndParamsArray(_params, _signer);
 
-  // @ts-ignore
-  return _arena.connect(signer).addTopic(...params);
+  return _arena.connect(signer).addTopic(_params);
 }
 
 async function addChoice(

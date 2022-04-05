@@ -12,7 +12,6 @@ import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { parseEther } from "ethers/lib/utils";
-import { address } from "hardhat/internal/core/config/config-validation";
 
 describe("Test Voting mechanism", async () => {
   let arena: Arena;
@@ -37,7 +36,7 @@ describe("Test Voting mechanism", async () => {
 
   async function _deployTopic() {
     const topicParams = getValidTopicParams();
-    topicParams.funds = topicFunds.address;
+    topicParams._funds = topicFunds.address;
     const _topicTx = await addTopic(arena, topicParams);
     await _topicTx.wait(1);
   }
@@ -290,7 +289,7 @@ describe("Test Voting mechanism", async () => {
     });
     it("should confirm fee distribution from voter 1 to topic", async () => {
       const feePercentage = (await arena.getTopicInfoById(topic))
-        .topicFeePercentage;
+        ._topicFeePercentage;
       await confirmFeePercentagePaid(
         parseEther("1"),
         BigNumber.from(feePercentage),
@@ -298,7 +297,7 @@ describe("Test Voting mechanism", async () => {
       );
     });
     it("should confirm fee distribution from voter 1 to arena", async () => {
-      const feePercentage = (await arena.info()).arenaFeePercentage;
+      const feePercentage = (await arena.info())._arenaFeePercentage;
       await confirmFeePercentagePaid(
         parseEther("1"),
         BigNumber.from(feePercentage),

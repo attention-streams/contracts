@@ -4,33 +4,34 @@ export interface ArenaParams {
   name: string;
   token: string;
   minContributionAmount: BigNumber;
-  maxChoiceFeePercentage: Number;
-  maxTopicFeePercentage: Number;
-  arenaFeePercentage: Number;
+  maxChoiceFeePercentage: number;
+  maxTopicFeePercentage: number;
+  arenaFeePercentage: number;
   choiceCreationFee: BigNumber;
   topicCreationFee: BigNumber;
   funds: string;
 }
 
 export interface TopicParams {
-  cycleDuration: Number;
-  sharePerCyclePercentage: Number;
+  _id: BigNumber;
+  _cycleDuration: number;
+  _sharePerCyclePercentage: number;
 
-  prevContributorsFeePercentage: Number;
-  topicFeePercentage: Number;
+  _prevContributorsFeePercentage: number;
+  _topicFeePercentage: number;
 
-  maxChoiceFeePercentage: Number;
+  _maxChoiceFeePercentage: number;
 
-  relativeSupportThreshold: Number;
-  fundingPeriod: Number;
-  fundingPercentage: Number;
-  funds: string;
+  _relativeSupportThreshold: number;
+  _fundingPeriod: number;
+  _fundingPercentage: number;
+  _funds: string;
 }
 
 export interface ChoiceParams {
   description: string;
   funds: string;
-  feePercentage: Number;
+  feePercentage: number;
   fundingTarget: BigNumber;
 }
 
@@ -58,18 +59,19 @@ export function getValidChoiceBParams(): ChoiceParams {
 
 export function getValidTopicParams(): TopicParams {
   return {
-    cycleDuration: 100, // 100 blocks
-    sharePerCyclePercentage: 100 * 10 ** 2, // 100%
+    _id: BigNumber.from(0),
+    _cycleDuration: 100, // 100 blocks
+    _sharePerCyclePercentage: 100 * 10 ** 2, // 100%
 
-    prevContributorsFeePercentage: 12 * 10 ** 2, // 12 %
-    topicFeePercentage: 5 * 10 ** 2, // 5%
+    _prevContributorsFeePercentage: 12 * 10 ** 2, // 12 %
+    _topicFeePercentage: 5 * 10 ** 2, // 5%
 
-    maxChoiceFeePercentage: 25 * 10 ** 2, // 25%
+    _maxChoiceFeePercentage: 25 * 10 ** 2, // 25%
 
-    relativeSupportThreshold: 0,
-    fundingPeriod: 0,
-    fundingPercentage: 0,
-    funds: "0x71bE63f3384f5fb98995898A86B02Fb2426c5788",
+    _relativeSupportThreshold: 0,
+    _fundingPeriod: 0,
+    _fundingPercentage: 0,
+    _funds: "0x71bE63f3384f5fb98995898A86B02Fb2426c5788",
   };
 }
 
