@@ -21,7 +21,7 @@ describe("Attention Streams Setup", () => {
     });
     it("should properly retrieve the deployed arena info", async () => {
       const arenaInfo = await arena.functions.info();
-      expect(arenaInfo[0]).deep.include.members(
+      expect(arenaInfo).deep.include.members(
         getFlatParamsFromDict(getValidArenaParams())
       );
       expect(arena.address).not.null;
