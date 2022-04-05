@@ -61,7 +61,6 @@ describe("Attention Streams Setup", () => {
     it("should properly retrieve topic # 1 info", async () => {
       const info = await arena.getTopicInfoById(1);
       const params = getValidTopicParams();
-      params._id = BigNumber.from(1);
       params._cycleDuration = 10;
       expect(info).to.deep.include.members(getFlatParamsFromDict(params));
     });
@@ -244,7 +243,7 @@ describe("Attention Streams Setup", () => {
     });
     it("should fail to create choice if fee percentage is more than allowed by topic", async () => {
       const params = getValidChoiceParams();
-      params.feePercentage = 2600;
+      params._feePercentage = 2600;
       const tx = addChoice(arenaNoFee, topic, params);
       await expect(tx).to.be.revertedWith("Fee percentage too high");
     });
@@ -267,7 +266,7 @@ describe("Attention Streams Setup", () => {
 
     async function configureAndAddChoice(_arena: Arena) {
       const choiceParams = getValidChoiceParams();
-      choiceParams.feePercentage = 4000;
+      choiceParams._feePercentage = 4000;
       return addChoice(_arena, BigNumber.from(0), choiceParams);
     }
 

@@ -73,9 +73,7 @@ async function addChoice(
   _signer?: SignerWithAddress
 ) {
   const { params, signer } = await getSingerAndParamsArray(_params, _signer);
-
-  // @ts-ignore
-  return _arena.connect(signer).addChoice(_topicId, ...params);
+  return _arena.connect(signer).addChoice(_topicId, _params);
 }
 
 async function vote(

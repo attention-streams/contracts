@@ -5,7 +5,6 @@ pragma solidity ^0.8.0;
 import "./Choice.sol";
 
 struct Topic {
-    uint256 _id;
     uint32 _cycleDuration; // share distribution cycle. in terms of # of blocks - ex. once every 100 blocks
     uint16 _sharePerCyclePercentage; // percentage of a position given as "shares" in each cycle
     uint16 _prevContributorsFeePercentage; // percentage of a vote given to the previous voters

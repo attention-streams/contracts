@@ -43,10 +43,10 @@ describe("Test Voting mechanism", async () => {
 
   async function _deployTwoChoices() {
     const choiceAParams = getValidChoiceParams();
-    choiceAParams.funds = choiceAFunds.address;
+    choiceAParams._funds = choiceAFunds.address;
 
     const choiceBParams = getValidChoiceBParams();
-    choiceBParams.funds = choiceBFunds.address;
+    choiceBParams._funds = choiceBFunds.address;
 
     const _choiceATx = await addChoice(arena, topic, choiceAParams);
     const _choiceBTx = await addChoice(arena, topic, choiceBParams);
@@ -280,7 +280,7 @@ describe("Test Voting mechanism", async () => {
 
     it("should confirm fee distribution from voter 1 to choice A", async () => {
       const feePercentage = (await arena.choiceInfo(topic, choiceA))
-        .feePercentage;
+        ._feePercentage;
       await confirmFeePercentagePaid(
         parseEther("1"),
         BigNumber.from(feePercentage),

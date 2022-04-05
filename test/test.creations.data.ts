@@ -13,7 +13,6 @@ export interface ArenaParams {
 }
 
 export interface TopicParams {
-  _id: BigNumber;
   _cycleDuration: number;
   _sharePerCyclePercentage: number;
 
@@ -29,18 +28,18 @@ export interface TopicParams {
 }
 
 export interface ChoiceParams {
-  description: string;
-  funds: string;
-  feePercentage: number;
-  fundingTarget: BigNumber;
+  _description: string;
+  _funds: string;
+  _feePercentage: number;
+  _fundingTarget: BigNumber;
 }
 
 export function getValidChoiceParams(): ChoiceParams {
   return {
-    description: "choice A",
-    funds: "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
-    feePercentage: 1000, // 10 %
-    fundingTarget: BigNumber.from(
+    _description: "choice A",
+    _funds: "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+    _feePercentage: 1000, // 10 %
+    _fundingTarget: BigNumber.from(
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     ),
   };
@@ -48,10 +47,10 @@ export function getValidChoiceParams(): ChoiceParams {
 
 export function getValidChoiceBParams(): ChoiceParams {
   return {
-    description: "choice B",
-    funds: "0xdD2FD4581271e230360230F9337D5c0430Bf44C0",
-    feePercentage: 1500, // 15 %
-    fundingTarget: BigNumber.from(
+    _description: "choice B",
+    _funds: "0xdD2FD4581271e230360230F9337D5c0430Bf44C0",
+    _feePercentage: 1500, // 15 %
+    _fundingTarget: BigNumber.from(
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     ),
   };
@@ -59,7 +58,6 @@ export function getValidChoiceBParams(): ChoiceParams {
 
 export function getValidTopicParams(): TopicParams {
   return {
-    _id: BigNumber.from(0),
     _cycleDuration: 100, // 100 blocks
     _sharePerCyclePercentage: 100 * 10 ** 2, // 100%
 

@@ -106,38 +106,18 @@ contract Arena {
             "accumulative fees exceeded 100%"
         );
 
-        topic._id = _topics.length;
         _topics.push(topic);
     }
 
     function choiceInfo(uint256 topicId, uint256 choiceId)
         public
         view
-        returns (
-            uint256 id,
-            string memory description,
-            address funds, // fees are paid to this address
-            uint16 feePercentage, // fees paid to choice from votes
-            uint256 fundingTarget
-        )
+        returns (Choice memory)
     {
-        Choice storage c = _topicChoices[topicId][choiceId];
-        return (
-            c._id,
-            c._description,
-            c._funds,
-            c._feePercentage,
-            c._fundingTarget
-        );
+        return _topicChoices[topicId][choiceId];
     }
 
-    function addChoice(
-        uint256 topicId,
-        string memory description,
-        address payable funds,
-        uint16 feePercentage,
-        uint256 fundingTarget
-    ) public {
+    function addChoice(uint256 topicId, Choice memory choice) public {
         if (_info._choiceCreationFee > 0) {
             _info._token.transferFrom(
                 msg.sender,
@@ -147,25 +127,17 @@ contract Arena {
         }
 
         require(
-            feePercentage <= _topics[topicId]._maxChoiceFeePercentage,
+            choice._feePercentage <= _topics[topicId]._maxChoiceFeePercentage,
             "Fee percentage too high"
         );
 
         require(
-            feePercentage +
+            choice._feePercentage +
                 _info._arenaFeePercentage +
                 _topics[topicId]._topicFeePercentage +
                 _topics[topicId]._prevContributorsFeePercentage <=
                 10000,
             "accumulative fees exceeded 100%"
-        );
-
-        Choice memory choice = Choice(
-            _topicChoices[topicId].length,
-            description,
-            funds,
-            feePercentage,
-            fundingTarget
         );
         _topicChoices[topicId].push(choice);
     }
