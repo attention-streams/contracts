@@ -8,39 +8,41 @@ import "./Choice.sol";
 import "hardhat/console.sol";
 import "./Position.sol";
 
-contract Arena {
-    mapping(uint256 => Topic) public _topicIdMap; // list of topics in arena
-    uint256 public _nextTopicId; // id of a new topic
-
-    // list of choices of each topic
-    mapping(uint256 => mapping(uint256 => Choice)) public _topicChoices;
-    // next choice id in each topic
-    mapping(uint256 => uint256) public _topicChoiceNextId;
-
-    // topicId => (choiceId => listOfPositions)
-    mapping(uint256 => mapping(uint256 => Position)) _choicePositionSummery;
-
-    // position of each user in each choice of each topic
-    // address => (topicId => (choiceId => Position))
-    mapping(address => mapping(uint256 => mapping(uint256 => Position))) _addressPositions;
-
-    mapping(address => uint256) public claimableBalance;
-
-    string public _name; // arena name
-
-    IERC20 public _token; // this is the token that is used to vote in this arena
-
-    uint256 public _minContributionAmount; // minimum amount of voting/contributing
-
+struct ArenaInfo {
+    string _name; // arena name
+    IERC20 _token; // this is the token that is used to vote in this arena
+    uint256 _minContributionAmount; // minimum amount of voting/contributing
     // all percentage fields assume 2 decimal places
-    uint16 public _maxChoiceFeePercentage; // max percentage of a vote taken as fees for a choice
-    uint16 public _maxTopicFeePercentage; // max percentage of a vote taken as fees for a topic
-    uint16 public _arenaFeePercentage; // percentage of each vote that goes to the arena
+    uint16 _maxChoiceFeePercentage; // max percentage of a vote taken as fees for a choice
+    uint16 _maxTopicFeePercentage; // max percentage of a vote taken as fees for a topic
+    uint16 _arenaFeePercentage; // percentage of each vote that goes to the arena
+    uint256 _choiceCreationFee; // to prevent spam choice creation
+    uint256 _topicCreationFee; // to prevent spam topic creation
+    address payable _funds; // arena funds location
+}
 
-    uint256 public _choiceCreationFee; // to prevent spam choice creation
-    uint256 public _topicCreationFee; // to prevent spam topic creation
+contract Arena {
+    Topic[] public _topics; // list of topics in arena
+    mapping(uint256 => Choice[]) public _topicChoices; // list of choices of each topic
+    mapping(uint256 => mapping(uint256 => Position))
+        public _choicePositionSummery; // topicId => (choiceId => listOfPositions)
+    // position of each user in each choice of each topic
+    mapping(address => mapping(uint256 => mapping(uint256 => Position)))
+        public _addressPositions; // address => (topicId => (choiceId => Position))
+    mapping(address => uint256) public claimableBalance;
+    ArenaInfo public _info;
 
-    address payable public _funds; // arena funds location
+    function _nextTopicId() public view returns (uint256) {
+        return _topics.length;
+    }
+
+    function _nextChoiceIdInTopic(uint256 topicId)
+        public
+        view
+        returns (uint256)
+    {
+        return _topicChoices[topicId].length;
+    }
 
     function info()
         public
@@ -58,15 +60,15 @@ contract Arena {
         )
     {
         return (
-            _name,
-            address(_token),
-            _minContributionAmount,
-            _maxChoiceFeePercentage,
-            _maxTopicFeePercentage,
-            _arenaFeePercentage,
-            _choiceCreationFee,
-            _topicCreationFee,
-            _funds
+            _info._name,
+            address(_info._token),
+            _info._minContributionAmount,
+            _info._maxChoiceFeePercentage,
+            _info._maxTopicFeePercentage,
+            _info._arenaFeePercentage,
+            _info._choiceCreationFee,
+            _info._topicCreationFee,
+            _info._funds
         );
     }
 
@@ -82,15 +84,15 @@ contract Arena {
         address payable funds
     ) {
         require((arenaFeePercentage) <= 100 * 10**2, "Fees exceeded 100%");
-        _name = name;
-        _token = IERC20(token);
-        _minContributionAmount = minContribAmount;
-        _maxChoiceFeePercentage = maxChoiceFeePercentage;
-        _maxTopicFeePercentage = maxTopicFeePercentage;
-        _arenaFeePercentage = arenaFeePercentage;
-        _choiceCreationFee = choiceCreationFee;
-        _topicCreationFee = topicCreationFee;
-        _funds = funds;
+        _info._name = name;
+        _info._token = IERC20(token);
+        _info._minContributionAmount = minContribAmount;
+        _info._maxChoiceFeePercentage = maxChoiceFeePercentage;
+        _info._maxTopicFeePercentage = maxTopicFeePercentage;
+        _info._arenaFeePercentage = arenaFeePercentage;
+        _info._choiceCreationFee = choiceCreationFee;
+        _info._topicCreationFee = topicCreationFee;
+        _info._funds = funds;
     }
 
     function getTopicInfoById(uint256 _id)
@@ -109,7 +111,7 @@ contract Arena {
             address payable funds
         )
     {
-        Topic storage t = _topicIdMap[_id];
+        Topic storage t = _topics[_id];
         return (
             t._id,
             t._cycleDuration,
@@ -135,33 +137,34 @@ contract Arena {
         uint16 fundingPercentage,
         address payable funds
     ) public {
-        if (_topicCreationFee > 0) {
-            _token.transferFrom(msg.sender, _funds, _topicCreationFee);
+        if (_info._topicCreationFee > 0) {
+            _info._token.transferFrom(
+                msg.sender,
+                _info._funds,
+                _info._topicCreationFee
+            );
         }
 
         require(fundingPercentage <= 10000, "funding percentage exceeded 100%");
 
         require(
-            topicFeePercentage <= _maxTopicFeePercentage,
+            topicFeePercentage <= _info._maxTopicFeePercentage,
             "Max topic fee exceeded"
         );
         require(
-            maxChoiceFeePercentage <= _maxChoiceFeePercentage,
+            maxChoiceFeePercentage <= _info._maxChoiceFeePercentage,
             "Max choice fee exceeded"
         );
         require(
-            _arenaFeePercentage +
+            _info._arenaFeePercentage +
                 topicFeePercentage +
                 prevContributorsFeePercentage <=
                 10000,
             "accumulative fees exceeded 100%"
         );
-        _nextTopicId += 1;
-
-        uint256 newTopicId = _nextTopicId;
 
         Topic memory newTopic = Topic(
-            newTopicId,
+            _topics.length,
             cycleDuration,
             sharePerCyclePercentage,
             prevContributorsFeePercentage,
@@ -172,7 +175,7 @@ contract Arena {
             fundingPercentage,
             funds
         );
-        _topicIdMap[newTopicId] = newTopic;
+        _topics.push(newTopic);
     }
 
     function choiceInfo(uint256 topicId, uint256 choiceId)
@@ -203,34 +206,36 @@ contract Arena {
         uint16 feePercentage,
         uint256 fundingTarget
     ) public {
-        if (_choiceCreationFee > 0) {
-            _token.transferFrom(msg.sender, _funds, _choiceCreationFee);
+        if (_info._choiceCreationFee > 0) {
+            _info._token.transferFrom(
+                msg.sender,
+                _info._funds,
+                _info._choiceCreationFee
+            );
         }
 
         require(
-            feePercentage <= _topicIdMap[topicId]._maxChoiceFeePercentage,
+            feePercentage <= _topics[topicId]._maxChoiceFeePercentage,
             "Fee percentage too high"
         );
 
         require(
             feePercentage +
-                _arenaFeePercentage +
-                _topicIdMap[topicId]._topicFeePercentage +
-                _topicIdMap[topicId]._prevContributorsFeePercentage <=
+                _info._arenaFeePercentage +
+                _topics[topicId]._topicFeePercentage +
+                _topics[topicId]._prevContributorsFeePercentage <=
                 10000,
             "accumulative fees exceeded 100%"
         );
 
-        _topicChoiceNextId[topicId] += 1;
-        uint256 choiceId = _topicChoiceNextId[topicId];
         Choice memory choice = Choice(
-            choiceId,
+            _topicChoices[topicId].length,
             description,
             funds,
             feePercentage,
             fundingTarget
         );
-        _topicChoices[topicId][choiceId] = choice;
+        _topicChoices[topicId].push(choice);
     }
 
     function calculateSharesOfPosition(Position memory p, Topic memory t)
@@ -257,24 +262,26 @@ contract Arena {
         uint256 amount
     ) public {
         require(
-            amount >= _minContributionAmount,
+            amount >= _info._minContributionAmount,
             "contribution amount too low"
         );
-        _token.transferFrom(msg.sender, address(this), amount);
+        _info._token.transferFrom(msg.sender, address(this), amount);
 
-
-        Topic memory topic = _topicIdMap[topicId];
+        Topic memory topic = _topics[topicId];
         Choice memory choice = _topicChoices[topicId][choiceId];
 
+        // pay arena, topic, and choice fees
+        claimableBalance[address(_info._funds)] +=
+            (amount * _info._arenaFeePercentage) /
+            10000;
+        claimableBalance[address(topic._funds)] +=
+            (amount * topic._topicFeePercentage) /
+            10000;
+        claimableBalance[address(choice._funds)] +=
+            (amount * choice._feePercentage) /
+            10000;
 
-        uint256 arenaFee = (amount * _arenaFeePercentage) / 10000;
-        uint256 topicFee =  (amount * topic._topicFeePercentage) / 10000;
-        uint256 choiceFee = (amount * choice._feePercentage) / 10000;
-
-        claimableBalance[address(_funds)] += arenaFee;
-        claimableBalance[address(topic._funds)] += topicFee;
-        claimableBalance[address(choice._funds)] += choiceFee;
-
+        // get user and choice positions
         Position storage _userPosition = _addressPositions[address(msg.sender)][
             topicId
         ][choiceId];
@@ -286,7 +293,7 @@ contract Arena {
         // update user postion data
         _userPosition.checkPointShares = calculateSharesOfPosition(
             _userPosition,
-            _topicIdMap[topicId]
+            topic
         );
         _userPosition.tokens += amount;
         _userPosition.blockNumber = block.number;
@@ -294,7 +301,7 @@ contract Arena {
         // update choice summery position data
         _choicePosition.checkPointShares = calculateSharesOfPosition(
             _choicePosition,
-            _topicIdMap[topicId]
+            topic
         );
         _choicePosition.tokens += amount;
         _choicePosition.blockNumber = block.number;
@@ -310,7 +317,7 @@ contract Arena {
         ];
         return (
             _position.tokens,
-            calculateSharesOfPosition(_position, _topicIdMap[topicId])
+            calculateSharesOfPosition(_position, _topics[topicId])
         );
     }
 
@@ -323,12 +330,12 @@ contract Arena {
             _choicePositionSummery[topicId][choiceId].tokens,
             calculateSharesOfPosition(
                 _choicePositionSummery[topicId][choiceId],
-                _topicIdMap[topicId]
+                _topics[topicId]
             )
         );
     }
 
-    function balanceOf(address account) public view returns(uint256) {
+    function balanceOf(address account) public view returns (uint256) {
         return claimableBalance[account];
     }
 }

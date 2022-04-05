@@ -23,9 +23,9 @@ describe("Test Voting mechanism", async () => {
   let choiceBFunds: SignerWithAddress;
   let voter1: SignerWithAddress;
   let voter2: SignerWithAddress;
-  const topic: BigNumber = BigNumber.from(1);
-  const choiceA: BigNumber = BigNumber.from(1);
-  const choiceB: BigNumber = BigNumber.from(2);
+  const topic: BigNumber = BigNumber.from(0);
+  const choiceA: BigNumber = BigNumber.from(0);
+  const choiceB: BigNumber = BigNumber.from(1);
 
   async function _deployArena() {
     const arenaParams = getValidArenaParams();
@@ -298,7 +298,7 @@ describe("Test Voting mechanism", async () => {
       );
     });
     it("should confirm fee distribution from voter 1 to arena", async () => {
-      const feePercentage = await arena._arenaFeePercentage();
+      const feePercentage = (await arena.info()).arenaFeePercentage;
       await confirmFeePercentagePaid(
         parseEther("1"),
         BigNumber.from(feePercentage),
