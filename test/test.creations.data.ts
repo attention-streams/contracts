@@ -61,7 +61,7 @@ export function getValidTopicParams(): TopicParams {
     cycleDuration: 100, // 100 blocks
     sharePerCyclePercentage: 100 * 10 ** 2, // 100%
 
-    prevContributorsFeePercentage: 12 * 10 ** 2, // 10 %
+    prevContributorsFeePercentage: 12 * 10 ** 2, // 12 %
     topicFeePercentage: 5 * 10 ** 2, // 5%
 
     maxChoiceFeePercentage: 25 * 10 ** 2, // 25%
