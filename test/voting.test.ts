@@ -11,6 +11,7 @@ import {
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { parseEther } from "ethers/lib/utils";
 
 describe("Test Voting mechanism", async () => {
   let arena: Arena;
@@ -74,13 +75,17 @@ describe("Test Voting mechanism", async () => {
     await _tx2.wait(1);
   }
 
-  before(async () => {
+  async function setup() {
     [, arenaFunds, topicFunds, choiceAFunds, choiceBFunds, voter1, voter2] =
       await ethers.getSigners();
     await _setupAttentionStreams();
     await _fundVoters();
-  });
+  }
+
   describe("Core voting mechanism", async () => {
+    it("should setup a clean attention stream", async () => {
+      await setup();
+    });
     it("should fail to vote with less than min contribution amount", async () => {
       const tx = vote(arena, topic, choiceA, BigNumber.from(5), voter1);
       await expect(tx).to.be.revertedWith("contribution amount too low");
@@ -216,6 +221,21 @@ describe("Test Voting mechanism", async () => {
 
       expect(positionBInfo.tokens).to.equal(20);
       expect(positionBInfo.shares).to.equal(20);
+    });
+  });
+
+  describe("test voting fee distribution to choice, topic and arena funds", async () => {
+    it("should setup a clean attention stream", async () => {
+      await setup();
+    });
+    it("should confirm that no votes are on choice A", async () => {
+      const info = await arena.choicePositionSummery(topic, choiceA);
+      expect(info.tokens).equal(0);
+      expect(info.shares).equal(0);
+    });
+    it("confirms successful fee distributions from voter 1 to choice A funds", async () => {
+      const tx = await vote(arena, topic, choiceA, parseEther("1"), voter1);
+      await tx.wait(1);
     });
   });
 });
