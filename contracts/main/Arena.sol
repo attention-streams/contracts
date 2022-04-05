@@ -13,7 +13,7 @@ contract Arena {
     uint256 public _nextTopicId; // id of a new topic
 
     // list of choices of each topic
-    mapping(uint256 => Choice[]) public _topicChoices;
+    mapping(uint256 => mapping(uint256 => Choice)) public _topicChoices;
     // next choice id in each topic
     mapping(uint256 => uint256) public _topicChoiceNextId;
 
@@ -23,6 +23,8 @@ contract Arena {
     // position of each user in each choice of each topic
     // address => (topicId => (choiceId => Position))
     mapping(address => mapping(uint256 => mapping(uint256 => Position))) _addressPositions;
+
+    mapping(address => uint256) public claimableBalance;
 
     string public _name; // arena name
 
@@ -228,7 +230,7 @@ contract Arena {
             feePercentage,
             fundingTarget
         );
-        _topicChoices[topicId].push(choice);
+        _topicChoices[topicId][choiceId] = choice;
     }
 
     function calculateSharesOfPosition(Position memory p, Topic memory t)
@@ -258,6 +260,20 @@ contract Arena {
             amount >= _minContributionAmount,
             "contribution amount too low"
         );
+        _token.transferFrom(msg.sender, address(this), amount);
+
+
+        Topic memory topic = _topicIdMap[topicId];
+        Choice memory choice = _topicChoices[topicId][choiceId];
+
+
+        uint256 arenaFee = (amount * _arenaFeePercentage) / 10000;
+        uint256 topicFee =  (amount * topic._topicFeePercentage) / 10000;
+        uint256 choiceFee = (amount * choice._feePercentage) / 10000;
+
+        claimableBalance[address(_funds)] += arenaFee;
+        claimableBalance[address(topic._funds)] += topicFee;
+        claimableBalance[address(choice._funds)] += choiceFee;
 
         Position storage _userPosition = _addressPositions[address(msg.sender)][
             topicId
@@ -310,5 +326,9 @@ contract Arena {
                 _topicIdMap[topicId]
             )
         );
+    }
+
+    function balanceOf(address account) public view returns(uint256) {
+        return claimableBalance[account];
     }
 }

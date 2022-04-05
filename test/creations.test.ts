@@ -234,7 +234,7 @@ describe("Attention Streams Setup", () => {
       expect(nextChoiceId).to.equal(BigNumber.from(1));
     });
     it("should retrieve the first choices info", async () => {
-      const choiceInfo = await arenaNoFee.choiceInfo(topic, 0);
+      const choiceInfo = await arenaNoFee.choiceInfo(topic, 1);
       const params = getFlatParamsFromDict(getValidChoiceParams());
       expect(choiceInfo).to.deep.include.members(params);
     });

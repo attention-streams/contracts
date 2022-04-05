@@ -12,6 +12,7 @@ import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { parseEther } from "ethers/lib/utils";
+import { address } from "hardhat/internal/core/config/config-validation";
 
 describe("Test Voting mechanism", async () => {
   let arena: Arena;
@@ -73,6 +74,10 @@ describe("Test Voting mechanism", async () => {
       ethers.utils.parseEther("20")
     );
     await _tx2.wait(1);
+
+    // allow arena to spend funds on their behalf
+    await token.connect(voter1).approve(arena.address, parseEther("1000"));
+    await token.connect(voter2).approve(arena.address, parseEther("1000"));
   }
 
   async function setup() {
@@ -224,6 +229,37 @@ describe("Test Voting mechanism", async () => {
     });
   });
 
+  async function _snapshotTokenBalance(
+    accounts: SignerWithAddress[]
+  ): Promise<BigNumber[]> {
+    const balances: BigNumber[] = [];
+    for (const account of accounts) {
+      const balanceActual = await token.balanceOf(account.address);
+      const balanceClaimable = await arena.balanceOf(account.address);
+      balances.push(balanceActual.add(balanceClaimable));
+    }
+    return balances;
+  }
+
+  function _delta(a: BigNumber[], b: BigNumber[]): BigNumber[] {
+    if (a.length !== b.length) throw new Error("Lists must be the same length");
+    const result: BigNumber[] = [];
+    for (let i = 0; i < a.length; i++) {
+      result.push(a[i].sub(b[i]).abs());
+    }
+    return result;
+  }
+
+  async function confirmFeePercentagePaid(
+    amount: BigNumber,
+    percentage: BigNumber,
+    account: SignerWithAddress
+  ) {
+    const feeAmount = amount.mul(percentage).div(10000);
+    const [balance] = await _snapshotTokenBalance([account]);
+    expect(balance).equal(feeAmount);
+  }
+
   describe("test voting fee distribution to choice, topic and arena funds", async () => {
     it("should setup a clean attention stream", async () => {
       await setup();
@@ -233,9 +269,41 @@ describe("Test Voting mechanism", async () => {
       expect(info.tokens).equal(0);
       expect(info.shares).equal(0);
     });
-    it("confirms successful fee distributions from voter 1 to choice A funds", async () => {
-      const tx = await vote(arena, topic, choiceA, parseEther("1"), voter1);
+    it("should confirm voter 1 votes on choice A", async () => {
+      const amount = parseEther("1");
+      const balanceBefore = await _snapshotTokenBalance([voter1]);
+      const tx = await vote(arena, topic, choiceA, amount, voter1);
       await tx.wait(1);
+      const balanceAfter = await _snapshotTokenBalance([voter1]);
+      const [balanceDelta] = _delta(balanceAfter, balanceBefore);
+      expect(balanceDelta).equal(amount);
+    });
+
+    it("should confirm fee distribution from voter 1 to choice A", async () => {
+      const feePercentage = (await arena.choiceInfo(topic, choiceA))
+        .feePercentage;
+      await confirmFeePercentagePaid(
+        parseEther("1"),
+        BigNumber.from(feePercentage),
+        choiceAFunds
+      );
+    });
+    it("should confirm fee distribution from voter 1 to topic", async () => {
+      const feePercentage = (await arena.getTopicInfoById(topic))
+        .topicFeePercentage;
+      await confirmFeePercentagePaid(
+        parseEther("1"),
+        BigNumber.from(feePercentage),
+        topicFunds
+      );
+    });
+    it("should confirm fee distribution from voter 1 to arena", async () => {
+      const feePercentage = await arena._arenaFeePercentage();
+      await confirmFeePercentagePaid(
+        parseEther("1"),
+        BigNumber.from(feePercentage),
+        arenaFunds
+      );
     });
   });
 });
