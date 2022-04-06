@@ -131,7 +131,7 @@ contract Arena {
 
     function getTopicFee(Topic memory topic, uint256 amount)
         internal
-        view
+        pure
         returns (uint256)
     {
         return (amount * topic._topicFeePercentage) / 10000;
@@ -139,7 +139,7 @@ contract Arena {
 
     function getChoiceFee(Choice memory choice, uint256 amount)
         internal
-        view
+        pure
         returns (uint256)
     {
         return (amount * choice._feePercentage) / 10000;
@@ -147,7 +147,7 @@ contract Arena {
 
     function getPrevFee(Topic memory topic, uint256 amount)
         internal
-        view
+        pure
         returns (uint256)
     {
         return (amount * topic._prevContributorsFeePercentage) / 10000;
