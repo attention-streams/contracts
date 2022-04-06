@@ -9,10 +9,14 @@ library PositionUtils {
         Topic memory topic,
         uint256 amount
     ) internal {
-        // update user postion data
-        p.checkPointShares = getShares(p, topic);
-        p.tokens += amount;
-        p.blockNumber = block.number;
+        if (p.blockNumber == block.number) {
+            p.tokens += amount;
+        } else {
+            // update user postion data
+            p.checkPointShares = getShares(p, topic);
+            p.tokens += amount;
+            p.blockNumber = block.number;
+        }
     }
 
     function getShares(Position memory p, Topic memory t)

@@ -30,6 +30,7 @@ contract Arena {
     mapping(uint256 => Choice[]) internal _topicChoices; // list of choices of each topic
     mapping(uint256 => mapping(uint256 => Position)) // aggregated voting data of a chioce
         internal _choicePositionSummery; // topicId => (choiceId => listOfPositions)
+    mapping(uint256 => mapping(uint256 => address[])) internal _choiceVoters; // list of all voters in a position
     mapping(address => mapping(uint256 => mapping(uint256 => Position))) // position of each user in each choice of each topic
         internal _addressPositions; // address => (topicId => (choiceId => Position))
     mapping(address => uint256) internal claimableBalance; // amount of "info._token" that an address can withdraw from the arena
@@ -124,6 +125,34 @@ contract Arena {
         _topicChoices[topicId].push(choice);
     }
 
+    function getArenaFee(uint256 amount) internal view returns (uint256) {
+        return (amount * info._arenaFeePercentage) / 10000;
+    }
+
+    function getTopicFee(Topic memory topic, uint256 amount)
+        internal
+        view
+        returns (uint256)
+    {
+        return (amount * topic._topicFeePercentage) / 10000;
+    }
+
+    function getChoiceFee(Choice memory choice, uint256 amount)
+        internal
+        view
+        returns (uint256)
+    {
+        return (amount * choice._feePercentage) / 10000;
+    }
+
+    function getPrevFee(Topic memory topic, uint256 amount)
+        internal
+        view
+        returns (uint256)
+    {
+        return (amount * topic._prevContributorsFeePercentage) / 10000;
+    }
+
     function vote(
         uint256 topicId,
         uint256 choiceId,
@@ -137,24 +166,54 @@ contract Arena {
 
         Topic memory topic = _topics[topicId];
         Choice memory choice = _topicChoices[topicId][choiceId];
+        Position storage choicePosition = _choicePositionSummery[topicId][
+            choiceId
+        ];
+        uint256 netVoteAmount;
 
-        // pay arena, topic, and choice fees
-        claimableBalance[address(info._funds)] +=
-            (amount * info._arenaFeePercentage) /
-            10000;
-        claimableBalance[address(topic._funds)] +=
-            (amount * topic._topicFeePercentage) /
-            10000;
-        claimableBalance[address(choice._funds)] +=
-            (amount * choice._feePercentage) /
-            10000;
+        claimableBalance[info._funds] += getArenaFee(amount);
+        claimableBalance[topic._funds] += getTopicFee(topic, amount);
+        claimableBalance[choice._funds] += getChoiceFee(choice, amount);
+
+        netVoteAmount =
+            amount -
+            (getArenaFee(amount) +
+                getTopicFee(topic, amount) +
+                getChoiceFee(choice, amount));
+
+        if (choicePosition.getShares(topic) > 0) {
+            uint256 prevFee = getPrevFee(topic, amount);
+            uint256 totalShares = choicePosition.getShares(topic);
+            netVoteAmount -= prevFee;
+
+            // pay previouse contributor
+            for (
+                uint256 i = 0;
+                i < _choiceVoters[topicId][choiceId].length;
+                i++
+            ) {
+                Position storage thePosition = _addressPositions[
+                    _choiceVoters[topicId][choiceId][i]
+                ][topicId][choiceId];
+                if (thePosition.blockNumber >= block.number) continue; // ignore if does not belong to prev cycles
+                uint256 fee = (prevFee * thePosition.getShares(topic)) /
+                    totalShares;
+                thePosition.updatePosition(topic, fee);
+                choicePosition.updatePosition(topic, fee);
+            }
+        }
 
         _addressPositions[msg.sender][topicId][choiceId].updatePosition(
             topic,
-            amount
+            netVoteAmount
         );
 
-        _choicePositionSummery[topicId][choiceId].updatePosition(topic, amount);
+        _choicePositionSummery[topicId][choiceId].updatePosition(
+            topic,
+            netVoteAmount
+        );
+
+        _choiceVoters[topicId][choiceId].push(msg.sender);
     }
 
     function getVoterPositionOnChoice(
