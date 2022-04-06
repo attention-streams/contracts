@@ -119,6 +119,11 @@ describe("Test Voting mechanism", async () => {
             tokens: BigNumber.from(750),
             shares: BigNumber.from(0),
           },
+          {
+            voter: voter2,
+            tokens: BigNumber.from(0),
+            shares: BigNumber.from(0),
+          },
         ],
       },
       {
@@ -166,7 +171,42 @@ describe("Test Voting mechanism", async () => {
           },
         ],
       },
+      {
+        cycle: 4,
+        positions: [
+          {
+            voter: voter1,
+            tokens: BigNumber.from(3058),
+            shares: BigNumber.from(3720),
+          },
+          {
+            voter: voter2,
+            tokens: BigNumber.from(1441),
+            shares: BigNumber.from(3780),
+          },
+        ],
+      },
     ];
+
+    async function validateVoter1and2PositionData(
+      choice: BigNumber,
+      cycle: number
+    ) {
+      let position1Info = await arena.getVoterPositionOnChoice(
+        topic,
+        choice,
+        voter1.address
+      );
+      let position2Info = await arena.getVoterPositionOnChoice(
+        topic,
+        choice,
+        voter2.address
+      );
+      expect(position1Info.tokens).to.equal(data[cycle].positions[0].tokens);
+      expect(position1Info.shares).to.equal(data[cycle].positions[0].shares);
+      expect(position2Info.tokens).to.equal(data[cycle].positions[1].tokens);
+      expect(position2Info.shares).to.equal(data[cycle].positions[1].shares);
+    }
 
     it("should setup a clean attention stream", async () => {
       await setup();
@@ -180,13 +220,7 @@ describe("Test Voting mechanism", async () => {
         voter1
       );
       await tx.wait();
-      let positionInfo = await arena.getVoterPositionOnChoice(
-        topic,
-        choiceA,
-        voter1.address
-      );
-      expect(positionInfo.tokens).to.equal(data[0].positions[0].tokens);
-      expect(positionInfo.shares).to.equal(data[0].positions[0].shares);
+      await validateVoter1and2PositionData(choiceA, 0);
     });
     it("should retrieve correct position info after one cycle and voter 2 vote", async () => {
       for (let i = 0; i < 100; i++) {
@@ -200,39 +234,13 @@ describe("Test Voting mechanism", async () => {
         voter2
       );
       await tx.wait(1);
-      let position1Info = await arena.getVoterPositionOnChoice(
-        topic,
-        choiceA,
-        voter1.address
-      );
-      let position2Info = await arena.getVoterPositionOnChoice(
-        topic,
-        choiceA,
-        voter2.address
-      );
-      expect(position1Info.tokens).to.equal(data[1].positions[0].tokens);
-      expect(position1Info.shares).to.equal(data[1].positions[0].shares);
-      expect(position2Info.tokens).to.equal(data[1].positions[1].tokens);
-      expect(position2Info.shares).to.equal(data[1].positions[1].shares);
+      await validateVoter1and2PositionData(choiceA, 1);
     });
     it("should retrieve correct info after one more cycle", async () => {
       for (let i = 0; i < 100; i++) {
         await network.provider.send("evm_mine");
       }
-      let position1Info = await arena.getVoterPositionOnChoice(
-        topic,
-        choiceA,
-        voter1.address
-      );
-      let position2Info = await arena.getVoterPositionOnChoice(
-        topic,
-        choiceA,
-        voter2.address
-      );
-      expect(position1Info.tokens).to.equal(data[2].positions[0].tokens);
-      expect(position1Info.shares).to.equal(data[2].positions[0].shares);
-      expect(position2Info.tokens).to.equal(data[2].positions[1].tokens);
-      expect(position2Info.shares).to.equal(data[2].positions[1].shares);
+      await validateVoter1and2PositionData(choiceA, 2);
     });
     it("should retrieve correct info after third cycle", async () => {
       for (let i = 0; i < 100; i++) {
@@ -257,6 +265,20 @@ describe("Test Voting mechanism", async () => {
       let info = await arena.choicePositionSummery(topic, choiceA);
       expect(info.shares).equal(5250);
       expect(info.tokens).equal(2250);
+    });
+    it("should get correct info after voter a votes 3000 tokens on the next cycle", async () => {
+      for (let i = 0; i < 100; i++) {
+        await network.provider.send("evm_mine");
+      }
+      const tx = await vote(
+        arena,
+        topic,
+        choiceA,
+        BigNumber.from(3000),
+        voter1
+      );
+      await tx.wait();
+      await validateVoter1and2PositionData(choiceA, 4);
     });
     // it("should setup a clean attention stream", async () => {
     //   await setup();
