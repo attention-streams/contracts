@@ -114,83 +114,125 @@ describe("Test Voting mechanism", async () => {
       {
         cycle: 0,
         positions: [
-          {
-            voter: voter1,
-            tokens: BigNumber.from(750),
-            shares: BigNumber.from(0),
-          },
-          {
-            voter: voter2,
-            tokens: BigNumber.from(0),
-            shares: BigNumber.from(0),
-          },
+          [
+            {
+              voter: voter1,
+              tokens: BigNumber.from(750),
+              shares: BigNumber.from(0),
+            },
+            {
+              voter: voter2,
+              tokens: BigNumber.from(0),
+              shares: BigNumber.from(0),
+            },
+          ],
         ],
       },
       {
         cycle: 1,
         positions: [
-          {
-            voter: voter1,
-            tokens: BigNumber.from(990),
-            shares: BigNumber.from(750),
-          },
-          {
-            voter: voter2,
-            tokens: BigNumber.from(1260),
-            shares: BigNumber.from(0),
-          },
+          [
+            {
+              voter: voter1,
+              tokens: BigNumber.from(990),
+              shares: BigNumber.from(750),
+            },
+            {
+              voter: voter2,
+              tokens: BigNumber.from(1260),
+              shares: BigNumber.from(0),
+            },
+          ],
         ],
       },
       {
         cycle: 2,
         positions: [
-          {
-            voter: voter1,
-            tokens: BigNumber.from(990),
-            shares: BigNumber.from(1740),
-          },
-          {
-            voter: voter2,
-            tokens: BigNumber.from(1260),
-            shares: BigNumber.from(1260),
-          },
+          [
+            {
+              voter: voter1,
+              tokens: BigNumber.from(990),
+              shares: BigNumber.from(1740),
+            },
+            {
+              voter: voter2,
+              tokens: BigNumber.from(1260),
+              shares: BigNumber.from(1260),
+            },
+          ],
         ],
       },
       {
         cycle: 3,
         positions: [
-          {
-            voter: voter1,
-            tokens: BigNumber.from(990),
-            shares: BigNumber.from(2730),
-          },
-          {
-            voter: voter2,
-            tokens: BigNumber.from(1260),
-            shares: BigNumber.from(2520),
-          },
+          [
+            {
+              voter: voter1,
+              tokens: BigNumber.from(990),
+              shares: BigNumber.from(2730),
+            },
+            {
+              voter: voter2,
+              tokens: BigNumber.from(1260),
+              shares: BigNumber.from(2520),
+            },
+          ],
         ],
       },
       {
         cycle: 4,
         positions: [
-          {
-            voter: voter1,
-            tokens: BigNumber.from(3058),
-            shares: BigNumber.from(3720),
-          },
-          {
-            voter: voter2,
-            tokens: BigNumber.from(1441),
-            shares: BigNumber.from(3780),
-          },
+          [
+            // epoch - voter 1 puts 3000 more
+            {
+              voter: voter1,
+              tokens: BigNumber.from(3058),
+              shares: BigNumber.from(3720),
+            },
+            {
+              voter: voter2,
+              tokens: BigNumber.from(1441),
+              shares: BigNumber.from(3780),
+            },
+          ],
+          [
+            // epoch 2 voter 2  puts 2000 more
+            {
+              voter: voter1,
+              tokens: BigNumber.from(3177),
+              shares: BigNumber.from(3720),
+            },
+            {
+              voter: voter2,
+              tokens: BigNumber.from(2821),
+              shares: BigNumber.from(3780),
+            },
+          ],
+        ],
+      },
+      {
+        cycle: 5,
+        positions: [
+          [
+            {
+              voter: voter1,
+              tokens: BigNumber.from(3177),
+              shares: BigNumber.from(6897),
+            },
+            {
+              voter: voter2,
+              tokens: BigNumber.from(2821),
+              shares: BigNumber.from(6601),
+            },
+          ],
         ],
       },
     ];
 
     async function validateVoter1and2PositionData(
       choice: BigNumber,
-      cycle: number
+      cycle: number,
+      epoch: number = 0
     ) {
       let position1Info = await arena.getVoterPositionOnChoice(
         topic,
@@ -202,10 +244,18 @@ describe("Test Voting mechanism", async () => {
         choice,
         voter2.address
       );
-      expect(position1Info.tokens).to.equal(data[cycle].positions[0].tokens);
-      expect(position1Info.shares).to.equal(data[cycle].positions[0].shares);
-      expect(position2Info.tokens).to.equal(data[cycle].positions[1].tokens);
-      expect(position2Info.shares).to.equal(data[cycle].positions[1].shares);
+      expect(position1Info.tokens).to.equal(
+        data[cycle].positions[epoch][0].tokens
+      );
+      expect(position1Info.shares).to.equal(
+        data[cycle].positions[epoch][0].shares
+      );
+      expect(position2Info.tokens).to.equal(
+        data[cycle].positions[epoch][1].tokens
+      );
+      expect(position2Info.shares).to.equal(
+        data[cycle].positions[epoch][1].shares
+      );
     }
     it("should setup a clean attention stream", async () => {
       await setup();
@@ -249,20 +299,7 @@ describe("Test Voting mechanism", async () => {
       for (let i = 0; i < 100; i++) {
         await network.provider.send("evm_mine");
       }
-      let position1Info = await arena.getVoterPositionOnChoice(
-        topic,
-        choiceA,
-        voter1.address
-      );
-      let position2Info = await arena.getVoterPositionOnChoice(
-        topic,
-        choiceA,
-        voter2.address
-      );
-      expect(position1Info.tokens).to.equal(data[3].positions[0].tokens);
-      expect(position1Info.shares).to.equal(data[3].positions[0].shares);
-      expect(position2Info.tokens).to.equal(data[3].positions[1].tokens);
-      expect(position2Info.shares).to.equal(data[3].positions[1].shares);
+      await validateVoter1and2PositionData(choiceA, 3);
     });
     it("should retrieve correct accumulative choice A info ", async () => {
       let info = await arena.choicePositionSummery(topic, choiceA);
@@ -282,6 +319,52 @@ describe("Test Voting mechanism", async () => {
       );
       await tx.wait();
       await validateVoter1and2PositionData(choiceA, 4);
+    });
+    it("should get correct info after voter 2 puts 2000 tokens in the same cycle", async () => {
+      const tx = await vote(
+        arena,
+        topic,
+        choiceA,
+        BigNumber.from(2000),
+        voter2
+      );
+      await tx.wait();
+      await validateVoter1and2PositionData(choiceA, 4, 1);
+    });
+    it("voter 1 votes on choice B, this should not affect choice A data", async () => {
+      const tx = await vote(
+        arena,
+        topic,
+        choiceB,
+        BigNumber.from(1000),
+        voter1
+      );
+      await tx.wait(1);
+      await validateVoter1and2PositionData(choiceA, 4, 1); // check that position A not changed
+
+      let positionOnB = await arena.getVoterPositionOnChoice(
+        topic,
+        choiceB,
+        voter1.address
+      );
+
+      expect(positionOnB.tokens).equal(700);
+      expect(positionOnB.shares).equal(0);
+    });
+    it("should get correct info of both choice A and B on cycle 5", async () => {
+      for (let i = 0; i < 100; i++) {
+        await network.provider.send("evm_mine");
+      }
+
+      await validateVoter1and2PositionData(choiceA, 5); // check that position A not changed
+      let positionOnB = await arena.getVoterPositionOnChoice(
+        topic,
+        choiceB,
+        voter1.address
+      );
+
+      expect(positionOnB.tokens).equal(700);
+      expect(positionOnB.shares).equal(700);
     });
   });
 

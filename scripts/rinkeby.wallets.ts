@@ -1,3 +1,4 @@
+// **THESE ARE TEST WALLETS, AND ARE PUBLICLY KNOW, DO NOT DEPOSIT ACTUAL COINS**
 const wallets = [
   "play youth mandate crawl child update sustain decade blind service foster old",
   "inmate speed use beef whip happy bicycle repair legal time clean cave",
