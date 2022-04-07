@@ -19,22 +19,28 @@ library PositionUtils {
         }
     }
 
+    function isEmpty(Position memory p) internal pure returns (bool) {
+        return (p.tokens == 0 && p.blockNumber == 0 && p.checkPointShares == 0);
+    }
+
+    function cyclesPassed(Position memory p, Topic memory t)
+        internal
+        view
+        returns (uint256)
+    {
+        return (block.number - p.blockNumber) / t._cycleDuration;
+    }
+
     function getShares(Position memory p, Topic memory t)
         internal
         view
         returns (uint256)
     {
-        // cycles passed
-        uint256 shares;
-        uint256 cyclesPassed = (block.number - p.blockNumber) /
-            t._cycleDuration;
-        shares =
+        return
             p.tokens *
-            cyclesPassed *
+            cyclesPassed(p, t) *
             (t._sharePerCyclePercentage / 10000) +
             p.checkPointShares;
-
-        return shares;
     }
 }
 
