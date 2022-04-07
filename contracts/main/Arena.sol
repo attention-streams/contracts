@@ -101,14 +101,6 @@ contract Arena {
     }
 
     function addChoice(uint256 topicId, Choice memory choice) public {
-        if (info._choiceCreationFee > 0) {
-            info._token.transferFrom(
-                msg.sender,
-                info._funds,
-                info._choiceCreationFee
-            );
-        }
-
         require(
             choice._feePercentage <= _topics[topicId]._maxChoiceFeePercentage,
             "Fee percentage too high"
@@ -122,6 +114,14 @@ contract Arena {
                 10000,
             "accumulative fees exceeded 100%"
         );
+        if (info._choiceCreationFee > 0) {
+            info._token.transferFrom(
+                msg.sender,
+                info._funds,
+                info._choiceCreationFee
+            );
+        }
+
         _topicChoices[topicId].push(choice);
     }
 
@@ -169,14 +169,12 @@ contract Arena {
         Position storage choicePosition = _choicePositionSummery[topicId][
             choiceId
         ];
-        uint256 netVoteAmount;
 
         claimableBalance[info._funds] += getArenaFee(amount);
         claimableBalance[topic._funds] += getTopicFee(topic, amount);
         claimableBalance[choice._funds] += getChoiceFee(choice, amount);
 
-        netVoteAmount =
-            amount -
+        uint256 netVoteAmount = amount -
             (getArenaFee(amount) +
                 getTopicFee(topic, amount) +
                 getChoiceFee(choice, amount));
@@ -195,12 +193,15 @@ contract Arena {
                 Position storage thePosition = _addressPositions[
                     _choiceVoters[topicId][choiceId][i]
                 ][topicId][choiceId];
-                if (thePosition.blockNumber >= block.number) continue; // ignore if does not belong to prev cycles
                 uint256 fee = (prevFee * thePosition.getShares(topic)) /
                     totalShares;
                 thePosition.updatePosition(topic, fee);
                 choicePosition.updatePosition(topic, fee);
             }
+        }
+
+        if (_addressPositions[msg.sender][topicId][choiceId].isEmpty()) {
+            _choiceVoters[topicId][choiceId].push(msg.sender);
         }
 
         _addressPositions[msg.sender][topicId][choiceId].updatePosition(
@@ -212,8 +213,6 @@ contract Arena {
             topic,
             netVoteAmount
         );
-
-        _choiceVoters[topicId][choiceId].push(msg.sender);
     }
 
     function getVoterPositionOnChoice(
