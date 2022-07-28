@@ -94,7 +94,8 @@ describe("Test Voting mechanism", async () => {
     const topicFeePercentage = (await arena.topics(topic))._topicFeePercentage;
     const contributorFee = (await arena.topics(topic))
       ._prevContributorsFeePercentage;
-    const choiceFee = (await arena.choiceInfo(topic, choiceId))._feePercentage;
+    const choiceFee = (await arena.topicChoices(topic, choiceId))
+      ._feePercentage;
     const totalFeePercentage =
       arenaFeePercentage + topicFeePercentage + contributorFee + choiceFee;
 
@@ -418,7 +419,7 @@ describe("Test Voting mechanism", async () => {
     });
 
     it("should confirm fee distribution from voter 1 to choice A", async () => {
-      const feePercentage = (await arena.choiceInfo(topic, choiceA))
+      const feePercentage = (await arena.topicChoices(topic, choiceA))
         ._feePercentage;
       await confirmFeePercentagePaid(
         parseEther("1"),

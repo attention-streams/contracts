@@ -29,7 +29,7 @@ contract Arena is Initializable {
     ArenaInfo public info;
 
     Topic[] public topics; // list of topics in arena
-    mapping(uint256 => Choice[]) internal _topicChoices; // list of choices of each topic
+    mapping(uint256 => Choice[]) public topicChoices; // list of choices of each topic
     mapping(uint256 => mapping(uint256 => Position)) // aggregated voting data of a chioce
         internal _choicePositionSummery; // topicId => (choiceId => listOfPositions)
     mapping(uint256 => mapping(uint256 => address[])) internal _choiceVoters; // list of all voters in a position
@@ -54,7 +54,7 @@ contract Arena is Initializable {
         view
         returns (uint256)
     {
-        return _topicChoices[topicId].length;
+        return topicChoices[topicId].length;
     }
 
     function addTopic(Topic memory topic) public {
@@ -90,14 +90,6 @@ contract Arena is Initializable {
         topics.push(topic);
     }
 
-    function choiceInfo(uint256 topicId, uint256 choiceId)
-        public
-        view
-        returns (Choice memory)
-    {
-        return _topicChoices[topicId][choiceId];
-    }
-
     function addChoice(uint256 topicId, Choice memory choice) public {
         require(
             choice._feePercentage <= topics[topicId]._maxChoiceFeePercentage,
@@ -120,7 +112,7 @@ contract Arena is Initializable {
             );
         }
 
-        _topicChoices[topicId].push(choice);
+        topicChoices[topicId].push(choice);
     }
 
     function getArenaFee(uint256 amount) internal view returns (uint256) {
@@ -163,7 +155,7 @@ contract Arena is Initializable {
         info._token.transferFrom(msg.sender, address(this), amount);
 
         Topic memory topic = topics[topicId];
-        Choice memory choice = _topicChoices[topicId][choiceId];
+        Choice memory choice = topicChoices[topicId][choiceId];
         Position storage choicePosition = _choicePositionSummery[topicId][
             choiceId
         ];
