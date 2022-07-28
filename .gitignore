@@ -142,3 +142,5 @@ dist
 # ide
 .idea
 .vscode
+
+-31337.json
