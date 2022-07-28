@@ -1,7 +1,8 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { parseEther } from "ethers/lib/utils";
-import { ethers, network } from "hardhat";
+import { ethers, network, upgrades } from "hardhat";
+
 import {
   ArenaParams,
   ChoiceParams,
@@ -50,8 +51,11 @@ async function deployArena(
   _signer?: SignerWithAddress
 ): Promise<Arena> {
   const signer = await getSigner(_signer);
-  const Arena = await ethers.getContractFactory("Arena");
-  return Arena.connect(signer).deploy(_params);
+  const factory = await ethers.getContractFactory("Arena", signer);
+  const arena = await upgrades.deployProxy(factory, [
+    getFlatParamsFromDict(_params),
+  ]);
+  return arena as Arena;
 }
 
 async function addTopic(

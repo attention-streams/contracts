@@ -2,6 +2,8 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "./Topic.sol";
 import "./Choice.sol";
 
@@ -21,7 +23,7 @@ struct ArenaInfo {
     address payable _funds; // arena funds location
 }
 
-contract Arena {
+contract Arena is Initializable {
     using PositionUtils for Position;
 
     ArenaInfo public info;
@@ -35,13 +37,17 @@ contract Arena {
         internal _addressPositions; // address => (topicId => (choiceId => Position))
     mapping(address => uint256) internal claimableBalance; // amount of "info._token" that an address can withdraw from the arena
 
-    constructor(ArenaInfo memory _info) {
+    function initialize(ArenaInfo memory _info) public initializer {
         require(
             (_info._arenaFeePercentage) <= 100 * 10**2,
             "Fees exceeded 100%"
         );
         info = _info;
     }
+
+    // function initialize() public initializer {
+
+    // }
 
     function _nextTopicId() public view returns (uint256) {
         return _topics.length;
