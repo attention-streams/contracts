@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import "./Topic.sol";
 import "./Choice.sol";
@@ -12,7 +13,7 @@ import "./Position.sol";
 
 struct ArenaInfo {
     string _name; // arena name
-    IERC20 _token; // this is the token that is used to vote in this arena
+    address _token; // this is the token that is used to vote in this arena
     uint256 _minContributionAmount; // minimum amount of voting/contributing
     // all percentage fields assume 2 decimal places
     uint16 _maxChoiceFeePercentage; // max percentage of a vote taken as fees for a choice
@@ -25,6 +26,7 @@ struct ArenaInfo {
 
 contract Arena is Initializable {
     using PositionUtils for Position;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     ArenaInfo public info;
 
@@ -59,7 +61,7 @@ contract Arena is Initializable {
 
     function addTopic(Topic memory topic) public {
         if (info._topicCreationFee > 0) {
-            info._token.transferFrom(
+            IERC20Upgradeable(info._token).safeTransferFrom(
                 msg.sender,
                 info._funds,
                 info._topicCreationFee
@@ -105,7 +107,7 @@ contract Arena is Initializable {
             "accumulative fees exceeded 100%"
         );
         if (info._choiceCreationFee > 0) {
-            info._token.transferFrom(
+            IERC20Upgradeable(info._token).safeTransferFrom(
                 msg.sender,
                 info._funds,
                 info._choiceCreationFee
@@ -152,7 +154,11 @@ contract Arena is Initializable {
             amount >= info._minContributionAmount,
             "contribution amount too low"
         );
-        info._token.transferFrom(msg.sender, address(this), amount);
+        IERC20Upgradeable(info._token).safeTransferFrom(
+            msg.sender,
+            address(this),
+            amount
+        );
 
         Topic memory topic = topics[topicId];
         Choice memory choice = topicChoices[topicId][choiceId];
