@@ -54,12 +54,12 @@ describe("Attention Streams Setup", () => {
       expect(nextId).to.be.equal(2);
     });
     it("should properly retrieve topic # 0 info", async () => {
-      const info = await arena.getTopicInfoById(0);
+      const info = await arena.topics(0);
       const params = getValidTopicParams();
       expect(info).to.deep.include.members(getFlatParamsFromDict(params));
     });
     it("should properly retrieve topic # 1 info", async () => {
-      const info = await arena.getTopicInfoById(1);
+      const info = await arena.topics(1);
       const params = getValidTopicParams();
       params._cycleDuration = 10;
       expect(info).to.deep.include.members(getFlatParamsFromDict(params));

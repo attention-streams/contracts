@@ -28,7 +28,7 @@ contract Arena is Initializable {
 
     ArenaInfo public info;
 
-    Topic[] internal _topics; // list of topics in arena
+    Topic[] public topics; // list of topics in arena
     mapping(uint256 => Choice[]) internal _topicChoices; // list of choices of each topic
     mapping(uint256 => mapping(uint256 => Position)) // aggregated voting data of a chioce
         internal _choicePositionSummery; // topicId => (choiceId => listOfPositions)
@@ -45,12 +45,8 @@ contract Arena is Initializable {
         info = _info;
     }
 
-    // function initialize() public initializer {
-
-    // }
-
     function _nextTopicId() public view returns (uint256) {
-        return _topics.length;
+        return topics.length;
     }
 
     function _nextChoiceIdInTopic(uint256 topicId)
@@ -59,10 +55,6 @@ contract Arena is Initializable {
         returns (uint256)
     {
         return _topicChoices[topicId].length;
-    }
-
-    function getTopicInfoById(uint256 _id) public view returns (Topic memory) {
-        return _topics[_id];
     }
 
     function addTopic(Topic memory topic) public {
@@ -95,7 +87,7 @@ contract Arena is Initializable {
             "accumulative fees exceeded 100%"
         );
 
-        _topics.push(topic);
+        topics.push(topic);
     }
 
     function choiceInfo(uint256 topicId, uint256 choiceId)
@@ -108,15 +100,15 @@ contract Arena is Initializable {
 
     function addChoice(uint256 topicId, Choice memory choice) public {
         require(
-            choice._feePercentage <= _topics[topicId]._maxChoiceFeePercentage,
+            choice._feePercentage <= topics[topicId]._maxChoiceFeePercentage,
             "Fee percentage too high"
         );
 
         require(
             choice._feePercentage +
                 info._arenaFeePercentage +
-                _topics[topicId]._topicFeePercentage +
-                _topics[topicId]._prevContributorsFeePercentage <=
+                topics[topicId]._topicFeePercentage +
+                topics[topicId]._prevContributorsFeePercentage <=
                 10000,
             "accumulative fees exceeded 100%"
         );
@@ -170,7 +162,7 @@ contract Arena is Initializable {
         );
         info._token.transferFrom(msg.sender, address(this), amount);
 
-        Topic memory topic = _topics[topicId];
+        Topic memory topic = topics[topicId];
         Choice memory choice = _topicChoices[topicId][choiceId];
         Position storage choicePosition = _choicePositionSummery[topicId][
             choiceId
@@ -229,7 +221,7 @@ contract Arena is Initializable {
         Position storage _position = _addressPositions[voter][topicId][
             choiceId
         ];
-        return (_position.tokens, _position.getShares(_topics[topicId]));
+        return (_position.tokens, _position.getShares(topics[topicId]));
     }
 
     function choicePositionSummery(uint256 topicId, uint256 choiceId)
@@ -239,9 +231,7 @@ contract Arena is Initializable {
     {
         return (
             _choicePositionSummery[topicId][choiceId].tokens,
-            _choicePositionSummery[topicId][choiceId].getShares(
-                _topics[topicId]
-            )
+            _choicePositionSummery[topicId][choiceId].getShares(topics[topicId])
         );
     }
 

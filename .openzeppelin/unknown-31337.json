@@ -2,47 +2,57 @@
   "manifestVersion": "3.2",
   "admin": {
     "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-    "txHash": "0x3ae64b79ad2e38b06e2220c75eef16e96efe0c5768dab7c0087c099d49b9e534"
+    "txHash": "0xeaea9f58871ca86a0b6a3b065f98649c19631cb161e304d2a0fcbd9be42e3890"
   },
   "proxies": [
     {
+      "address": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
+      "txHash": "0xf1dce43c79856088d0ebcd162c68d0575326b19beb86f197afde87fd1c1bb056",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9",
+      "txHash": "0xb6271b1932bfa1e9f8139d24675b6d9d3e14d5a67199810ce6c2b418e5d65a91",
+      "kind": "transparent"
+    },
+    {
       "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0xf2dc18811949e39005a9a7aae14450b330f225886e102fea92c3d0c2aa8816d4",
+      "txHash": "0xa40f1872ba7505b83fe1bffd733fd4e955ae1eae7c05feda3b3fab64bfffc4ed",
       "kind": "transparent"
     },
     {
       "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-      "txHash": "0x476bff9983a35c694802db0d907e4220e98735151330b09d201f21ba3fa9e297",
+      "txHash": "0x54c7337bc546ebc007f18738d6dddcdd366b04dcb1bb4b37e234489c8bba4121",
       "kind": "transparent"
     },
     {
       "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
-      "txHash": "0x53e458839e7167dced2fbbd30bb8b137d59bafbb125c9b8158ca60853ce9302a",
+      "txHash": "0xbaea42c711dae2d363ce3d82fbb61eec486cc79354c74fb431a208b6df671f4e",
       "kind": "transparent"
     },
     {
       "address": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
-      "txHash": "0x3223b222d2f48a52ba027fa2401f80467bddec2990a493f2cff574dec3d6444c",
+      "txHash": "0x8af4cd76b3d2052fcc3e336ae0e4a5e1b08f0e72eaac058339bcc517450d9b37",
       "kind": "transparent"
     },
     {
       "address": "0x9A676e781A523b5d0C0e43731313A708CB607508",
-      "txHash": "0xef4266eeace4bd12237a5e18b489dedb854f87c6c650df14b5dd46eab5c498bd",
+      "txHash": "0x805ad6b2147cde03f95dfdc8bd6b765c628f50c3c903b651dbb37b7d278ceb12",
       "kind": "transparent"
     },
     {
       "address": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
-      "txHash": "0xe2cf328d4f81096c91ea37d909b5914ed7bc7157dc8578f0798523a0e040c4fc",
+      "txHash": "0xa5614f8e8197430e1a68e87f4675424da8f45b88957ffea2a8a3fcf64e70bf95",
       "kind": "transparent"
     },
     {
       "address": "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
-      "txHash": "0xd789e45d705bad0523f4a2efd4c928fe41a44fd57659af7e5e70332afca576ab",
+      "txHash": "0x547d4b858afcc84ec21f7d1efb7b4e9f947a0ffa9dc6dd1dc43d0a16e8097d96",
       "kind": "transparent"
     },
     {
       "address": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
-      "txHash": "0x9b017d0042af0c20bc91ee06d75f98d3b41c28426860dfc6c069a5f03f6bb455",
+      "txHash": "0x91c1cf9c25a937422958c1827a77ee9e9826fc3d9d9b0c2fe0bcde322c58af0c",
       "kind": "transparent"
     },
     {
@@ -52,9 +62,9 @@
     }
   ],
   "impls": {
-    "bc15b14a6ed76f95bb7dfbf63754592828dcdb82b943cf3817658a70fe4e4c7a": {
+    "55a2ae66a97cb3c4cee491b89ae72b140c41d5727a2c6065e1a08a92186b7c2f": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0x111428c12809b2098af504692e8259f1cbfe981a2a4abedd29692900e2076546",
+      "txHash": "0xa6995cab001e80b79e0b33770b35594bee0bfe0309bf75ec3b6a5f6327b90462",
       "layout": {
         "storage": [
           {
@@ -78,15 +88,15 @@
             "label": "info",
             "offset": 0,
             "slot": "1",
-            "type": "t_struct(ArenaInfo)1132_storage",
+            "type": "t_struct(ArenaInfo)499_storage",
             "contract": "Arena",
             "src": "contracts\\main\\Arena.sol:29"
           },
           {
-            "label": "_topics",
+            "label": "topics",
             "offset": 0,
             "slot": "8",
-            "type": "t_array(t_struct(Topic)1950_storage)dyn_storage",
+            "type": "t_array(t_struct(Topic)1304_storage)dyn_storage",
             "contract": "Arena",
             "src": "contracts\\main\\Arena.sol:31"
           },
@@ -94,7 +104,7 @@
             "label": "_topicChoices",
             "offset": 0,
             "slot": "9",
-            "type": "t_mapping(t_uint256,t_array(t_struct(Choice)1793_storage)dyn_storage)",
+            "type": "t_mapping(t_uint256,t_array(t_struct(Choice)1147_storage)dyn_storage)",
             "contract": "Arena",
             "src": "contracts\\main\\Arena.sol:32"
           },
@@ -102,7 +112,7 @@
             "label": "_choicePositionSummery",
             "offset": 0,
             "slot": "10",
-            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_struct(Position)1928_storage))",
+            "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_struct(Position)1282_storage))",
             "contract": "Arena",
             "src": "contracts\\main\\Arena.sol:33"
           },
@@ -118,7 +128,7 @@
             "label": "_addressPositions",
             "offset": 0,
             "slot": "12",
-            "type": "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_uint256,t_struct(Position)1928_storage)))",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_uint256,t_struct(Position)1282_storage)))",
             "contract": "Arena",
             "src": "contracts\\main\\Arena.sol:36"
           },
@@ -144,11 +154,11 @@
             "label": "address[]",
             "numberOfBytes": "32"
           },
-          "t_array(t_struct(Choice)1793_storage)dyn_storage": {
+          "t_array(t_struct(Choice)1147_storage)dyn_storage": {
             "label": "struct Choice[]",
             "numberOfBytes": "32"
           },
-          "t_array(t_struct(Topic)1950_storage)dyn_storage": {
+          "t_array(t_struct(Topic)1304_storage)dyn_storage": {
             "label": "struct Topic[]",
             "numberOfBytes": "32"
           },
@@ -156,11 +166,11 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IERC20)1057": {
+          "t_contract(IERC20)471": {
             "label": "contract IERC20",
             "numberOfBytes": "20"
           },
-          "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_uint256,t_struct(Position)1928_storage)))": {
+          "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_uint256,t_struct(Position)1282_storage)))": {
             "label": "mapping(address => mapping(uint256 => mapping(uint256 => struct Position)))",
             "numberOfBytes": "32"
           },
@@ -172,7 +182,7 @@
             "label": "mapping(uint256 => address[])",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_array(t_struct(Choice)1793_storage)dyn_storage)": {
+          "t_mapping(t_uint256,t_array(t_struct(Choice)1147_storage)dyn_storage)": {
             "label": "mapping(uint256 => struct Choice[])",
             "numberOfBytes": "32"
           },
@@ -180,11 +190,11 @@
             "label": "mapping(uint256 => mapping(uint256 => address[]))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_mapping(t_uint256,t_struct(Position)1928_storage))": {
+          "t_mapping(t_uint256,t_mapping(t_uint256,t_struct(Position)1282_storage))": {
             "label": "mapping(uint256 => mapping(uint256 => struct Position))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(Position)1928_storage)": {
+          "t_mapping(t_uint256,t_struct(Position)1282_storage)": {
             "label": "mapping(uint256 => struct Position)",
             "numberOfBytes": "32"
           },
@@ -192,7 +202,7 @@
             "label": "string",
             "numberOfBytes": "32"
           },
-          "t_struct(ArenaInfo)1132_storage": {
+          "t_struct(ArenaInfo)499_storage": {
             "label": "struct ArenaInfo",
             "members": [
               {
@@ -203,7 +213,7 @@
               },
               {
                 "label": "_token",
-                "type": "t_contract(IERC20)1057",
+                "type": "t_contract(IERC20)471",
                 "offset": 0,
                 "slot": "1"
               },
@@ -252,7 +262,7 @@
             ],
             "numberOfBytes": "224"
           },
-          "t_struct(Choice)1793_storage": {
+          "t_struct(Choice)1147_storage": {
             "label": "struct Choice",
             "members": [
               {
@@ -282,7 +292,7 @@
             ],
             "numberOfBytes": "96"
           },
-          "t_struct(Position)1928_storage": {
+          "t_struct(Position)1282_storage": {
             "label": "struct Position",
             "members": [
               {
@@ -306,7 +316,7 @@
             ],
             "numberOfBytes": "96"
           },
-          "t_struct(Topic)1950_storage": {
+          "t_struct(Topic)1304_storage": {
             "label": "struct Topic",
             "members": [
               {

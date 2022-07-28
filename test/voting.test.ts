@@ -91,9 +91,8 @@ describe("Test Voting mechanism", async () => {
     amount: BigNumber
   ): Promise<BigNumber> {
     const arenaFeePercentage = (await arena.info())._arenaFeePercentage;
-    const topicFeePercentage = (await arena.getTopicInfoById(topic))
-      ._topicFeePercentage;
-    const contributorFee = (await arena.getTopicInfoById(topic))
+    const topicFeePercentage = (await arena.topics(topic))._topicFeePercentage;
+    const contributorFee = (await arena.topics(topic))
       ._prevContributorsFeePercentage;
     const choiceFee = (await arena.choiceInfo(topic, choiceId))._feePercentage;
     const totalFeePercentage =
@@ -428,8 +427,7 @@ describe("Test Voting mechanism", async () => {
       );
     });
     it("should confirm fee distribution from voter 1 to topic", async () => {
-      const feePercentage = (await arena.getTopicInfoById(topic))
-        ._topicFeePercentage;
+      const feePercentage = (await arena.topics(topic))._topicFeePercentage;
       await confirmFeePercentagePaid(
         parseEther("1"),
         BigNumber.from(feePercentage),
