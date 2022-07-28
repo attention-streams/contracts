@@ -42,7 +42,7 @@ describe("Attention Streams Setup", () => {
     it("should create the first valid topic with id of # 0", async () => {
       const tx = await addTopic(arena, getValidTopicParams());
       await tx.wait(1);
-      const nextId = await arena._nextTopicId();
+      const nextId = await arena.getNextTopicId();
       expect(nextId).to.be.equal(1);
     });
     it("should create the second valid topic with id of # 1", async () => {
@@ -50,7 +50,7 @@ describe("Attention Streams Setup", () => {
       params._cycleDuration = 10;
       const tx = await addTopic(arena, params);
       await tx.wait(1);
-      const nextId = await arena._nextTopicId();
+      const nextId = await arena.getNextTopicId();
       expect(nextId).to.be.equal(2);
     });
     it("should properly retrieve topic # 0 info", async () => {
@@ -224,7 +224,7 @@ describe("Attention Streams Setup", () => {
       await deployTestVoteToken();
       await deployWithFeeArena();
 
-      topic = (await arenaNoFee._nextTopicId()).sub(1);
+      topic = (await arenaNoFee.getNextTopicId()).sub(1);
     });
     it("should create valid choice with id # 0", async () => {
       const addChoiceTx = await addChoice(
@@ -233,7 +233,7 @@ describe("Attention Streams Setup", () => {
         getValidChoiceParams()
       );
       await addChoiceTx.wait(1);
-      const nextChoiceId = await arenaNoFee._nextChoiceIdInTopic(topic);
+      const nextChoiceId = await arenaNoFee.getNextChoiceIdInTopic(topic);
       expect(nextChoiceId).to.equal(BigNumber.from(1));
     });
     it("should retrieve the first choices info", async () => {

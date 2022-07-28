@@ -302,7 +302,7 @@ describe("Test Voting mechanism", async () => {
       await validateVoter1and2PositionData(choiceA, 3);
     });
     it("should retrieve correct accumulative choice A info ", async () => {
-      let info = await arena.choicePositionSummery(topic, choiceA);
+      let info = await arena.getChoicePositionSummery(topic, choiceA);
       expect(info.shares).equal(5250);
       expect(info.tokens).equal(2250);
     });
@@ -404,7 +404,7 @@ describe("Test Voting mechanism", async () => {
       await setup();
     });
     it("should confirm that no votes are on choice A", async () => {
-      const info = await arena.choicePositionSummery(topic, choiceA);
+      const info = await arena.getChoicePositionSummery(topic, choiceA);
       expect(info.tokens).equal(0);
       expect(info.shares).equal(0);
     });

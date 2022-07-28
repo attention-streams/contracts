@@ -31,11 +31,11 @@ contract Arena is Initializable {
     Topic[] public topics; // list of topics in arena
     mapping(uint256 => Choice[]) public topicChoices; // list of choices of each topic
     mapping(uint256 => mapping(uint256 => Position)) // aggregated voting data of a chioce
-        internal _choicePositionSummery; // topicId => (choiceId => listOfPositions)
-    mapping(uint256 => mapping(uint256 => address[])) internal _choiceVoters; // list of all voters in a position
+        public choicePositionSummery; // topicId => (choiceId => listOfPositions)
+    mapping(uint256 => mapping(uint256 => address[])) public choiceVoters; // list of all voters in a position
     mapping(address => mapping(uint256 => mapping(uint256 => Position))) // position of each user in each choice of each topic
-        internal _addressPositions; // address => (topicId => (choiceId => Position))
-    mapping(address => uint256) internal claimableBalance; // amount of "info._token" that an address can withdraw from the arena
+        public positions; // address => (topicId => (choiceId => Position))
+    mapping(address => uint256) public claimableBalance; // amount of "info._token" that an address can withdraw from the arena
 
     function initialize(ArenaInfo memory _info) public initializer {
         require(
@@ -45,11 +45,11 @@ contract Arena is Initializable {
         info = _info;
     }
 
-    function _nextTopicId() public view returns (uint256) {
+    function getNextTopicId() public view returns (uint256) {
         return topics.length;
     }
 
-    function _nextChoiceIdInTopic(uint256 topicId)
+    function getNextChoiceIdInTopic(uint256 topicId)
         public
         view
         returns (uint256)
@@ -156,7 +156,7 @@ contract Arena is Initializable {
 
         Topic memory topic = topics[topicId];
         Choice memory choice = topicChoices[topicId][choiceId];
-        Position storage choicePosition = _choicePositionSummery[topicId][
+        Position storage choicePosition = choicePositionSummery[topicId][
             choiceId
         ];
 
@@ -177,11 +177,11 @@ contract Arena is Initializable {
             // pay previouse contributor
             for (
                 uint256 i = 0;
-                i < _choiceVoters[topicId][choiceId].length;
+                i < choiceVoters[topicId][choiceId].length;
                 i++
             ) {
-                Position storage thePosition = _addressPositions[
-                    _choiceVoters[topicId][choiceId][i]
+                Position storage thePosition = positions[
+                    choiceVoters[topicId][choiceId][i]
                 ][topicId][choiceId];
                 uint256 fee = (prevFee * thePosition.getShares(topic)) /
                     totalShares;
@@ -190,16 +190,16 @@ contract Arena is Initializable {
             }
         }
 
-        if (_addressPositions[msg.sender][topicId][choiceId].isEmpty()) {
-            _choiceVoters[topicId][choiceId].push(msg.sender);
+        if (positions[msg.sender][topicId][choiceId].isEmpty()) {
+            choiceVoters[topicId][choiceId].push(msg.sender);
         }
 
-        _addressPositions[msg.sender][topicId][choiceId].updatePosition(
+        positions[msg.sender][topicId][choiceId].updatePosition(
             topic,
             netVoteAmount
         );
 
-        _choicePositionSummery[topicId][choiceId].updatePosition(
+        choicePositionSummery[topicId][choiceId].updatePosition(
             topic,
             netVoteAmount
         );
@@ -210,20 +210,18 @@ contract Arena is Initializable {
         uint256 choiceId,
         address voter
     ) public view returns (uint256 tokens, uint256 shares) {
-        Position storage _position = _addressPositions[voter][topicId][
-            choiceId
-        ];
+        Position storage _position = positions[voter][topicId][choiceId];
         return (_position.tokens, _position.getShares(topics[topicId]));
     }
 
-    function choicePositionSummery(uint256 topicId, uint256 choiceId)
+    function getChoicePositionSummery(uint256 topicId, uint256 choiceId)
         public
         view
         returns (uint256 tokens, uint256 shares)
     {
         return (
-            _choicePositionSummery[topicId][choiceId].tokens,
-            _choicePositionSummery[topicId][choiceId].getShares(topics[topicId])
+            choicePositionSummery[topicId][choiceId].tokens,
+            choicePositionSummery[topicId][choiceId].getShares(topics[topicId])
         );
     }
 
