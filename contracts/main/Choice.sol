@@ -7,4 +7,5 @@ struct Choice {
     address payable _funds; // fees are paid to this address
     uint16 _feePercentage; // fees paid to choice from votes
     uint256 _fundingTarget; // cannot receive funds more than this amount
+    uint256 _accFeePershare;
 }

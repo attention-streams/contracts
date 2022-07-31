@@ -1,4 +1,4 @@
-import { BigNumber } from "ethers";
+import { BigNumber, BigNumberish } from "ethers";
 
 export interface ArenaParams {
   _name: string;
@@ -32,6 +32,7 @@ export interface ChoiceParams {
   _funds: string;
   _feePercentage: number;
   _fundingTarget: BigNumber;
+  _accFeePershare: BigNumberish;
 }
 
 export function getValidChoiceParams(): ChoiceParams {
@@ -42,6 +43,7 @@ export function getValidChoiceParams(): ChoiceParams {
     _fundingTarget: BigNumber.from(
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     ),
+    _accFeePershare: BigNumber.from(0),
   };
 }
 
@@ -53,6 +55,7 @@ export function getValidChoiceBParams(): ChoiceParams {
     _fundingTarget: BigNumber.from(
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     ),
+    _accFeePershare: BigNumber.from(0),
   };
 }
 

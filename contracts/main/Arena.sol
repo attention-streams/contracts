@@ -24,6 +24,17 @@ struct ArenaInfo {
     address payable _funds; // arena funds location
 }
 
+struct UserDept {
+    uint256 amount;
+    uint256 blockNumber;
+}
+
+struct UserPosition {
+    uint256 amount;
+    uint256 blockNumber;
+    uint256 feesPaied;
+}
+
 contract Arena is Initializable {
     using PositionUtils for Position;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -37,7 +48,14 @@ contract Arena is Initializable {
     mapping(uint256 => mapping(uint256 => address[])) public choiceVoters; // list of all voters in a position
     mapping(address => mapping(uint256 => mapping(uint256 => Position))) // position of each user in each choice of each topic
         public positions; // address => (topicId => (choiceId => Position))
-    mapping(address => uint256) public claimableBalance; // amount of "info._token" that an address can withdraw from the arena
+
+    mapping(address => mapping(uint256 => mapping(uint256 => Position[]))) // address => topicId => choiceId
+        public userPositions;
+    mapping(address => uint256) public balances; // original deposists of users (amount without fee)
+    mapping(address => UserDept) public usersDept; // amount of fees paid out to users
+
+    // choice id => accFeePerShare
+    mapping(uint256 => uint256) public accFeePerShare; // accumulated fee per share in each choice
 
     function initialize(ArenaInfo memory _info) public initializer {
         require(
@@ -166,29 +184,29 @@ contract Arena is Initializable {
             choiceId
         ];
 
-        claimableBalance[info._funds] += getArenaFee(amount);
-        claimableBalance[topic._funds] += getTopicFee(topic, amount);
-        claimableBalance[choice._funds] += getChoiceFee(choice, amount);
+        balances[info._funds] += getArenaFee(amount);
+        balances[topic._funds] += getTopicFee(topic, amount);
+        balances[choice._funds] += getChoiceFee(choice, amount);
 
         uint256 netVoteAmount = amount -
             (getArenaFee(amount) +
                 getTopicFee(topic, amount) +
                 getChoiceFee(choice, amount));
 
+        address[] storage _voters = choiceVoters[topicId][choiceId];
+
         if (choicePosition.getShares(topic) > 0) {
             uint256 prevFee = getPrevFee(topic, amount);
             uint256 totalShares = choicePosition.getShares(topic);
             netVoteAmount -= prevFee;
 
+            choice._accFeePershare = (prevFee * 1e18) / totalShares;
+
             // pay previouse contributor
-            for (
-                uint256 i = 0;
-                i < choiceVoters[topicId][choiceId].length;
-                i++
-            ) {
-                Position storage thePosition = positions[
-                    choiceVoters[topicId][choiceId][i]
-                ][topicId][choiceId];
+            for (uint256 i = 0; i < _voters.length; i++) {
+                Position storage thePosition = positions[_voters[i]][topicId][
+                    choiceId
+                ];
                 uint256 fee = (prevFee * thePosition.getShares(topic)) /
                     totalShares;
                 thePosition.updatePosition(topic, fee);
@@ -197,7 +215,7 @@ contract Arena is Initializable {
         }
 
         if (positions[msg.sender][topicId][choiceId].isEmpty()) {
-            choiceVoters[topicId][choiceId].push(msg.sender);
+            _voters.push(msg.sender);
         }
 
         positions[msg.sender][topicId][choiceId].updatePosition(
@@ -205,10 +223,15 @@ contract Arena is Initializable {
             netVoteAmount
         );
 
-        choicePositionSummery[topicId][choiceId].updatePosition(
-            topic,
-            netVoteAmount
+        userPositions[msg.sender][topicId][choiceId].push(
+            Position({
+                tokens: netVoteAmount,
+                blockNumber: block.number,
+                checkPointShares: 0
+            })
         );
+
+        choicePosition.updatePosition(topic, netVoteAmount);
     }
 
     function getVoterPositionOnChoice(
@@ -217,7 +240,18 @@ contract Arena is Initializable {
         address voter
     ) public view returns (uint256 tokens, uint256 shares) {
         Position storage _position = positions[voter][topicId][choiceId];
-        return (_position.tokens, _position.getShares(topics[topicId]));
+        Position[] memory _positions = userPositions[voter][topicId][choiceId];
+        Topic memory _topic = topics[topicId];
+        Choice memory _choice = topicChoices[topicId][choiceId];
+
+        uint256 totalAmount;
+        uint256 totalShares;
+        for (uint16 i = 0; i < _positions.length; i++) {
+            totalAmount += _positions[i].tokens;
+            totalShares += _positions[i].getShares(_topic);
+        }
+        // return (totalAmount, totalShares);
+        return (_position.tokens, _position.getShares(_topic));
     }
 
     function getChoicePositionSummery(uint256 topicId, uint256 choiceId)
@@ -232,6 +266,6 @@ contract Arena is Initializable {
     }
 
     function balanceOf(address account) public view returns (uint256) {
-        return claimableBalance[account];
+        return balances[account];
     }
 }
