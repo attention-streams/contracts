@@ -24,6 +24,18 @@ struct ArenaInfo {
     address payable funds; // arena funds location
 }
 
+struct Cycle {
+    uint256 totalSum; // some of all tokens invested in this cycle
+    uint256 totalFees; // total fees accumulated on this cycle (to be distributed to voters)
+    uint256 totalSharesPaid; // used to efficiently update aggregates
+}
+
+struct ChoiceVoteData {
+    uint256 totalSum; // sum of all tokens invested in this choice
+    uint256 totalShares; // total shares of this choice
+    mapping(uint256 => Cycle) cycles; // cycleId => cycle info
+}
+
 contract Arena is Initializable {
     using PositionUtils for Position;
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -32,10 +44,11 @@ contract Arena is Initializable {
 
     Topic[] public topics; // list of topics in arena
     mapping(uint256 => Choice[]) public topicChoices; // list of choices of each topic
-    mapping(uint256 => mapping(uint256 => Position)) // aggregated voting data of a chioce
-        public choicePositionSummery; // topicId => (choiceId => listOfPositions)
+    mapping(uint256 => mapping(uint256 => ChoiceVoteData))
+        public choiceVoteData; // topicId => choiceId => aggregated vote data
+
     mapping(uint256 => mapping(uint256 => address[])) public choiceVoters; // list of all voters in a position
-    mapping(address => mapping(uint256 => mapping(uint256 => Position))) // position of each user in each choice of each topic
+    mapping(address => mapping(uint256 => mapping(uint256 => Position[]))) // positions of each user in each choice of each topic
         public positions; // address => (topicId => (choiceId => Position))
     mapping(address => uint256) public claimableBalance; // amount of "info._token" that an address can withdraw from the arena
 
@@ -162,53 +175,17 @@ contract Arena is Initializable {
 
         Topic memory topic = topics[topicId];
         Choice memory choice = topicChoices[topicId][choiceId];
-        Position storage choicePosition = choicePositionSummery[topicId][
-            choiceId
-        ];
-
-        claimableBalance[info.funds] += getArenaFee(amount);
-        claimableBalance[topic.funds] += getTopicFee(topic, amount);
-        claimableBalance[choice.funds] += getChoiceFee(choice, amount);
+        ChoiceVoteData storage voteData = choiceVoteData[topicId][choiceId];
 
         uint256 netVoteAmount = amount -
             (getArenaFee(amount) +
                 getTopicFee(topic, amount) +
                 getChoiceFee(choice, amount));
 
-        if (choicePosition.getShares(topic) > 0) {
-            uint256 prevFee = getPrevFee(topic, amount);
-            uint256 totalShares = choicePosition.getShares(topic);
-            netVoteAmount -= prevFee;
-
-            // pay previouse contributor
-            for (
-                uint256 i = 0;
-                i < choiceVoters[topicId][choiceId].length;
-                i++
-            ) {
-                Position storage thePosition = positions[
-                    choiceVoters[topicId][choiceId][i]
-                ][topicId][choiceId];
-                uint256 fee = (prevFee * thePosition.getShares(topic)) /
-                    totalShares;
-                thePosition.updatePosition(topic, fee);
-                choicePosition.updatePosition(topic, fee);
-            }
-        }
-
-        if (positions[msg.sender][topicId][choiceId].isEmpty()) {
-            choiceVoters[topicId][choiceId].push(msg.sender);
-        }
-
-        positions[msg.sender][topicId][choiceId].updatePosition(
-            topic,
-            netVoteAmount
-        );
-
-        choicePositionSummery[topicId][choiceId].updatePosition(
-            topic,
-            netVoteAmount
-        );
+        claimableBalance[info.funds] += getArenaFee(amount);
+        claimableBalance[topic.funds] += getTopicFee(topic, amount);
+        claimableBalance[choice.funds] += getChoiceFee(choice, amount);
+        claimableBalance[msg.sender] += netVoteAmount;
     }
 
     function getVoterPositionOnChoice(
