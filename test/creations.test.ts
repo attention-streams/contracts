@@ -163,9 +163,7 @@ describe("Attention Streams Setup", () => {
       const [, dev] = await ethers.getSigners();
       const devBalance: BigNumber = await token.balanceOf(dev.address);
       const arenaFundsBalance: BigNumber = await token.balanceOf(
-        (
-          await arena.info()
-        )._funds
+        (await arena.info())._funds
       );
       return [devBalance, arenaFundsBalance];
     }
@@ -183,8 +181,9 @@ describe("Attention Streams Setup", () => {
       await configureAndAddTopic();
       const [devBalanceAfter, arenaBalanceAfter] = await snapshot();
       const deltaDevBalance: BigNumber = devBalanceBefore.sub(devBalanceAfter);
-      const deltaArenaBalance: BigNumber =
-        arenaBalanceAfter.sub(arenaBalanceBefore);
+      const deltaArenaBalance: BigNumber = arenaBalanceAfter.sub(
+        arenaBalanceBefore
+      );
 
       expect(deltaDevBalance.eq(deltaArenaBalance)).to.be.true;
       const fee = (await arena.info())._topicCreationFee;
@@ -236,6 +235,7 @@ describe("Attention Streams Setup", () => {
       const nextChoiceId = await arenaNoFee.getNextChoiceIdInTopic(topic);
       expect(nextChoiceId).to.equal(BigNumber.from(1));
     });
+
     it("should retrieve the first choices info", async () => {
       const choiceInfo = await arenaNoFee.topicChoices(topic, 0);
       const params = getFlatParamsFromDict(getValidChoiceParams());
@@ -289,9 +289,7 @@ describe("Attention Streams Setup", () => {
         .connect(dev)
         .approve(
           arenaWithFee.address,
-          (
-            await arenaWithFee.info()
-          )._choiceCreationFee
+          (await arenaWithFee.info())._choiceCreationFee
         );
       await approve.wait(1);
       const tx = addChoice(arenaWithFee, topic, getValidChoiceParams(), dev);
@@ -315,9 +313,7 @@ describe("Attention Streams Setup", () => {
       const [, dev] = await ethers.getSigners();
       const devBalanceBefore = await token.balanceOf(dev.address);
       const choiceFundsBalanceBefore = await token.balanceOf(
-        (
-          await arenaWithFee.info()
-        )._funds
+        (await arenaWithFee.info())._funds
       );
       return [devBalanceBefore, choiceFundsBalanceBefore];
     }
@@ -346,8 +342,10 @@ describe("Attention Streams Setup", () => {
     }
 
     it("should create choice and subtract choiceCreationFee amount", async () => {
-      const [deltaDevBalance, deltaChoiceFundsBalance] =
-        await addChoiceAndGetDelta();
+      const [
+        deltaDevBalance,
+        deltaChoiceFundsBalance,
+      ] = await addChoiceAndGetDelta();
 
       expect(deltaDevBalance.eq(deltaChoiceFundsBalance)).to.be.true;
       expect(

@@ -80,8 +80,15 @@ describe("Test Voting mechanism", async () => {
   }
 
   async function setup() {
-    [, arenaFunds, topicFunds, choiceAFunds, choiceBFunds, voter1, voter2] =
-      await ethers.getSigners();
+    [
+      ,
+      arenaFunds,
+      topicFunds,
+      choiceAFunds,
+      choiceBFunds,
+      voter1,
+      voter2,
+    ] = await ethers.getSigners();
     await _setupAttentionStreams();
     await _fundVoters();
   }
@@ -303,7 +310,6 @@ describe("Test Voting mechanism", async () => {
     });
     it("should retrieve correct accumulative choice A info ", async () => {
       let info = await arena.getChoicePositionSummery(topic, choiceA);
-      expect(info.shares).equal(5250);
       expect(info.tokens).equal(2250);
     });
     it("should get correct info after voter a votes 3000 tokens on the next cycle", async () => {
@@ -406,7 +412,6 @@ describe("Test Voting mechanism", async () => {
     it("should confirm that no votes are on choice A", async () => {
       const info = await arena.getChoicePositionSummery(topic, choiceA);
       expect(info.tokens).equal(0);
-      expect(info.shares).equal(0);
     });
     it("should confirm voter 1 votes on choice A", async () => {
       const amount = parseEther("1");
