@@ -28,25 +28,25 @@ describe("Test Voting mechanism", async () => {
 
   async function _deployArena() {
     const arenaParams = getValidArenaParams();
-    arenaParams._token = token.address;
-    arenaParams._funds = arenaFunds.address;
+    arenaParams.token = token.address;
+    arenaParams.funds = arenaFunds.address;
     arena = await deployArena(arenaParams);
     await arena.deployed();
   }
 
   async function _deployTopic() {
     const topicParams = getValidTopicParams();
-    topicParams._funds = topicFunds.address;
+    topicParams.funds = topicFunds.address;
     const _topicTx = await addTopic(arena, topicParams);
     await _topicTx.wait(1);
   }
 
   async function _deployTwoChoices() {
     const choiceAParams = getValidChoiceParams();
-    choiceAParams._funds = choiceAFunds.address;
+    choiceAParams.funds = choiceAFunds.address;
 
     const choiceBParams = getValidChoiceBParams();
-    choiceBParams._funds = choiceBFunds.address;
+    choiceBParams.funds = choiceBFunds.address;
 
     const _choiceATx = await addChoice(arena, topic, choiceAParams);
     const _choiceBTx = await addChoice(arena, topic, choiceBParams);
@@ -97,12 +97,11 @@ describe("Test Voting mechanism", async () => {
     choiceId: BigNumber,
     amount: BigNumber
   ): Promise<BigNumber> {
-    const arenaFeePercentage = (await arena.info())._arenaFeePercentage;
-    const topicFeePercentage = (await arena.topics(topic))._topicFeePercentage;
+    const arenaFeePercentage = (await arena.info()).arenaFeePercentage;
+    const topicFeePercentage = (await arena.topics(topic)).topicFeePercentage;
     const contributorFee = (await arena.topics(topic))
-      ._prevContributorsFeePercentage;
-    const choiceFee = (await arena.topicChoices(topic, choiceId))
-      ._feePercentage;
+      .prevContributorsFeePercentage;
+    const choiceFee = (await arena.topicChoices(topic, choiceId)).feePercentage;
     const totalFeePercentage =
       arenaFeePercentage + topicFeePercentage + contributorFee + choiceFee;
 
@@ -425,7 +424,7 @@ describe("Test Voting mechanism", async () => {
 
     it("should confirm fee distribution from voter 1 to choice A", async () => {
       const feePercentage = (await arena.topicChoices(topic, choiceA))
-        ._feePercentage;
+        .feePercentage;
       await confirmFeePercentagePaid(
         parseEther("1"),
         BigNumber.from(feePercentage),
@@ -433,7 +432,7 @@ describe("Test Voting mechanism", async () => {
       );
     });
     it("should confirm fee distribution from voter 1 to topic", async () => {
-      const feePercentage = (await arena.topics(topic))._topicFeePercentage;
+      const feePercentage = (await arena.topics(topic)).topicFeePercentage;
       await confirmFeePercentagePaid(
         parseEther("1"),
         BigNumber.from(feePercentage),
@@ -441,7 +440,7 @@ describe("Test Voting mechanism", async () => {
       );
     });
     it("should confirm fee distribution from voter 1 to arena", async () => {
-      const feePercentage = (await arena.info())._arenaFeePercentage;
+      const feePercentage = (await arena.info()).arenaFeePercentage;
       await confirmFeePercentagePaid(
         parseEther("1"),
         BigNumber.from(feePercentage),

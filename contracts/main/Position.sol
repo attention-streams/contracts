@@ -28,7 +28,7 @@ library PositionUtils {
         view
         returns (uint256)
     {
-        return (block.number - p.blockNumber) / t._cycleDuration;
+        return (block.number - p.blockNumber) / t.cycleDuration;
     }
 
     function getShares(Position memory p, Topic memory t)
@@ -39,7 +39,7 @@ library PositionUtils {
         return
             p.tokens *
             cyclesPassed(p, t) *
-            (t._sharePerCyclePercentage / 10000) +
+            (t.sharePerCyclePercentage / 10000) +
             p.checkPointShares;
     }
 }

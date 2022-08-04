@@ -29,7 +29,7 @@ describe("Attention Streams Setup", () => {
 
     it("should fail to create arena with fee percentage more than 100%", async () => {
       const params = getValidArenaParams();
-      params._arenaFeePercentage = 10100;
+      params.arenaFeePercentage = 10100;
       await expect(deployArena(params)).to.be.reverted;
     });
   });
@@ -47,7 +47,7 @@ describe("Attention Streams Setup", () => {
     });
     it("should create the second valid topic with id of # 1", async () => {
       const params = getValidTopicParams();
-      params._cycleDuration = 10;
+      params.cycleDuration = 10;
       const tx = await addTopic(arena, params);
       await tx.wait(1);
       const nextId = await arena.getNextTopicId();
@@ -61,40 +61,40 @@ describe("Attention Streams Setup", () => {
     it("should properly retrieve topic # 1 info", async () => {
       const info = await arena.topics(1);
       const params = getValidTopicParams();
-      params._cycleDuration = 10;
+      params.cycleDuration = 10;
       expect(info).to.deep.include.members(getFlatParamsFromDict(params));
     });
     it("Should fail to create topic with topic fee percentage more than 5% (limited by arena)", async () => {
       const params = getValidTopicParams();
-      params._topicFeePercentage = 1000; // 10 %
+      params.topicFeePercentage = 1000; // 10 %
       const tx = addTopic(arena, params);
       await expect(tx).to.be.revertedWith("Max topic fee exceeded");
     });
     it("Should fail to create topic with max choice fee percentage exceeding max choice fee percentage defined by arena", async () => {
       const params = getValidTopicParams();
-      params._maxChoiceFeePercentage = 3100; // 31 %
+      params.maxChoiceFeePercentage = 3100; // 31 %
       const tx = addTopic(arena, params);
       await expect(tx).to.be.revertedWith("Max choice fee exceeded");
     });
     it("should fail to create topic with fundingPercentage more than 100%", async () => {
       const params = getValidTopicParams();
-      params._fundingPercentage = 10100;
+      params.fundingPercentage = 10100;
       const tx = addTopic(arena, params);
       await expect(tx).to.be.revertedWith("funding percentage exceeded 100%");
     });
 
     async function deployArenaWithNoFeeLimits() {
       const arenaParams = getValidArenaParams();
-      arenaParams._maxTopicFeePercentage = 10000; // 100 %
-      arenaParams._maxChoiceFeePercentage = 10000; // 100 %
+      arenaParams.maxTopicFeePercentage = 10000; // 100 %
+      arenaParams.maxChoiceFeePercentage = 10000; // 100 %
       return await deployArena(arenaParams);
     }
 
     async function deployTopicWithExceedingFees() {
       const arena = await deployArenaWithNoFeeLimits();
       const topicParams = getValidTopicParams();
-      topicParams._topicFeePercentage = 3000; // 30 %
-      topicParams._prevContributorsFeePercentage = 6500; // 65 %
+      topicParams.topicFeePercentage = 3000; // 30 %
+      topicParams.prevContributorsFeePercentage = 6500; // 65 %
       // current arrangement: 10(arena) + 30(topic) + 65(contributor) = 105 %
       return addTopic(arena, topicParams);
     }
@@ -112,15 +112,15 @@ describe("Attention Streams Setup", () => {
     async function deployArenaWithTestVoteTokenAndFee() {
       token = await helpers.getTestVoteToken();
       const params = getValidArenaParams();
-      params._topicCreationFee = utils.parseEther("10");
-      params._token = token.address;
+      params.topicCreationFee = utils.parseEther("10");
+      params.token = token.address;
       arena = await deployArena(params);
     }
 
     it("should create an arena with with topicCreationFee of 10 tokens", async () => {
       await deployArenaWithTestVoteTokenAndFee();
       const info = await arena.info();
-      expect(info._topicCreationFee).to.be.equal(utils.parseEther("10"));
+      expect(info.topicCreationFee).to.be.equal(utils.parseEther("10"));
     });
 
     it("should fail to create topic if contract can't spend funds", async () => {
@@ -131,8 +131,7 @@ describe("Attention Streams Setup", () => {
     });
     it("should fail to create topic if balance is low", async () => {
       const [, dev] = await ethers.getSigners();
-      const topicCreationFee: BigNumber = (await arena.info())
-        ._topicCreationFee;
+      const topicCreationFee: BigNumber = (await arena.info()).topicCreationFee;
 
       // approve the contract to spend funds
       const approveTx = await token
@@ -149,7 +148,7 @@ describe("Attention Streams Setup", () => {
 
     async function fundDevAccountAndApprove() {
       const [owner, dev] = await ethers.getSigners();
-      const fee = (await arena.info())._topicCreationFee;
+      const fee = (await arena.info()).topicCreationFee;
       // transfer some funds from owner to dev
       const transferTx = await token.connect(owner).transfer(dev.address, fee);
       await transferTx.wait(1);
@@ -163,7 +162,7 @@ describe("Attention Streams Setup", () => {
       const [, dev] = await ethers.getSigners();
       const devBalance: BigNumber = await token.balanceOf(dev.address);
       const arenaFundsBalance: BigNumber = await token.balanceOf(
-        (await arena.info())._funds
+        (await arena.info()).funds
       );
       return [devBalance, arenaFundsBalance];
     }
@@ -186,7 +185,7 @@ describe("Attention Streams Setup", () => {
       );
 
       expect(deltaDevBalance.eq(deltaArenaBalance)).to.be.true;
-      const fee = (await arena.info())._topicCreationFee;
+      const fee = (await arena.info()).topicCreationFee;
       expect(deltaArenaBalance).equal(fee);
     });
   });
@@ -211,8 +210,8 @@ describe("Attention Streams Setup", () => {
 
     async function deployWithFeeArena() {
       const withFeeParams = await deployTestVoteToken();
-      withFeeParams._choiceCreationFee = ethers.utils.parseEther("10"); // 10 tokens as fee
-      withFeeParams._token = token.address;
+      withFeeParams.choiceCreationFee = ethers.utils.parseEther("10"); // 10 tokens as fee
+      withFeeParams.token = token.address;
       arenaWithFee = await deployArena(withFeeParams);
       const createTopic2 = await addTopic(arenaWithFee, getValidTopicParams());
       await createTopic2.wait(1);
@@ -243,39 +242,39 @@ describe("Attention Streams Setup", () => {
     });
     it("should fail to create choice if fee percentage is more than allowed by topic", async () => {
       const params = getValidChoiceParams();
-      params._feePercentage = 2600;
+      params.feePercentage = 2600;
       const tx = addChoice(arenaNoFee, topic, params);
       await expect(tx).to.be.revertedWith("Fee percentage too high");
     });
 
     async function ConfigureAndDeployArena() {
       const arenaParams = getValidArenaParams(); // arena fee is 10%
-      arenaParams._maxChoiceFeePercentage = 10000;
-      arenaParams._maxTopicFeePercentage = 10000;
+      arenaParams.maxChoiceFeePercentage = 10000;
+      arenaParams.maxTopicFeePercentage = 10000;
       return await deployArena(arenaParams);
     }
 
-    async function configureAndAddTopic(_arena: Arena) {
+    async function configureAndAddTopic(arena: Arena) {
       const topicParams = getValidTopicParams();
-      topicParams._maxChoiceFeePercentage = 10000;
-      topicParams._topicFeePercentage = 6000;
-      const _topic = await addTopic(_arena, topicParams);
-      await _topic.wait(1);
-      return _topic;
+      topicParams.maxChoiceFeePercentage = 10000;
+      topicParams.topicFeePercentage = 6000;
+      const topic = await addTopic(arena, topicParams);
+      await topic.wait(1);
+      return topic;
     }
 
-    async function configureAndAddChoice(_arena: Arena) {
+    async function configureAndAddChoice(arena: Arena) {
       const choiceParams = getValidChoiceParams();
-      choiceParams._feePercentage = 4000;
-      return addChoice(_arena, BigNumber.from(0), choiceParams);
+      choiceParams.feePercentage = 4000;
+      return addChoice(arena, BigNumber.from(0), choiceParams);
     }
 
     it("should fail to create choice if accumulative fee is more than 100%", async () => {
-      const _arena = await ConfigureAndDeployArena();
-      await configureAndAddTopic(_arena);
-      const _choice = configureAndAddChoice(_arena);
+      const arena = await ConfigureAndDeployArena();
+      await configureAndAddTopic(arena);
+      const choice = configureAndAddChoice(arena);
 
-      await expect(_choice).to.be.revertedWith(
+      await expect(choice).to.be.revertedWith(
         "accumulative fees exceeded 100%"
       );
     });
@@ -289,7 +288,7 @@ describe("Attention Streams Setup", () => {
         .connect(dev)
         .approve(
           arenaWithFee.address,
-          (await arenaWithFee.info())._choiceCreationFee
+          (await arenaWithFee.info()).choiceCreationFee
         );
       await approve.wait(1);
       const tx = addChoice(arenaWithFee, topic, getValidChoiceParams(), dev);
@@ -300,7 +299,7 @@ describe("Attention Streams Setup", () => {
 
     async function fundDevAccountAndApprove() {
       const [owner, dev] = await ethers.getSigners();
-      const fee = (await arenaWithFee.info())._choiceCreationFee;
+      const fee = (await arenaWithFee.info()).choiceCreationFee;
       const transfer = await token.connect(owner).transfer(dev.address, fee);
       await transfer.wait(1);
       const approve = await token
@@ -313,7 +312,7 @@ describe("Attention Streams Setup", () => {
       const [, dev] = await ethers.getSigners();
       const devBalanceBefore = await token.balanceOf(dev.address);
       const choiceFundsBalanceBefore = await token.balanceOf(
-        (await arenaWithFee.info())._funds
+        (await arenaWithFee.info()).funds
       );
       return [devBalanceBefore, choiceFundsBalanceBefore];
     }
@@ -348,9 +347,7 @@ describe("Attention Streams Setup", () => {
       ] = await addChoiceAndGetDelta();
 
       expect(deltaDevBalance.eq(deltaChoiceFundsBalance)).to.be.true;
-      expect(
-        deltaDevBalance.eq((await arenaWithFee.info())._choiceCreationFee)
-      );
+      expect(deltaDevBalance.eq((await arenaWithFee.info()).choiceCreationFee));
     });
   });
 });

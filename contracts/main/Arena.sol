@@ -12,16 +12,16 @@ import "hardhat/console.sol";
 import "./Position.sol";
 
 struct ArenaInfo {
-    string _name; // arena name
-    address _token; // this is the token that is used to vote in this arena
-    uint256 _minContributionAmount; // minimum amount of voting/contributing
+    string name; // arena name
+    address token; // this is the token that is used to vote in this arena
+    uint256 minContributionAmount; // minimum amount of voting/contributing
     // all percentage fields assume 2 decimal places
-    uint16 _maxChoiceFeePercentage; // max percentage of a vote taken as fees for a choice
-    uint16 _maxTopicFeePercentage; // max percentage of a vote taken as fees for a topic
-    uint16 _arenaFeePercentage; // percentage of each vote that goes to the arena
-    uint256 _choiceCreationFee; // to prevent spam choice creation
-    uint256 _topicCreationFee; // to prevent spam topic creation
-    address payable _funds; // arena funds location
+    uint16 maxChoiceFeePercentage; // max percentage of a vote taken as fees for a choice
+    uint16 maxTopicFeePercentage; // max percentage of a vote taken as fees for a topic
+    uint16 arenaFeePercentage; // percentage of each vote that goes to the arena
+    uint256 choiceCreationFee; // to prevent spam choice creation
+    uint256 topicCreationFee; // to prevent spam topic creation
+    address payable funds; // arena funds location
 }
 
 contract Arena is Initializable {
@@ -41,7 +41,7 @@ contract Arena is Initializable {
 
     function initialize(ArenaInfo memory _info) public initializer {
         require(
-            (_info._arenaFeePercentage) <= 100 * 10**2,
+            (_info.arenaFeePercentage) <= 100 * 10**2,
             "Fees exceeded 100%"
         );
         info = _info;
@@ -60,31 +60,31 @@ contract Arena is Initializable {
     }
 
     function addTopic(Topic memory topic) public {
-        if (info._topicCreationFee > 0) {
-            IERC20Upgradeable(info._token).safeTransferFrom(
+        if (info.topicCreationFee > 0) {
+            IERC20Upgradeable(info.token).safeTransferFrom(
                 msg.sender,
-                info._funds,
-                info._topicCreationFee
+                info.funds,
+                info.topicCreationFee
             );
         }
 
         require(
-            topic._fundingPercentage <= 10000,
+            topic.fundingPercentage <= 10000,
             "funding percentage exceeded 100%"
         );
 
         require(
-            topic._topicFeePercentage <= info._maxTopicFeePercentage,
+            topic.topicFeePercentage <= info.maxTopicFeePercentage,
             "Max topic fee exceeded"
         );
         require(
-            topic._maxChoiceFeePercentage <= info._maxChoiceFeePercentage,
+            topic.maxChoiceFeePercentage <= info.maxChoiceFeePercentage,
             "Max choice fee exceeded"
         );
         require(
-            info._arenaFeePercentage +
-                topic._topicFeePercentage +
-                topic._prevContributorsFeePercentage <=
+            info.arenaFeePercentage +
+                topic.topicFeePercentage +
+                topic.prevContributorsFeePercentage <=
                 10000,
             "accumulative fees exceeded 100%"
         );
@@ -94,23 +94,23 @@ contract Arena is Initializable {
 
     function addChoice(uint256 topicId, Choice memory choice) public {
         require(
-            choice._feePercentage <= topics[topicId]._maxChoiceFeePercentage,
+            choice.feePercentage <= topics[topicId].maxChoiceFeePercentage,
             "Fee percentage too high"
         );
 
         require(
-            choice._feePercentage +
-                info._arenaFeePercentage +
-                topics[topicId]._topicFeePercentage +
-                topics[topicId]._prevContributorsFeePercentage <=
+            choice.feePercentage +
+                info.arenaFeePercentage +
+                topics[topicId].topicFeePercentage +
+                topics[topicId].prevContributorsFeePercentage <=
                 10000,
             "accumulative fees exceeded 100%"
         );
-        if (info._choiceCreationFee > 0) {
-            IERC20Upgradeable(info._token).safeTransferFrom(
+        if (info.choiceCreationFee > 0) {
+            IERC20Upgradeable(info.token).safeTransferFrom(
                 msg.sender,
-                info._funds,
-                info._choiceCreationFee
+                info.funds,
+                info.choiceCreationFee
             );
         }
 
@@ -118,7 +118,7 @@ contract Arena is Initializable {
     }
 
     function getArenaFee(uint256 amount) internal view returns (uint256) {
-        return (amount * info._arenaFeePercentage) / 10000;
+        return (amount * info.arenaFeePercentage) / 10000;
     }
 
     function getTopicFee(Topic memory topic, uint256 amount)
@@ -126,7 +126,7 @@ contract Arena is Initializable {
         pure
         returns (uint256)
     {
-        return (amount * topic._topicFeePercentage) / 10000;
+        return (amount * topic.topicFeePercentage) / 10000;
     }
 
     function getChoiceFee(Choice memory choice, uint256 amount)
@@ -134,7 +134,7 @@ contract Arena is Initializable {
         pure
         returns (uint256)
     {
-        return (amount * choice._feePercentage) / 10000;
+        return (amount * choice.feePercentage) / 10000;
     }
 
     function getPrevFee(Topic memory topic, uint256 amount)
@@ -142,7 +142,7 @@ contract Arena is Initializable {
         pure
         returns (uint256)
     {
-        return (amount * topic._prevContributorsFeePercentage) / 10000;
+        return (amount * topic.prevContributorsFeePercentage) / 10000;
     }
 
     function vote(
@@ -151,10 +151,10 @@ contract Arena is Initializable {
         uint256 amount
     ) public {
         require(
-            amount >= info._minContributionAmount,
+            amount >= info.minContributionAmount,
             "contribution amount too low"
         );
-        IERC20Upgradeable(info._token).safeTransferFrom(
+        IERC20Upgradeable(info.token).safeTransferFrom(
             msg.sender,
             address(this),
             amount
@@ -166,9 +166,9 @@ contract Arena is Initializable {
             choiceId
         ];
 
-        claimableBalance[info._funds] += getArenaFee(amount);
-        claimableBalance[topic._funds] += getTopicFee(topic, amount);
-        claimableBalance[choice._funds] += getChoiceFee(choice, amount);
+        claimableBalance[info.funds] += getArenaFee(amount);
+        claimableBalance[topic.funds] += getTopicFee(topic, amount);
+        claimableBalance[choice.funds] += getChoiceFee(choice, amount);
 
         uint256 netVoteAmount = amount -
             (getArenaFee(amount) +

@@ -64,6 +64,7 @@ async function addTopic(
   _signer?: SignerWithAddress
 ) {
   const signer = await getSigner(_signer);
+
   return _arena.connect(signer).addTopic(_params);
 }
 
@@ -100,7 +101,7 @@ export {
 
 async function deployStandardArena() {
   let params = getValidArenaParams();
-  params._token = "0x93055D4D59CE4866424E1814b84986bFD44920b9";
+  params.token = "0x93055D4D59CE4866424E1814b84986bFD44920b9";
   let t = await deployArena(params);
   await t.deployed();
   console.log("Deployed at ", t.address);
@@ -108,7 +109,7 @@ async function deployStandardArena() {
 
 async function addStandardTopic(arena: Arena) {
   let params = getValidTopicParams();
-  params._cycleDuration = 2;
+  params.cycleDuration = 2;
   let t = await addTopic(arena, params);
   await t.wait(1);
   console.log("Topic Added");
