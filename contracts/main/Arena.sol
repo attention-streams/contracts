@@ -174,6 +174,7 @@ contract Arena is Initializable {
         );
 
         Topic memory topic = topics[topicId];
+
         Choice memory choice = topicChoices[topicId][choiceId];
         ChoiceVoteData storage voteData = choiceVoteData[topicId][choiceId];
 
@@ -192,20 +193,16 @@ contract Arena is Initializable {
         uint256 topicId,
         uint256 choiceId,
         address voter
-    ) public view returns (uint256 tokens, uint256 shares) {
-        Position storage _position = positions[voter][topicId][choiceId];
-        return (_position.tokens, _position.getShares(topics[topicId]));
+    ) public view returns (uint256 tokens) {
+        tokens = 0;
     }
 
     function getChoicePositionSummery(uint256 topicId, uint256 choiceId)
         public
         view
-        returns (uint256 tokens, uint256 shares)
+        returns (uint256 tokens)
     {
-        return (
-            choicePositionSummery[topicId][choiceId].tokens,
-            choicePositionSummery[topicId][choiceId].getShares(topics[topicId])
-        );
+        return 0;
     }
 
     function balanceOf(address account) public view returns (uint256) {

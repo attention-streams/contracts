@@ -1,4 +1,4 @@
-import { BigNumber } from "ethers";
+import { BigNumber, BigNumberish } from "ethers";
 
 export interface ArenaParams {
   name: string;
@@ -14,6 +14,7 @@ export interface ArenaParams {
 
 export interface TopicParams {
   cycleDuration: number;
+  startBlock: BigNumberish;
   sharePerCyclePercentage: number;
 
   prevContributorsFeePercentage: number;
@@ -59,6 +60,7 @@ export function getValidChoiceBParams(): ChoiceParams {
 export function getValidTopicParams(): TopicParams {
   return {
     cycleDuration: 100, // 100 blocks
+    startBlock: 0,
     sharePerCyclePercentage: 100 * 10 ** 2, // 100%
 
     prevContributorsFeePercentage: 12 * 10 ** 2, // 12 %

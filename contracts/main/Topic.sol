@@ -4,8 +4,15 @@ pragma solidity ^0.8.0;
 
 import "./Choice.sol";
 
+library TopicUtils {
+    function getActiveCycle(Topic memory topic) public view returns (uint256) {
+        return (block.number - topic.startBlock) / topic.cycleDuration;
+    }
+}
+
 struct Topic {
     uint32 cycleDuration; // share distribution cycle. in terms of # of blocks - ex. once every 100 blocks
+    uint32 startBlock; // block to open voting
     uint16 sharePerCyclePercentage; // percentage of a position given as "shares" in each cycle
     uint16 prevContributorsFeePercentage; // percentage of a vote given to the previous voters
     uint16 topicFeePercentage; // percentage of a vote given to the topic

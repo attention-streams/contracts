@@ -36,6 +36,7 @@ describe("Test Voting mechanism", async () => {
 
   async function _deployTopic() {
     const topicParams = getValidTopicParams();
+    topicParams.startBlock = await ethers.provider.getBlockNumber();
     topicParams.funds = topicFunds.address;
     const _topicTx = await addTopic(arena, topicParams);
     await _topicTx.wait(1);
@@ -250,18 +251,8 @@ describe("Test Voting mechanism", async () => {
         choice,
         voter2.address
       );
-      expect(position1Info.tokens).to.equal(
-        data[cycle].positions[epoch][0].tokens
-      );
-      expect(position1Info.shares).to.equal(
-        data[cycle].positions[epoch][0].shares
-      );
-      expect(position2Info.tokens).to.equal(
-        data[cycle].positions[epoch][1].tokens
-      );
-      expect(position2Info.shares).to.equal(
-        data[cycle].positions[epoch][1].shares
-      );
+      expect(position1Info).to.equal(data[cycle].positions[epoch][0].tokens);
+      expect(position2Info).to.equal(data[cycle].positions[epoch][1].tokens);
     }
     it("should setup a clean attention stream", async () => {
       await setup();
@@ -309,7 +300,7 @@ describe("Test Voting mechanism", async () => {
     });
     it("should retrieve correct accumulative choice A info ", async () => {
       let info = await arena.getChoicePositionSummery(topic, choiceA);
-      expect(info.tokens).equal(2250);
+      expect(info).equal(2250);
     });
     it("should get correct info after voter a votes 3000 tokens on the next cycle", async () => {
       for (let i = 0; i < 100; i++) {
@@ -353,8 +344,7 @@ describe("Test Voting mechanism", async () => {
         voter1.address
       );
 
-      expect(positionOnB.tokens).equal(700);
-      expect(positionOnB.shares).equal(0);
+      expect(positionOnB).equal(700);
     });
     it("should get correct info of both choice A and B on cycle 5", async () => {
       for (let i = 0; i < 100; i++) {
@@ -368,8 +358,7 @@ describe("Test Voting mechanism", async () => {
         voter1.address
       );
 
-      expect(positionOnB.tokens).equal(700);
-      expect(positionOnB.shares).equal(700);
+      expect(positionOnB).equal(700);
     });
   });
 
@@ -410,7 +399,7 @@ describe("Test Voting mechanism", async () => {
     });
     it("should confirm that no votes are on choice A", async () => {
       const info = await arena.getChoicePositionSummery(topic, choiceA);
-      expect(info.tokens).equal(0);
+      expect(info).equal(0);
     });
     it("should confirm voter 1 votes on choice A", async () => {
       const amount = parseEther("1");
