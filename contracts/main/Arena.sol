@@ -35,6 +35,7 @@ struct ChoiceVoteData {
     uint256 totalSum; // sum of all tokens invested in this choice
     uint256 totalShares; // total shares of this choice
     uint256 totalFess; // total fees generated in this choice
+    uint256 updatedAt; // block at which data was last updated
     mapping(uint256 => Cycle) cycles; // cycleId => cycle info
 }
 
@@ -194,20 +195,24 @@ contract Arena is Initializable {
         claimableBalance[topic.funds] += getTopicFee(topic, amount);
         claimableBalance[choice.funds] += getChoiceFee(choice, amount);
 
-        // update total sharers of cycle
-        voteData.cycles[activeCycle].totalShares +=
-            (netVoteAmount * topic.sharePerCyclePercentage) /
-            10000;
-
-        // update total raw investmenst in this cycle
-        voteData.cycles[activeCycle].totalSum += netVoteAmount;
-
-        // update total shares on this choice
-        voteData.totalShares +=
-            (voteData.totalSum * topic.sharePerCyclePercentage) /
-            10000;
-
+        if (activeCycle > 0) {
+            // update total shares on this choice
+            uint256 lastUpdateCycle;
+            if (voteData.updatedAt == 0) {
+                lastUpdateCycle = activeCycle - 1;
+            } else {
+                lastUpdateCycle = voteData.updatedAt;
+            }
+            voteData.updatedAt = activeCycle;
+            voteData.totalShares +=
+                (activeCycle - lastUpdateCycle) *
+                ((voteData.totalSum * topic.sharePerCyclePercentage) / 10000);
+        }
         voteData.totalFess += fee;
+
+        if (int256(activeCycle) - 1 >= 0 && voteData.totalShares != 0) {
+            netVoteAmount -= fee;
+        }
 
         // update previouse cycles share
         for (int256 it = int256(activeCycle) - 1; it >= 0; it--) {
@@ -219,15 +224,24 @@ contract Arena is Initializable {
             uint256 feeForCycle = (fee * cycleShares) / voteData.totalShares;
             uint256 feeShare = (feeForCycle * topic.sharePerCyclePercentage) /
                 10000;
-
+            voteData.cycles[i].totalShares += feeShare;
             voteData.cycles[i].totalSharesPaid += (activeCycle - i) * feeShare;
             voteData.cycles[i].totalFees += feeForCycle;
             voteData.totalSum += feeForCycle;
         }
 
+        // console.log(activeCycle, netVoteAmount, fee);
+
+        // update total sharers of cycle
+        voteData.cycles[activeCycle].totalShares +=
+            (netVoteAmount * topic.sharePerCyclePercentage) /
+            10000;
+
+        // update total raw investmenst in this cycle
+        voteData.cycles[activeCycle].totalSum += netVoteAmount;
+
         // update total investments on this choice
         voteData.totalSum += netVoteAmount;
-
         positions[msg.sender][topicId][choiceId].push(
             Position(netVoteAmount, block.number, 0)
         );
@@ -242,13 +256,15 @@ contract Arena is Initializable {
         Position[] memory _positions = positions[voter][topicId][choiceId];
 
         Topic memory topic = topics[topicId];
+
         for (uint32 i = 0; i < _positions.length; i++) {
-            uint256 cycle = (block.number - _positions[i].blockNumber) /
+            uint256 cycle = (_positions[i].blockNumber - topic.startBlock) /
                 topic.cycleDuration;
-            tokens +=
-                (_positions[i].tokens *
+            uint256 _tokens = _positions[i].tokens +
+                ((_positions[i].tokens *
                     choiceVoteData[topicId][choiceId].cycles[cycle].totalFees) /
-                choiceVoteData[topicId][choiceId].cycles[cycle].totalSum;
+                    choiceVoteData[topicId][choiceId].cycles[cycle].totalSum);
+            tokens += _tokens;
         }
     }
 
@@ -257,9 +273,7 @@ contract Arena is Initializable {
         view
         returns (uint256 tokens)
     {
-        return
-            choiceVoteData[topicId][choiceId].totalSum +
-            choiceVoteData[topicId][choiceId].totalFess;
+        return choiceVoteData[topicId][choiceId].totalSum;
     }
 
     function balanceOf(address account) public view returns (uint256) {
