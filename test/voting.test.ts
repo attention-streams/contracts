@@ -316,50 +316,50 @@ describe("Test Voting mechanism", async () => {
       await tx.wait();
       await validateVoter1and2PositionData(choiceA, 4);
     });
-    // it("should get correct info after voter 2 puts 2000 tokens in the same cycle", async () => {
-    //   const tx = await vote(
-    //     arena,
-    //     topic,
-    //     choiceA,
-    //     BigNumber.from(2000),
-    //     voter2
-    //   );
-    //   await tx.wait();
-    //   await validateVoter1and2PositionData(choiceA, 4, 1);
-    // });
-    // it("voter 1 votes on choice B, this should not affect choice A data", async () => {
-    //   const tx = await vote(
-    //     arena,
-    //     topic,
-    //     choiceB,
-    //     BigNumber.from(1000),
-    //     voter1
-    //   );
-    //   await tx.wait(1);
-    //   await validateVoter1and2PositionData(choiceA, 4, 1); // check that position A not changed
+    it("should get correct info after voter 2 puts 2000 tokens in the same cycle", async () => {
+      const tx = await vote(
+        arena,
+        topic,
+        choiceA,
+        BigNumber.from(2000),
+        voter2
+      );
+      await tx.wait();
+      await validateVoter1and2PositionData(choiceA, 4, 1);
+    });
+    it("voter 1 votes on choice B, this should not affect choice A data", async () => {
+      const tx = await vote(
+        arena,
+        topic,
+        choiceB,
+        BigNumber.from(1000),
+        voter1
+      );
+      await tx.wait(1);
+      await validateVoter1and2PositionData(choiceA, 4, 1); // check that position A not changed
 
-    //   let positionOnB = await arena.getVoterPositionOnChoice(
-    //     topic,
-    //     choiceB,
-    //     voter1.address
-    //   );
+      let positionOnB = await arena.getVoterPositionOnChoice(
+        topic,
+        choiceB,
+        voter1.address
+      );
 
-    //   expect(positionOnB).equal(700);
-    // });
-    // it("should get correct info of both choice A and B on cycle 5", async () => {
-    //   for (let i = 0; i < 100; i++) {
-    //     await network.provider.send("evm_mine");
-    //   }
+      expect(positionOnB).equal(700);
+    });
+    it("should get correct info of both choice A and B on cycle 5", async () => {
+      for (let i = 0; i < 100; i++) {
+        await network.provider.send("evm_mine");
+      }
 
-    //   await validateVoter1and2PositionData(choiceA, 5); // check that position A not changed
-    //   let positionOnB = await arena.getVoterPositionOnChoice(
-    //     topic,
-    //     choiceB,
-    //     voter1.address
-    //   );
+      await validateVoter1and2PositionData(choiceA, 5); // check that position A not changed
+      let positionOnB = await arena.getVoterPositionOnChoice(
+        topic,
+        choiceB,
+        voter1.address
+      );
 
-    //   expect(positionOnB).equal(700);
-    // });
+      expect(positionOnB).equal(700);
+    });
   });
 
   async function _snapshotTokenBalance(
@@ -393,48 +393,48 @@ describe("Test Voting mechanism", async () => {
     expect(balance).equal(feeAmount);
   }
 
-  // describe("test voting fee distribution to choice, topic and arena funds", async () => {
-  //   it("should setup a clean attention stream", async () => {
-  //     await setup();
-  //   });
-  //   it("should confirm that no votes are on choice A", async () => {
-  //     const info = await arena.getChoicePositionSummery(topic, choiceA);
-  //     expect(info).equal(0);
-  //   });
-  //   it("should confirm voter 1 votes on choice A", async () => {
-  //     const amount = parseEther("1");
-  //     const balanceBefore = await _snapshotTokenBalance([voter1]);
-  //     const tx = await vote(arena, topic, choiceA, amount, voter1);
-  //     await tx.wait(1);
-  //     const balanceAfter = await _snapshotTokenBalance([voter1]);
-  //     const [balanceDelta] = _delta(balanceAfter, balanceBefore);
-  //     expect(balanceDelta).equal(amount);
-  //   });
+  describe("test voting fee distribution to choice, topic and arena funds", async () => {
+    it("should setup a clean attention stream", async () => {
+      await setup();
+    });
+    it("should confirm that no votes are on choice A", async () => {
+      const info = await arena.getChoicePositionSummery(topic, choiceA);
+      expect(info).equal(0);
+    });
+    it("should confirm voter 1 votes on choice A", async () => {
+      const amount = parseEther("1");
+      const balanceBefore = await _snapshotTokenBalance([voter1]);
+      const tx = await vote(arena, topic, choiceA, amount, voter1);
+      await tx.wait(1);
+      const balanceAfter = await _snapshotTokenBalance([voter1]);
+      const [balanceDelta] = _delta(balanceAfter, balanceBefore);
+      expect(balanceDelta).equal(amount);
+    });
 
-  //   it("should confirm fee distribution from voter 1 to choice A", async () => {
-  //     const feePercentage = (await arena.topicChoices(topic, choiceA))
-  //       .feePercentage;
-  //     await confirmFeePercentagePaid(
-  //       parseEther("1"),
-  //       BigNumber.from(feePercentage),
-  //       choiceAFunds
-  //     );
-  //   });
-  //   it("should confirm fee distribution from voter 1 to topic", async () => {
-  //     const feePercentage = (await arena.topics(topic)).topicFeePercentage;
-  //     await confirmFeePercentagePaid(
-  //       parseEther("1"),
-  //       BigNumber.from(feePercentage),
-  //       topicFunds
-  //     );
-  //   });
-  //   it("should confirm fee distribution from voter 1 to arena", async () => {
-  //     const feePercentage = (await arena.info()).arenaFeePercentage;
-  //     await confirmFeePercentagePaid(
-  //       parseEther("1"),
-  //       BigNumber.from(feePercentage),
-  //       arenaFunds
-  //     );
-  //   });
-  // });
+    it("should confirm fee distribution from voter 1 to choice A", async () => {
+      const feePercentage = (await arena.topicChoices(topic, choiceA))
+        .feePercentage;
+      await confirmFeePercentagePaid(
+        parseEther("1"),
+        BigNumber.from(feePercentage),
+        choiceAFunds
+      );
+    });
+    it("should confirm fee distribution from voter 1 to topic", async () => {
+      const feePercentage = (await arena.topics(topic)).topicFeePercentage;
+      await confirmFeePercentagePaid(
+        parseEther("1"),
+        BigNumber.from(feePercentage),
+        topicFunds
+      );
+    });
+    it("should confirm fee distribution from voter 1 to arena", async () => {
+      const feePercentage = (await arena.info()).arenaFeePercentage;
+      await confirmFeePercentagePaid(
+        parseEther("1"),
+        BigNumber.from(feePercentage),
+        arenaFunds
+      );
+    });
+  });
 });

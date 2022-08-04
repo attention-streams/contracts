@@ -212,26 +212,25 @@ contract Arena is Initializable {
 
         if (int256(activeCycle) - 1 >= 0 && voteData.totalShares != 0) {
             netVoteAmount -= fee;
+            // update previouse cycles share
+            for (int256 it = int256(activeCycle) - 1; it >= 0; it--) {
+                uint256 i = uint256(it);
+                uint256 cycleShares = (activeCycle - i) *
+                    voteData.cycles[i].totalShares -
+                    voteData.cycles[i].totalSharesPaid;
+
+                uint256 feeForCycle = (fee * cycleShares) /
+                    voteData.totalShares;
+                uint256 feeShare = (feeForCycle *
+                    topic.sharePerCyclePercentage) / 10000;
+                voteData.cycles[i].totalShares += feeShare;
+                voteData.cycles[i].totalSharesPaid +=
+                    (activeCycle - i) *
+                    feeShare;
+                voteData.cycles[i].totalFees += feeForCycle;
+                voteData.totalSum += feeForCycle;
+            }
         }
-
-        // update previouse cycles share
-        for (int256 it = int256(activeCycle) - 1; it >= 0; it--) {
-            uint256 i = uint256(it);
-            uint256 cycleShares = (activeCycle - i) *
-                voteData.cycles[i].totalShares -
-                voteData.cycles[i].totalSharesPaid;
-
-            uint256 feeForCycle = (fee * cycleShares) / voteData.totalShares;
-            uint256 feeShare = (feeForCycle * topic.sharePerCyclePercentage) /
-                10000;
-            voteData.cycles[i].totalShares += feeShare;
-            voteData.cycles[i].totalSharesPaid += (activeCycle - i) * feeShare;
-            voteData.cycles[i].totalFees += feeForCycle;
-            voteData.totalSum += feeForCycle;
-        }
-
-        // console.log(activeCycle, netVoteAmount, fee);
-
         // update total sharers of cycle
         voteData.cycles[activeCycle].totalShares +=
             (netVoteAmount * topic.sharePerCyclePercentage) /
