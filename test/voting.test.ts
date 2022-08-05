@@ -259,7 +259,7 @@ describe("Test Voting mechanism", async () => {
     });
     it("should fail to vote with less than min contribution amount", async () => {
       const tx = vote(arena, topic, choiceA, BigNumber.from(5), voter1);
-      await expect(tx).to.be.revertedWith("contribution amount too low");
+      await expect(tx).to.be.revertedWith("Arena: LOW_AMOUNT");
     });
     it("should retrieve correct position info after voter 1 puts 1000 token on choice A", async () => {
       const tx = await vote(

@@ -83,19 +83,19 @@ describe("Attention Streams Setup", () => {
       const params = getValidTopicParams();
       params.topicFeePercentage = 1000; // 10 %
       const tx = addTopic(arena, params);
-      await expect(tx).to.be.revertedWith("Max topic fee exceeded");
+      await expect(tx).to.be.revertedWith("Arena: TOPIC_FEE_EXCEEDED");
     });
     it("Should fail to create topic with max choice fee percentage exceeding max choice fee percentage defined by arena", async () => {
       const params = getValidTopicParams();
       params.maxChoiceFeePercentage = 3100; // 31 %
       const tx = addTopic(arena, params);
-      await expect(tx).to.be.revertedWith("Max choice fee exceeded");
+      await expect(tx).to.be.revertedWith("Arena: CHOICE_FEE_EXCEEDED");
     });
     it("should fail to create topic with fundingPercentage more than 100%", async () => {
       const params = getValidTopicParams();
       params.fundingPercentage = 10100;
       const tx = addTopic(arena, params);
-      await expect(tx).to.be.revertedWith("funding percentage exceeded 100%");
+      await expect(tx).to.be.revertedWith("Arena: FUNDING_FEE_EXCEEDED");
     });
 
     async function deployArenaWithNoFeeLimits() {
@@ -116,7 +116,7 @@ describe("Attention Streams Setup", () => {
 
     it("should fail to create topic with arenaFee + topicFee + contributorFee > 100%", async () => {
       const tx = deployTopicWithExceedingFees();
-      await expect(tx).to.be.revertedWith("accumulative fees exceeded 100%");
+      await expect(tx).to.be.revertedWith("Arena: ACCUMULATIVE_FEE_EXCEEDED");
     });
   });
 
@@ -268,7 +268,7 @@ describe("Attention Streams Setup", () => {
       const params = getValidChoiceParams();
       params.feePercentage = 2600;
       const tx = addChoice(arenaNoFee, topic, params);
-      await expect(tx).to.be.revertedWith("Fee percentage too high");
+      await expect(tx).to.be.revertedWith("Arena: HIGH_FEE_PERCENTAGE");
     });
 
     async function ConfigureAndDeployArena() {
@@ -299,7 +299,7 @@ describe("Attention Streams Setup", () => {
       const choice = configureAndAddChoice(arena);
 
       await expect(choice).to.be.revertedWith(
-        "accumulative fees exceeded 100%"
+        "Arena: ACCUMULATIVE_FEE_EXCEEDED"
       );
     });
     it("should fail to create choice if contract can't spend funds", async () => {

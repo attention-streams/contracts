@@ -73,7 +73,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
     function initialize(ArenaInfo memory _info) public initializer {
         require(
             (_info.arenaFeePercentage) <= 100 * 10**2,
-            "Fees exceeded 100%"
+            "Arena: MAX_FEE_EXCEEDED"
         );
         __AccessControl_init();
 
@@ -104,23 +104,23 @@ contract Arena is Initializable, AccessControlUpgradeable {
 
         require(
             topic.fundingPercentage <= 10000,
-            "funding percentage exceeded 100%"
+            "Arena: FUNDING_FEE_EXCEEDED"
         );
 
         require(
             topic.topicFeePercentage <= info.maxTopicFeePercentage,
-            "Max topic fee exceeded"
+            "Arena: TOPIC_FEE_EXCEEDED"
         );
         require(
             topic.maxChoiceFeePercentage <= info.maxChoiceFeePercentage,
-            "Max choice fee exceeded"
+            "Arena: CHOICE_FEE_EXCEEDED"
         );
         require(
             info.arenaFeePercentage +
                 topic.topicFeePercentage +
                 topic.prevContributorsFeePercentage <=
                 10000,
-            "accumulative fees exceeded 100%"
+            "Arena: ACCUMULATIVE_FEE_EXCEEDED"
         );
 
         emit AddTopic(getNextTopicId(), topic);
@@ -138,7 +138,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
     function addChoice(uint256 topicId, Choice memory choice) public {
         require(
             choice.feePercentage <= topics[topicId].maxChoiceFeePercentage,
-            "Fee percentage too high"
+            "Arena: HIGH_FEE_PERCENTAGE"
         );
 
         require(
@@ -147,7 +147,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
                 topics[topicId].topicFeePercentage +
                 topics[topicId].prevContributorsFeePercentage <=
                 10000,
-            "accumulative fees exceeded 100%"
+            "Arena: ACCUMULATIVE_FEE_EXCEEDED"
         );
         if (info.choiceCreationFee > 0) {
             IERC20Upgradeable(info.token).safeTransferFrom(
@@ -201,10 +201,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
         uint256 choiceId,
         uint256 amount
     ) public {
-        require(
-            amount >= info.minContributionAmount,
-            "contribution amount too low"
-        );
+        require(amount >= info.minContributionAmount, "Arena: LOW_AMOUNT");
         require(isTopicDeleted[topicId] == false, "Arena: DELETED_TOPIC");
         require(
             isChoiceDeleted[topicId][choiceId] == false,
