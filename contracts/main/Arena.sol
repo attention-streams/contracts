@@ -10,12 +10,21 @@ import "./ArenaUtils.sol";
 
 import "hardhat/console.sol";
 
+struct PositionsData {
+    mapping(address => mapping(uint256 => mapping(uint256 => Position[]))) positions; // positions of each user in each choice of each topic // address => (topicId => (choiceId => Position[]))
+    mapping(address => mapping(uint256 => mapping(uint256 => uint256))) positionsLength; // address => (topicId => (choiceId => positions length))
+    mapping(address => mapping(uint256 => mapping(uint256 => uint256))) nextPositionToWithdraw; // address => (topicId => (choiceId => next position to withdraw))
+}
+
 contract Arena is Initializable, AccessControlUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     // state variables
     ArenaInfo public info;
     Topic[] public topics; // list of topics in arena
+
+    PositionsData internal positionsData;
+
     mapping(uint256 => Choice[]) public topicChoices; // list of choices of each topic
     mapping(uint256 => mapping(uint256 => ChoiceVoteData))
         public choiceVoteData; // topicId => choiceId => aggregated vote data
@@ -23,8 +32,6 @@ contract Arena is Initializable, AccessControlUpgradeable {
     mapping(uint256 => bool) public isTopicDeleted; // indicates if a topic is deleted or not. (if deleted, not voting can happen)
     mapping(uint256 => mapping(uint256 => bool)) public isChoiceDeleted; // topicId => choiceId => isDeleted
 
-    mapping(address => mapping(uint256 => mapping(uint256 => Position[]))) // positions of each user in each choice of each topic
-        public positions; // address => (topicId => (choiceId => Position))
     mapping(address => uint256) public claimableBalance; // amount of "info._token" that an address can withdraw from the arena
 
     event AddTopic(uint256 topicId, Topic topic);
@@ -208,7 +215,6 @@ contract Arena is Initializable, AccessControlUpgradeable {
             );
             voteData.updatedAt = activeCycle;
         }
-        voteData.totalFess += fee;
 
         if (int256(activeCycle) - 1 >= 0 && voteData.totalShares != 0) {
             netVoteAmount -= fee;
@@ -241,7 +247,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
 
         // update total investments on this choice
         voteData.totalSum += netVoteAmount;
-        positions[msg.sender][topicId][choiceId].push(
+        positionsData.positions[msg.sender][topicId][choiceId].push(
             Position(netVoteAmount, block.number, 0)
         );
 
@@ -254,9 +260,9 @@ contract Arena is Initializable, AccessControlUpgradeable {
         uint256 positionIndex,
         address voter
     ) public view returns (uint256 tokens, uint256 shares) {
-        Position memory position = positions[voter][topicId][choiceId][
-            positionIndex
-        ];
+        Position memory position = positionsData.positions[voter][topicId][
+            choiceId
+        ][positionIndex];
         Topic memory topic = topics[topicId];
         uint256 activeCycle = getActiveCycle(topicId);
         uint256 cycle = (position.blockNumber - topic.startBlock) /
@@ -274,6 +280,49 @@ contract Arena is Initializable, AccessControlUpgradeable {
                 (((activeCycle - cycle) * cycleData.totalShares) -
                     cycleData.totalSharesPaid)) /
             cycleData.totalSum;
+    }
+
+    function withdrawPosition(
+        uint256 topicId,
+        uint256 choiceId,
+        uint256 positionIndex
+    ) public {
+        Topic memory topic = topics[topicId];
+
+        Position storage position = positionsData.positions[msg.sender][
+            topicId
+        ][choiceId][positionIndex];
+        uint256 activeCycle = getActiveCycle(topicId);
+        uint256 cycle = (position.blockNumber - topic.startBlock) /
+            topic.cycleDuration;
+        Cycle storage cycleData = choiceVoteData[topicId][choiceId].cycles[
+            cycle
+        ];
+
+        ChoiceVoteData storage voteData = choiceVoteData[topicId][choiceId];
+
+        (uint256 tokens, uint256 shares) = voterPosition(
+            topicId,
+            choiceId,
+            positionIndex,
+            msg.sender
+        );
+        uint256 principalShare = (position.tokens *
+            topic.sharePerCyclePercentage) / 10000;
+        uint256 totalFees = (tokens - position.tokens);
+        uint256 feeShare = (totalFees * topic.sharePerCyclePercentage) / 10000;
+        uint256 paidShares = ((activeCycle - cycle) *
+            (principalShare + feeShare)) - shares;
+
+        cycleData.totalFees -= totalFees;
+        cycleData.totalShares -= principalShare + feeShare;
+        cycleData.totalSharesPaid -= paidShares;
+        cycleData.totalSum -= position.tokens;
+
+        voteData.totalShares -= principalShare;
+        voteData.totalSum -= tokens;
+        position.tokens = 0;
+        IERC20Upgradeable(info.token).safeTransfer(msg.sender, tokens);
     }
 
     function choiceSharesAtCycle(
@@ -306,7 +355,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
     ) public view returns (uint256 tokens, uint256 shares) {
         for (
             uint32 i = 0;
-            i < positions[voter][topicId][choiceId].length;
+            i < positionsData.positions[voter][topicId][choiceId].length;
             i++
         ) {
             (uint256 _tokens, uint256 _shares) = voterPosition(
