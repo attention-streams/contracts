@@ -231,17 +231,12 @@ contract Arena is Initializable, AccessControlUpgradeable {
         claimableBalance[choice.funds] += getChoiceFee(choice, amount);
 
         if (activeCycle > 0) {
-            // update total shares on this choice
-            uint256 lastUpdateCycle;
-            if (voteData.updatedAt == 0) {
-                lastUpdateCycle = activeCycle - 1;
-            } else {
-                lastUpdateCycle = voteData.updatedAt;
-            }
+            voteData.totalShares = getChoiceSharesAtCycle(
+                topicId,
+                choiceId,
+                activeCycle
+            );
             voteData.updatedAt = activeCycle;
-            voteData.totalShares +=
-                (activeCycle - lastUpdateCycle) *
-                ((voteData.totalSum * topic.sharePerCyclePercentage) / 10000);
         }
         voteData.totalFess += fee;
 
@@ -313,6 +308,29 @@ contract Arena is Initializable, AccessControlUpgradeable {
             cycleData.totalSum;
     }
 
+    function getChoiceSharesAtCycle(
+        uint256 topicId,
+        uint256 choiceId,
+        uint256 cycle
+    ) public view returns (uint256 shares) {
+        ChoiceVoteData storage voteData = choiceVoteData[topicId][choiceId];
+
+        Topic memory topic = topics[topicId];
+
+        if (cycle > 0) {
+            uint256 lastUpdateCycle;
+            if (voteData.updatedAt == 0) {
+                lastUpdateCycle = cycle - 1;
+            } else {
+                lastUpdateCycle = voteData.updatedAt;
+            }
+            shares =
+                voteData.totalShares +
+                (cycle - lastUpdateCycle) *
+                ((voteData.totalSum * topic.sharePerCyclePercentage) / 10000);
+        }
+    }
+
     function aggregatedVoterPositionOnChoice(
         uint256 topicId,
         uint256 choiceId,
@@ -339,25 +357,9 @@ contract Arena is Initializable, AccessControlUpgradeable {
         view
         returns (uint256 tokens, uint256 shares)
     {
-        Topic memory topic = topics[topicId];
-        uint256 activeCycle = (block.number - topic.startBlock) /
-            topic.cycleDuration;
-
-        ChoiceVoteData storage voteData = choiceVoteData[topicId][choiceId];
-
-        if (activeCycle > 0) {
-            uint256 lastUpdateCycle;
-            if (voteData.updatedAt == 0) {
-                lastUpdateCycle = activeCycle - 1;
-            } else {
-                lastUpdateCycle = voteData.updatedAt;
-            }
-            shares =
-                voteData.totalShares +
-                (activeCycle - lastUpdateCycle - 1) *
-                ((voteData.totalSum * topic.sharePerCyclePercentage) / 10000);
-        }
-
+        uint256 activeCycle = (block.number - topics[topicId].startBlock) /
+            topics[topicId].cycleDuration;
+        shares = getChoiceSharesAtCycle(topicId, choiceId, activeCycle - 1);
         tokens = choiceVoteData[topicId][choiceId].totalSum;
     }
 
