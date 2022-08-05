@@ -52,7 +52,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
         public choiceVoteData; // topicId => choiceId => aggregated vote data
 
     mapping(uint256 => bool) public isTopicDeleted; // indicates if a topic is deleted or not. (if deleted, not voting can happen)
-    mapping(uint256 => bool) public isChoiceDeleted; // indicates if a choice is deleted or not (if deleted, not voting can happen)
+    mapping(uint256 => mapping(uint256 => bool)) public isChoiceDeleted; // topicId => choiceId => isDeleted
 
     mapping(address => mapping(uint256 => mapping(uint256 => Position[]))) // positions of each user in each choice of each topic
         public positions; // address => (topicId => (choiceId => Position))
@@ -158,6 +158,14 @@ contract Arena is Initializable, AccessControlUpgradeable {
         }
         emit AddChoice(getNextChoiceIdInTopic(topicId), topicId, choice);
         topicChoices[topicId].push(choice);
+    }
+
+    function removeChoice(uint256 topicId, uint256 choiceId)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        isChoiceDeleted[topicId][choiceId] = true;
+        emit RemoveChoice(choiceId, topicId);
     }
 
     function getArenaFee(uint256 amount) internal view returns (uint256) {

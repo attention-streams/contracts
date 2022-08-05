@@ -255,6 +255,15 @@ describe("Attention Streams Setup", () => {
       const params = getFlatParamsFromDict(getValidChoiceParams());
       expect(choiceInfo).to.deep.include.members(params);
     });
+    it("should fail to remove choice if not admin ", async () => {
+      const tx = arenaNoFee.connect(user).removeChoice(topic, 0);
+      await expect(tx).to.be.reverted;
+    });
+    it("should remove choice if admin", async () => {
+      await arenaNoFee.removeChoice(topic, 0);
+      const isDeleted = await arenaNoFee.isChoiceDeleted(topic, 0);
+      expect(isDeleted).to.be.true;
+    });
     it("should fail to create choice if fee percentage is more than allowed by topic", async () => {
       const params = getValidChoiceParams();
       params.feePercentage = 2600;
