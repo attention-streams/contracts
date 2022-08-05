@@ -58,3 +58,54 @@ struct Topic {
     uint16 fundingPercentage; // percentage of funds transferred to leading choices
     address payable funds;
 }
+
+struct PositionData {
+    mapping(address => mapping(uint256 => mapping(uint256 => Position[]))) positions; // positions of each user in each choice of each topic // address => (topicId => (choiceId => Position[]))
+    mapping(address => mapping(uint256 => mapping(uint256 => uint256))) positionsLength; // address => (topicId => (choiceId => positions length))
+    mapping(address => mapping(uint256 => mapping(uint256 => uint256))) nextPositionToWithdraw; // address => (topicId => (choiceId => next position to withdraw))
+}
+
+struct ChoiceData {
+    mapping(uint256 => Choice[]) topicChoices; // list of choices of each topic
+    mapping(uint256 => mapping(uint256 => ChoiceVoteData)) choiceVoteData; // topicId => choiceId => aggregated vote data
+    mapping(uint256 => mapping(uint256 => bool)) isChoiceDeleted; // topicId => choiceId => isDeleted
+}
+
+struct TopicData {
+    Topic[] topics;
+    mapping(uint256 => bool) isTopicDeleted; // indicates if a topic is deleted or not. (if deleted, not voting can happen)
+}
+
+library FeeUtils {
+    function getArenaFee(ArenaInfo memory info, uint256 amount)
+        internal
+        pure
+        returns (uint256)
+    {
+        return (amount * info.arenaFeePercentage) / 10000;
+    }
+
+    function getTopicFee(Topic memory topic, uint256 amount)
+        internal
+        pure
+        returns (uint256)
+    {
+        return (amount * topic.topicFeePercentage) / 10000;
+    }
+
+    function getChoiceFee(Choice memory choice, uint256 amount)
+        internal
+        pure
+        returns (uint256)
+    {
+        return (amount * choice.feePercentage) / 10000;
+    }
+
+    function getPrevFee(Topic memory topic, uint256 amount)
+        internal
+        pure
+        returns (uint256)
+    {
+        return (amount * topic.prevContributorsFeePercentage) / 10000;
+    }
+}

@@ -8,31 +8,15 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 
 import "./ArenaUtils.sol";
 
-import "hardhat/console.sol";
-
-struct PositionsData {
-    mapping(address => mapping(uint256 => mapping(uint256 => Position[]))) positions; // positions of each user in each choice of each topic // address => (topicId => (choiceId => Position[]))
-    mapping(address => mapping(uint256 => mapping(uint256 => uint256))) positionsLength; // address => (topicId => (choiceId => positions length))
-    mapping(address => mapping(uint256 => mapping(uint256 => uint256))) nextPositionToWithdraw; // address => (topicId => (choiceId => next position to withdraw))
-}
-
 contract Arena is Initializable, AccessControlUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    // state variables
-    ArenaInfo public info;
-    Topic[] public topics; // list of topics in arena
-
-    PositionsData internal positionsData;
-
-    mapping(uint256 => Choice[]) public topicChoices; // list of choices of each topic
-    mapping(uint256 => mapping(uint256 => ChoiceVoteData))
-        public choiceVoteData; // topicId => choiceId => aggregated vote data
-
-    mapping(uint256 => bool) public isTopicDeleted; // indicates if a topic is deleted or not. (if deleted, not voting can happen)
-    mapping(uint256 => mapping(uint256 => bool)) public isChoiceDeleted; // topicId => choiceId => isDeleted
-
     mapping(address => uint256) public claimableBalance; // amount of "info._token" that an address can withdraw from the arena
+
+    ArenaInfo public info;
+    TopicData internal topicData;
+    PositionData internal positionsData;
+    ChoiceData internal choiceData;
 
     event AddTopic(uint256 topicId, Topic topic);
     event RemoveTopic(uint256 topicId);
@@ -57,8 +41,9 @@ contract Arena is Initializable, AccessControlUpgradeable {
         info = _info;
     }
 
+    // ============== core state views =============== //
     function getNextTopicId() public view returns (uint256) {
-        return topics.length;
+        return topicData.topics.length;
     }
 
     function getNextChoiceIdInTopic(uint256 topicId)
@@ -66,9 +51,34 @@ contract Arena is Initializable, AccessControlUpgradeable {
         view
         returns (uint256)
     {
-        return topicChoices[topicId].length;
+        return choiceData.topicChoices[topicId].length;
     }
 
+    function topics(uint256 topicId) public view returns (Topic memory) {
+        return topicData.topics[topicId];
+    }
+
+    function isTopicDeleted(uint256 topicId) public view returns (bool) {
+        return topicData.isTopicDeleted[topicId];
+    }
+
+    function topicChoices(uint256 topicId, uint256 choiceId)
+        public
+        view
+        returns (Choice memory)
+    {
+        return choiceData.topicChoices[topicId][choiceId];
+    }
+
+    function isChoiceDeleted(uint256 topicId, uint256 choiceId)
+        public
+        view
+        returns (bool)
+    {
+        return choiceData.isChoiceDeleted[topicId][choiceId];
+    }
+
+    // ============== core state functions =============== //
     function addTopic(Topic memory topic) public {
         if (info.topicCreationFee > 0) {
             IERC20Upgradeable(info.token).safeTransferFrom(
@@ -100,28 +110,29 @@ contract Arena is Initializable, AccessControlUpgradeable {
         );
 
         emit AddTopic(getNextTopicId(), topic);
-        topics.push(topic);
+        topicData.topics.push(topic);
     }
 
     function removeTopic(uint256 topicId)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
-        isTopicDeleted[topicId] = true;
+        topicData.isTopicDeleted[topicId] = true;
         emit RemoveTopic(topicId);
     }
 
     function addChoice(uint256 topicId, Choice memory choice) public {
         require(
-            choice.feePercentage <= topics[topicId].maxChoiceFeePercentage,
+            choice.feePercentage <=
+                topicData.topics[topicId].maxChoiceFeePercentage,
             "Arena: HIGH_FEE_PERCENTAGE"
         );
 
         require(
             choice.feePercentage +
                 info.arenaFeePercentage +
-                topics[topicId].topicFeePercentage +
-                topics[topicId].prevContributorsFeePercentage <=
+                topicData.topics[topicId].topicFeePercentage +
+                topicData.topics[topicId].prevContributorsFeePercentage <=
                 10000,
             "Arena: ACCUMULATIVE_FEE_EXCEEDED"
         );
@@ -133,43 +144,15 @@ contract Arena is Initializable, AccessControlUpgradeable {
             );
         }
         emit AddChoice(getNextChoiceIdInTopic(topicId), topicId, choice);
-        topicChoices[topicId].push(choice);
+        choiceData.topicChoices[topicId].push(choice);
     }
 
     function removeChoice(uint256 topicId, uint256 choiceId)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
-        isChoiceDeleted[topicId][choiceId] = true;
+        choiceData.isChoiceDeleted[topicId][choiceId] = true;
         emit RemoveChoice(choiceId, topicId);
-    }
-
-    function getArenaFee(uint256 amount) internal view returns (uint256) {
-        return (amount * info.arenaFeePercentage) / 10000;
-    }
-
-    function getTopicFee(Topic memory topic, uint256 amount)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (amount * topic.topicFeePercentage) / 10000;
-    }
-
-    function getChoiceFee(Choice memory choice, uint256 amount)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (amount * choice.feePercentage) / 10000;
-    }
-
-    function getPrevFee(Topic memory topic, uint256 amount)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (amount * topic.prevContributorsFeePercentage) / 10000;
     }
 
     function vote(
@@ -178,9 +161,12 @@ contract Arena is Initializable, AccessControlUpgradeable {
         uint256 amount
     ) public {
         require(amount >= info.minContributionAmount, "Arena: LOW_AMOUNT");
-        require(isTopicDeleted[topicId] == false, "Arena: DELETED_TOPIC");
         require(
-            isChoiceDeleted[topicId][choiceId] == false,
+            topicData.isTopicDeleted[topicId] == false,
+            "Arena: DELETED_TOPIC"
+        );
+        require(
+            choiceData.isChoiceDeleted[topicId][choiceId] == false,
             "Arena: DELETED_CHOICE"
         );
         IERC20Upgradeable(info.token).safeTransferFrom(
@@ -189,23 +175,25 @@ contract Arena is Initializable, AccessControlUpgradeable {
             amount
         );
 
-        Topic memory topic = topics[topicId];
-        Choice memory choice = topicChoices[topicId][choiceId];
-        ChoiceVoteData storage voteData = choiceVoteData[topicId][choiceId];
+        Topic memory topic = topicData.topics[topicId];
+        Choice memory choice = choiceData.topicChoices[topicId][choiceId];
+        ChoiceVoteData storage voteData = choiceData.choiceVoteData[topicId][
+            choiceId
+        ];
 
         uint256 activeCycle = getActiveCycle(topicId);
 
         uint256 netVoteAmount = amount -
-            (getArenaFee(amount) +
-                getTopicFee(topic, amount) +
-                getChoiceFee(choice, amount));
+            (FeeUtils.getArenaFee(info, amount) +
+                FeeUtils.getTopicFee(topic, amount) +
+                FeeUtils.getChoiceFee(choice, amount));
 
-        uint256 fee = getPrevFee(topic, amount);
+        uint256 fee = FeeUtils.getPrevFee(topic, amount);
 
         // update claimable balances
-        claimableBalance[info.funds] += getArenaFee(amount);
-        claimableBalance[topic.funds] += getTopicFee(topic, amount);
-        claimableBalance[choice.funds] += getChoiceFee(choice, amount);
+        claimableBalance[info.funds] += FeeUtils.getArenaFee(info, amount);
+        claimableBalance[topic.funds] += FeeUtils.getTopicFee(topic, amount);
+        claimableBalance[choice.funds] += FeeUtils.getChoiceFee(choice, amount);
 
         if (activeCycle > 0) {
             voteData.totalShares = choiceSharesAtCycle(
@@ -263,14 +251,13 @@ contract Arena is Initializable, AccessControlUpgradeable {
         Position memory position = positionsData.positions[voter][topicId][
             choiceId
         ][positionIndex];
-        Topic memory topic = topics[topicId];
+        Topic memory topic = topicData.topics[topicId];
         uint256 activeCycle = getActiveCycle(topicId);
         uint256 cycle = (position.blockNumber - topic.startBlock) /
             topic.cycleDuration;
 
-        Cycle memory cycleData = choiceVoteData[topicId][choiceId].cycles[
-            cycle
-        ];
+        Cycle memory cycleData = choiceData
+        .choiceVoteData[topicId][choiceId].cycles[cycle];
 
         tokens =
             position.tokens +
@@ -287,7 +274,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
         uint256 choiceId,
         uint256 positionIndex
     ) public {
-        Topic memory topic = topics[topicId];
+        Topic memory topic = topicData.topics[topicId];
 
         Position storage position = positionsData.positions[msg.sender][
             topicId
@@ -295,11 +282,12 @@ contract Arena is Initializable, AccessControlUpgradeable {
         uint256 activeCycle = getActiveCycle(topicId);
         uint256 cycle = (position.blockNumber - topic.startBlock) /
             topic.cycleDuration;
-        Cycle storage cycleData = choiceVoteData[topicId][choiceId].cycles[
-            cycle
-        ];
+        Cycle storage cycleData = choiceData
+        .choiceVoteData[topicId][choiceId].cycles[cycle];
 
-        ChoiceVoteData storage voteData = choiceVoteData[topicId][choiceId];
+        ChoiceVoteData storage voteData = choiceData.choiceVoteData[topicId][
+            choiceId
+        ];
 
         (uint256 tokens, uint256 shares) = voterPosition(
             topicId,
@@ -330,9 +318,11 @@ contract Arena is Initializable, AccessControlUpgradeable {
         uint256 choiceId,
         uint256 cycle
     ) public view returns (uint256 shares) {
-        ChoiceVoteData storage voteData = choiceVoteData[topicId][choiceId];
+        ChoiceVoteData storage voteData = choiceData.choiceVoteData[topicId][
+            choiceId
+        ];
 
-        Topic memory topic = topics[topicId];
+        Topic memory topic = topicData.topics[topicId];
 
         if (cycle > 0) {
             uint256 lastUpdateCycle;
@@ -371,8 +361,8 @@ contract Arena is Initializable, AccessControlUpgradeable {
 
     function getActiveCycle(uint256 topicId) public view returns (uint256) {
         return
-            (block.number - topics[topicId].startBlock) /
-            topics[topicId].cycleDuration;
+            (block.number - topicData.topics[topicId].startBlock) /
+            topicData.topics[topicId].cycleDuration;
     }
 
     function choiceSummery(uint256 topicId, uint256 choiceId)
@@ -385,7 +375,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
             choiceId,
             getActiveCycle(topicId)
         );
-        tokens = choiceVoteData[topicId][choiceId].totalSum;
+        tokens = choiceData.choiceVoteData[topicId][choiceId].totalSum;
     }
 
     function balanceOf(address account) public view returns (uint256) {
