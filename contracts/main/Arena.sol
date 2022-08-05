@@ -6,40 +6,11 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
-import "./Topic.sol";
-import "./Choice.sol";
-import "./Position.sol";
+import "./ArenaUtils.sol";
 
-struct ArenaInfo {
-    string name; // arena name
-    address token; // this is the token that is used to vote in this arena
-    uint256 minContributionAmount; // minimum amount of voting/contributing
-    // all percentage fields assume 2 decimal places
-    uint16 maxChoiceFeePercentage; // max percentage of a vote taken as fees for a choice
-    uint16 maxTopicFeePercentage; // max percentage of a vote taken as fees for a topic
-    uint16 arenaFeePercentage; // percentage of each vote that goes to the arena
-    uint256 choiceCreationFee; // to prevent spam choice creation
-    uint256 topicCreationFee; // to prevent spam topic creation
-    address payable funds; // arena funds location
-}
-
-struct Cycle {
-    uint256 totalShares; // some of all shares invested in this cycle
-    uint256 totalSharesPaid; // used to efficiently update aggregates
-    uint256 totalSum; // sum of all tokens invested in this cycle
-    uint256 totalFees; // total fees accumulated on this cycle (to be distributed to voters)
-}
-
-struct ChoiceVoteData {
-    uint256 totalSum; // sum of all tokens invested in this choice
-    uint256 totalShares; // total shares of this choice
-    uint256 totalFess; // total fees generated in this choice
-    uint256 updatedAt; // block at which data was last updated
-    mapping(uint256 => Cycle) cycles; // cycleId => cycle info
-}
+import "hardhat/console.sol";
 
 contract Arena is Initializable, AccessControlUpgradeable {
-    using PositionUtils for Position;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     // state variables
@@ -363,7 +334,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
         shares = choiceSharesAtCycle(
             topicId,
             choiceId,
-            getActiveCycle(topicId) - 1
+            getActiveCycle(topicId)
         );
         tokens = choiceVoteData[topicId][choiceId].totalSum;
     }
