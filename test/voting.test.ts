@@ -240,12 +240,12 @@ describe("Test Voting mechanism", async () => {
       cycle: number,
       epoch: number = 0
     ) {
-      let position1Info = await arena.getVoterPositionOnChoice(
+      let position1Info = await arena.aggregatedVoterPositionOnChoice(
         topic,
         choice,
         voter1.address
       );
-      let position2Info = await arena.getVoterPositionOnChoice(
+      let position2Info = await arena.aggregatedVoterPositionOnChoice(
         topic,
         choice,
         voter2.address
@@ -347,7 +347,7 @@ describe("Test Voting mechanism", async () => {
       await tx.wait(1);
       await validateVoter1and2PositionData(choiceA, 4, 1); // check that position A not changed
 
-      let positionOnB = await arena.getVoterPositionOnChoice(
+      let positionOnB = await arena.aggregatedVoterPositionOnChoice(
         topic,
         choiceB,
         voter1.address
@@ -362,7 +362,7 @@ describe("Test Voting mechanism", async () => {
       }
       await validateVoter1and2PositionData(choiceA, 5); // check that position A not changed
 
-      let positionOnB = await arena.getVoterPositionOnChoice(
+      let positionOnB = await arena.aggregatedVoterPositionOnChoice(
         topic,
         choiceB,
         voter1.address

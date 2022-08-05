@@ -283,32 +283,52 @@ contract Arena is Initializable, AccessControlUpgradeable {
         emit Vote(msg.sender, netVoteAmount, choiceId, topicId, activeCycle);
     }
 
+    // function getVoter
     function getVoterPositionOnChoice(
+        uint256 topicId,
+        uint256 choiceId,
+        uint256 positionIndex,
+        address voter
+    ) public view returns (uint256 tokens, uint256 shares) {
+        Position memory position = positions[voter][topicId][choiceId][
+            positionIndex
+        ];
+        Topic memory topic = topics[topicId];
+        uint256 activeCycle = (block.number - topic.startBlock) /
+            topic.cycleDuration;
+        uint256 cycle = (position.blockNumber - topic.startBlock) /
+            topic.cycleDuration;
+
+        Cycle memory cycleData = choiceVoteData[topicId][choiceId].cycles[
+            cycle
+        ];
+
+        tokens =
+            position.tokens +
+            ((position.tokens * cycleData.totalFees) / cycleData.totalSum);
+        shares =
+            (position.tokens *
+                (((activeCycle - cycle) * cycleData.totalShares) -
+                    cycleData.totalSharesPaid)) /
+            cycleData.totalSum;
+    }
+
+    function aggregatedVoterPositionOnChoice(
         uint256 topicId,
         uint256 choiceId,
         address voter
     ) public view returns (uint256 tokens, uint256 shares) {
-        Position[] memory _positions = positions[voter][topicId][choiceId];
-        Topic memory topic = topics[topicId];
-        uint256 activeCycle = (block.number - topic.startBlock) /
-            topic.cycleDuration;
-
-        for (uint32 i = 0; i < _positions.length; i++) {
-            uint256 cycle = (_positions[i].blockNumber - topic.startBlock) /
-                topic.cycleDuration;
-            uint256 _tokens = _positions[i].tokens +
-                ((_positions[i].tokens *
-                    choiceVoteData[topicId][choiceId].cycles[cycle].totalFees) /
-                    choiceVoteData[topicId][choiceId].cycles[cycle].totalSum);
-            uint256 _shares = (_positions[i].tokens *
-                (((activeCycle - cycle) *
-                    choiceVoteData[topicId][choiceId]
-                        .cycles[cycle]
-                        .totalShares) -
-                    choiceVoteData[topicId][choiceId]
-                        .cycles[cycle]
-                        .totalSharesPaid)) /
-                choiceVoteData[topicId][choiceId].cycles[cycle].totalSum;
+        for (
+            uint32 i = 0;
+            i < positions[voter][topicId][choiceId].length;
+            i++
+        ) {
+            (uint256 _tokens, uint256 _shares) = getVoterPositionOnChoice(
+                topicId,
+                choiceId,
+                i,
+                voter
+            );
             tokens += _tokens;
             shares += _shares;
         }
