@@ -230,7 +230,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
         claimableBalance[choice.funds] += getChoiceFee(choice, amount);
 
         if (activeCycle > 0) {
-            voteData.totalShares = getChoiceSharesAtCycle(
+            voteData.totalShares = choiceSharesAtCycle(
                 topicId,
                 choiceId,
                 activeCycle
@@ -277,8 +277,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
         emit Vote(msg.sender, netVoteAmount, choiceId, topicId, activeCycle);
     }
 
-    // function getVoter
-    function getVoterPositionOnChoice(
+    function voterPosition(
         uint256 topicId,
         uint256 choiceId,
         uint256 positionIndex,
@@ -306,7 +305,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
             cycleData.totalSum;
     }
 
-    function getChoiceSharesAtCycle(
+    function choiceSharesAtCycle(
         uint256 topicId,
         uint256 choiceId,
         uint256 cycle
@@ -329,7 +328,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
         }
     }
 
-    function aggregatedVoterPositionOnChoice(
+    function aggregatedVoterPosition(
         uint256 topicId,
         uint256 choiceId,
         address voter
@@ -339,7 +338,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
             i < positions[voter][topicId][choiceId].length;
             i++
         ) {
-            (uint256 _tokens, uint256 _shares) = getVoterPositionOnChoice(
+            (uint256 _tokens, uint256 _shares) = voterPosition(
                 topicId,
                 choiceId,
                 i,
@@ -356,12 +355,12 @@ contract Arena is Initializable, AccessControlUpgradeable {
             topics[topicId].cycleDuration;
     }
 
-    function getChoicePositionSummery(uint256 topicId, uint256 choiceId)
+    function choiceSummery(uint256 topicId, uint256 choiceId)
         public
         view
         returns (uint256 tokens, uint256 shares)
     {
-        shares = getChoiceSharesAtCycle(
+        shares = choiceSharesAtCycle(
             topicId,
             choiceId,
             getActiveCycle(topicId) - 1
