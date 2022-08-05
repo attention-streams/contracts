@@ -215,8 +215,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
         Choice memory choice = topicChoices[topicId][choiceId];
         ChoiceVoteData storage voteData = choiceVoteData[topicId][choiceId];
 
-        uint256 activeCycle = (block.number - topic.startBlock) /
-            topic.cycleDuration;
+        uint256 activeCycle = getActiveCycle(topicId);
 
         uint256 netVoteAmount = amount -
             (getArenaFee(amount) +
@@ -289,8 +288,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
             positionIndex
         ];
         Topic memory topic = topics[topicId];
-        uint256 activeCycle = (block.number - topic.startBlock) /
-            topic.cycleDuration;
+        uint256 activeCycle = getActiveCycle(topicId);
         uint256 cycle = (position.blockNumber - topic.startBlock) /
             topic.cycleDuration;
 
@@ -352,14 +350,22 @@ contract Arena is Initializable, AccessControlUpgradeable {
         }
     }
 
+    function getActiveCycle(uint256 topicId) public view returns (uint256) {
+        return
+            (block.number - topics[topicId].startBlock) /
+            topics[topicId].cycleDuration;
+    }
+
     function getChoicePositionSummery(uint256 topicId, uint256 choiceId)
         public
         view
         returns (uint256 tokens, uint256 shares)
     {
-        uint256 activeCycle = (block.number - topics[topicId].startBlock) /
-            topics[topicId].cycleDuration;
-        shares = getChoiceSharesAtCycle(topicId, choiceId, activeCycle - 1);
+        shares = getChoiceSharesAtCycle(
+            topicId,
+            choiceId,
+            getActiveCycle(topicId) - 1
+        );
         tokens = choiceVoteData[topicId][choiceId].totalSum;
     }
 
