@@ -393,6 +393,29 @@ describe("Test Voting mechanism", async () => {
     expect(balance).equal(feeAmount);
   }
 
+  describe("Removed choices and topics", async () => {
+    it("should setup a clean attention stream", async () => {
+      await setup();
+    });
+    it("should delete choice B", async () => {
+      await arena.removeChoice(topic, choiceB);
+    });
+    it("should not be able to vote on deleted choice B", async () => {
+      const tx = arena.connect(voter1).vote(topic, choiceB, 100);
+      await expect(tx).to.be.revertedWith("Arena: DELETED_CHOICE");
+    });
+    it("should  be able to vote on not deleted choice", async () => {
+      const tx = await arena.connect(voter1).vote(topic, choiceA, 100);
+    });
+    it("should delete topic", async () => {
+      await arena.removeTopic(topic);
+    });
+    it("should not allow vote on deleted topic", async () => {
+      const tx = arena.connect(voter1).vote(topic, choiceA, 100);
+      await expect(tx).to.be.revertedWith("Arena: DELETED_TOPIC");
+    });
+  });
+
   describe("test voting fee distribution to choice, topic and arena funds", async () => {
     it("should setup a clean attention stream", async () => {
       await setup();

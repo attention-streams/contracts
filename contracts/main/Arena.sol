@@ -205,6 +205,11 @@ contract Arena is Initializable, AccessControlUpgradeable {
             amount >= info.minContributionAmount,
             "contribution amount too low"
         );
+        require(isTopicDeleted[topicId] == false, "Arena: DELETED_TOPIC");
+        require(
+            isChoiceDeleted[topicId][choiceId] == false,
+            "Arena: DELETED_CHOICE"
+        );
         IERC20Upgradeable(info.token).safeTransferFrom(
             msg.sender,
             address(this),
