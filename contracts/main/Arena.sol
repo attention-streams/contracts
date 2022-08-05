@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import "./Topic.sol";
 import "./Choice.sol";
@@ -39,7 +40,7 @@ struct ChoiceVoteData {
     mapping(uint256 => Cycle) cycles; // cycleId => cycle info
 }
 
-contract Arena is Initializable {
+contract Arena is Initializable, AccessControlUpgradeable {
     using PositionUtils for Position;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -50,12 +51,17 @@ contract Arena is Initializable {
     mapping(uint256 => mapping(uint256 => ChoiceVoteData))
         public choiceVoteData; // topicId => choiceId => aggregated vote data
 
+    mapping(uint256 => bool) public isTopicDeleted; // indicates if a topic is deleted or not. (if deleted, not voting can happen)
+    mapping(uint256 => bool) public isChoiceDeleted; // indicates if a choice is deleted or not (if deleted, not voting can happen)
+
     mapping(address => mapping(uint256 => mapping(uint256 => Position[]))) // positions of each user in each choice of each topic
         public positions; // address => (topicId => (choiceId => Position))
     mapping(address => uint256) public claimableBalance; // amount of "info._token" that an address can withdraw from the arena
 
     event AddTopic(uint256 topicId, Topic topic);
+    event RemoveTopic(uint256 topicId);
     event AddChoice(uint256 choiceId, uint256 topicId, Choice choice);
+    event RemoveChoice(uint256 choiceId, uint256 topicId);
     event Vote(
         address user,
         uint256 amount,
@@ -69,6 +75,9 @@ contract Arena is Initializable {
             (_info.arenaFeePercentage) <= 100 * 10**2,
             "Fees exceeded 100%"
         );
+        __AccessControl_init();
+
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         info = _info;
     }
 
@@ -116,6 +125,14 @@ contract Arena is Initializable {
 
         emit AddTopic(getNextTopicId(), topic);
         topics.push(topic);
+    }
+
+    function removeTopic(uint256 topicId)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        isTopicDeleted[topicId] = true;
+        emit RemoveTopic(topicId);
     }
 
     function addChoice(uint256 topicId, Choice memory choice) public {

@@ -11,8 +11,14 @@ import {
   getValidTopicParams,
 } from "./test.creations.data";
 import { ethers } from "hardhat";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 describe("Attention Streams Setup", () => {
+  let admin: SignerWithAddress;
+  let user: SignerWithAddress;
+  before(async () => {
+    [admin, user] = await ethers.getSigners();
+  });
   describe("Arena creation", () => {
     let arena: Arena;
     it("should deploy arena with valid configuration", async () => {
@@ -44,6 +50,15 @@ describe("Attention Streams Setup", () => {
       await tx.wait(1);
       const nextId = await arena.getNextTopicId();
       expect(nextId).to.be.equal(1);
+    });
+    it("should fail to remove topic if not admin", async () => {
+      const tx = arena.connect(user).removeTopic(0);
+      await expect(tx).to.be.reverted;
+    });
+    it("should remove topic 0 if admin", async () => {
+      await arena.removeTopic(0);
+      let isTopicDeleted = await arena.isTopicDeleted(0);
+      expect(isTopicDeleted).to.be.true;
     });
     it("should create the second valid topic with id of # 1", async () => {
       const params = getValidTopicParams();
