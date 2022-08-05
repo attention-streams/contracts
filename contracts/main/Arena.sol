@@ -43,14 +43,13 @@ contract Arena is Initializable {
     using PositionUtils for Position;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
+    // state variables
     ArenaInfo public info;
-
     Topic[] public topics; // list of topics in arena
     mapping(uint256 => Choice[]) public topicChoices; // list of choices of each topic
     mapping(uint256 => mapping(uint256 => ChoiceVoteData))
         public choiceVoteData; // topicId => choiceId => aggregated vote data
 
-    mapping(uint256 => mapping(uint256 => address[])) public choiceVoters; // list of all voters in a position
     mapping(address => mapping(uint256 => mapping(uint256 => Position[]))) // positions of each user in each choice of each topic
         public positions; // address => (topicId => (choiceId => Position))
     mapping(address => uint256) public claimableBalance; // amount of "info._token" that an address can withdraw from the arena
