@@ -54,6 +54,16 @@ contract Arena is Initializable {
         public positions; // address => (topicId => (choiceId => Position))
     mapping(address => uint256) public claimableBalance; // amount of "info._token" that an address can withdraw from the arena
 
+    event AddTopic(uint256 topicId, Topic topic);
+    event AddChoice(uint256 choiceId, uint256 topicId, Choice choice);
+    event Vote(
+        address user,
+        uint256 amount,
+        uint256 choiceId,
+        uint256 topicId,
+        uint256 cycle
+    );
+
     function initialize(ArenaInfo memory _info) public initializer {
         require(
             (_info.arenaFeePercentage) <= 100 * 10**2,
@@ -104,6 +114,7 @@ contract Arena is Initializable {
             "accumulative fees exceeded 100%"
         );
 
+        emit AddTopic(getNextTopicId(), topic);
         topics.push(topic);
     }
 
@@ -128,7 +139,7 @@ contract Arena is Initializable {
                 info.choiceCreationFee
             );
         }
-
+        emit AddChoice(getNextChoiceIdInTopic(topicId), topicId, choice);
         topicChoices[topicId].push(choice);
     }
 
@@ -243,6 +254,8 @@ contract Arena is Initializable {
         positions[msg.sender][topicId][choiceId].push(
             Position(netVoteAmount, block.number, 0)
         );
+
+        emit Vote(msg.sender, netVoteAmount, choiceId, topicId, activeCycle);
     }
 
     function getVoterPositionOnChoice(
