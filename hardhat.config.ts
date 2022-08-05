@@ -34,11 +34,17 @@ setAccountIfExists(process.env.PRIVATE_KEY_OWNER);
 setAccountIfExists(process.env.PRIVATE_KEY_DEV);
 setAccountIfExists(process.env.PRIVATE_KEY_USER);
 
-const config: HardhatUserConfig = {
+const config = {
   solidity: "0.8.4",
   networks: {
     rinkeby: {
       url: process.env.RINKEBY_URL !== undefined ? process.env.RINKEBY_URL : "",
+      accounts: accounts,
+      gas: "auto",
+      gasPrice: "auto",
+    },
+    goerli: {
+      url: process.env.GOERLI_URL !== undefined ? process.env.GOERLI_URL : "",
       accounts: accounts,
       gas: "auto",
       gasPrice: "auto",
@@ -48,9 +54,9 @@ const config: HardhatUserConfig = {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: "USD",
   },
-  // etherscan: {
-  //   apiKey: process.env.ETHERSCAN_API_KEY,
-  // },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY,
+  },
   mocha: { timeout: 10 * 60 * 1000 },
 };
 

@@ -36,7 +36,6 @@ describe("Test Voting mechanism", async () => {
 
   async function _deployTopic() {
     const topicParams = getValidTopicParams();
-    topicParams.startBlock = await ethers.provider.getBlockNumber();
     topicParams.funds = topicFunds.address;
     const _topicTx = await addTopic(arena, topicParams);
     await _topicTx.wait(1);
@@ -193,7 +192,7 @@ describe("Test Voting mechanism", async () => {
             // epoch - voter 1 puts 3000 more
             {
               voter: voter1,
-              tokens: BigNumber.from(3058), // 1890 + 990 +
+              tokens: BigNumber.from(3058),
               shares: BigNumber.from(3720),
             },
             {
@@ -251,8 +250,18 @@ describe("Test Voting mechanism", async () => {
         choice,
         voter2.address
       );
-      expect(position1Info).to.equal(data[cycle].positions[epoch][0].tokens);
-      expect(position2Info).to.equal(data[cycle].positions[epoch][1].tokens);
+      expect(position1Info.tokens).to.equal(
+        data[cycle].positions[epoch][0].tokens
+      );
+      expect(position1Info.shares).to.equal(
+        data[cycle].positions[epoch][0].shares
+      );
+      expect(position2Info.tokens).to.equal(
+        data[cycle].positions[epoch][1].tokens
+      );
+      expect(position2Info.shares).to.equal(
+        data[cycle].positions[epoch][1].shares
+      );
     }
     it("should setup a clean attention stream", async () => {
       await setup();
@@ -300,7 +309,7 @@ describe("Test Voting mechanism", async () => {
     });
     it("should retrieve correct accumulative choice A info ", async () => {
       let info = await arena.getChoicePositionSummery(topic, choiceA);
-      expect(info).equal(2250);
+      expect(info.tokens).equal(2250);
     });
     it("should get correct info after voter a votes 3000 tokens on the next cycle", async () => {
       for (let i = 0; i < 100; i++) {
@@ -344,21 +353,31 @@ describe("Test Voting mechanism", async () => {
         voter1.address
       );
 
-      expect(positionOnB).equal(700);
+      expect(positionOnB.tokens).equal(700);
+      expect(positionOnB.shares).equal(0);
     });
     it("should get correct info of both choice A and B on cycle 5", async () => {
       for (let i = 0; i < 100; i++) {
         await network.provider.send("evm_mine");
       }
-
       await validateVoter1and2PositionData(choiceA, 5); // check that position A not changed
+
       let positionOnB = await arena.getVoterPositionOnChoice(
         topic,
         choiceB,
         voter1.address
       );
 
-      expect(positionOnB).equal(700);
+      expect(positionOnB.tokens).equal(700);
+      expect(positionOnB.shares).equal(700);
+    });
+    it("should retrieve correct accumulative choice A info ", async () => {
+      for (let i = 0; i < 300; i++) {
+        await network.provider.send("evm_mine");
+      }
+      let info = await arena.getChoicePositionSummery(topic, choiceA);
+      expect(info.shares).equal(25494);
+      expect(info.tokens).equal(5998);
     });
   });
 
@@ -393,36 +412,13 @@ describe("Test Voting mechanism", async () => {
     expect(balance).equal(feeAmount);
   }
 
-  describe("Removed choices and topics", async () => {
-    it("should setup a clean attention stream", async () => {
-      await setup();
-    });
-    it("should delete choice B", async () => {
-      await arena.removeChoice(topic, choiceB);
-    });
-    it("should not be able to vote on deleted choice B", async () => {
-      const tx = arena.connect(voter1).vote(topic, choiceB, 100);
-      await expect(tx).to.be.revertedWith("Arena: DELETED_CHOICE");
-    });
-    it("should  be able to vote on not deleted choice", async () => {
-      const tx = await arena.connect(voter1).vote(topic, choiceA, 100);
-    });
-    it("should delete topic", async () => {
-      await arena.removeTopic(topic);
-    });
-    it("should not allow vote on deleted topic", async () => {
-      const tx = arena.connect(voter1).vote(topic, choiceA, 100);
-      await expect(tx).to.be.revertedWith("Arena: DELETED_TOPIC");
-    });
-  });
-
   describe("test voting fee distribution to choice, topic and arena funds", async () => {
     it("should setup a clean attention stream", async () => {
       await setup();
     });
     it("should confirm that no votes are on choice A", async () => {
       const info = await arena.getChoicePositionSummery(topic, choiceA);
-      expect(info).equal(0);
+      expect(info.tokens).equal(0);
     });
     it("should confirm voter 1 votes on choice A", async () => {
       const amount = parseEther("1");

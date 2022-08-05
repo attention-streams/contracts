@@ -8,8 +8,6 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 
 import "./Topic.sol";
 import "./Choice.sol";
-
-import "hardhat/console.sol";
 import "./Position.sol";
 
 struct ArenaInfo {
@@ -289,11 +287,11 @@ contract Arena is Initializable, AccessControlUpgradeable {
         uint256 topicId,
         uint256 choiceId,
         address voter
-    ) public view returns (uint256 tokens) {
-        tokens = 0;
+    ) public view returns (uint256 tokens, uint256 shares) {
         Position[] memory _positions = positions[voter][topicId][choiceId];
-
         Topic memory topic = topics[topicId];
+        uint256 activeCycle = (block.number - topic.startBlock) /
+            topic.cycleDuration;
 
         for (uint32 i = 0; i < _positions.length; i++) {
             uint256 cycle = (_positions[i].blockNumber - topic.startBlock) /
@@ -302,19 +300,50 @@ contract Arena is Initializable, AccessControlUpgradeable {
                 ((_positions[i].tokens *
                     choiceVoteData[topicId][choiceId].cycles[cycle].totalFees) /
                     choiceVoteData[topicId][choiceId].cycles[cycle].totalSum);
+            uint256 _shares = (_positions[i].tokens *
+                (((activeCycle - cycle) *
+                    choiceVoteData[topicId][choiceId]
+                        .cycles[cycle]
+                        .totalShares) -
+                    choiceVoteData[topicId][choiceId]
+                        .cycles[cycle]
+                        .totalSharesPaid)) /
+                choiceVoteData[topicId][choiceId].cycles[cycle].totalSum;
             tokens += _tokens;
+            shares += _shares;
         }
     }
 
     function getChoicePositionSummery(uint256 topicId, uint256 choiceId)
         public
         view
-        returns (uint256 tokens)
+        returns (uint256 tokens, uint256 shares)
     {
-        return choiceVoteData[topicId][choiceId].totalSum;
+        Topic memory topic = topics[topicId];
+        uint256 activeCycle = (block.number - topic.startBlock) /
+            topic.cycleDuration;
+
+        ChoiceVoteData storage voteData = choiceVoteData[topicId][choiceId];
+
+        if (activeCycle > 0) {
+            uint256 lastUpdateCycle;
+            if (voteData.updatedAt == 0) {
+                lastUpdateCycle = activeCycle - 1;
+            } else {
+                lastUpdateCycle = voteData.updatedAt;
+            }
+            shares =
+                voteData.totalShares +
+                (activeCycle - lastUpdateCycle - 1) *
+                ((voteData.totalSum * topic.sharePerCyclePercentage) / 10000);
+        }
+
+        tokens = choiceVoteData[topicId][choiceId].totalSum;
     }
 
     function balanceOf(address account) public view returns (uint256) {
         return claimableBalance[account];
     }
+
+    // todo: erc20 and erc10 recovery
 }
