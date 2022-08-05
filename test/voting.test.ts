@@ -372,7 +372,7 @@ describe("Test Voting mechanism", async () => {
       expect(positionOnB.shares).equal(700);
     });
     it("should retrieve correct accumulative choice A info ", async () => {
-      for (let i = 0; i < 300; i++) {
+      for (let i = 0; i < 200; i++) {
         await network.provider.send("evm_mine");
       }
       let info = await arena.choiceSummery(topic, choiceA);
