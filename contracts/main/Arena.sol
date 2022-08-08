@@ -85,6 +85,22 @@ contract Arena is Initializable, AccessControlUpgradeable {
         return choiceData.isChoiceDeleted[topicId][choiceId];
     }
 
+    function positionsLength(
+        address user,
+        uint256 topicId,
+        uint256 choiceId
+    ) public view returns (uint256) {
+        return positionsData.positionsLength[user][topicId][choiceId];
+    }
+
+    function nextClaimIndex(
+        address user,
+        uint256 topicId,
+        uint256 choiceId
+    ) public view returns (uint256) {
+        return positionsData.nextClaimIndex[user][topicId][choiceId];
+    }
+
     // ============== core state functions =============== //
     function addTopic(Topic memory topic) public {
         if (info.topicCreationFee > 0) {
@@ -321,6 +337,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
             position.tokens = 0;
         }
         IERC20Upgradeable(info.token).safeTransfer(msg.sender, tokens);
+        positionsData.nextClaimIndex[msg.sender][topicId][choiceId]++;
         emit Withdaw(msg.sender, topicId, choiceId, positionIndex, tokens);
     }
 
