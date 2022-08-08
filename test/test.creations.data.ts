@@ -33,6 +33,7 @@ export interface ChoiceParams {
   funds: string;
   feePercentage: number;
   fundingTarget: BigNumber;
+  metaDataUrl: string;
 }
 
 export function getValidChoiceParams(): ChoiceParams {
@@ -43,6 +44,7 @@ export function getValidChoiceParams(): ChoiceParams {
     fundingTarget: BigNumber.from(
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     ),
+    metaDataUrl: "",
   };
 }
 
@@ -54,6 +56,7 @@ export function getValidChoiceBParams(): ChoiceParams {
     fundingTarget: BigNumber.from(
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     ),
+    metaDataUrl: "",
   };
 }
 
