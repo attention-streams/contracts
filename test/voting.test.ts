@@ -516,102 +516,102 @@ describe("Test Voting mechanism", async () => {
       expect(info2.tokens).eq(1548);
       expect(info2.shares).eq(1500);
     });
-    //   it("voter 1 withdraws", async () => {
-    //     // should recieve 2322 tokens
-    //     // cycle 2
-    //     let [before] = await _snapshotTokenBalance([voter1]);
-    //     await arena.connect(voter1).withdrawPosition(topic, choiceA, 0);
-    //     let [after] = await _snapshotTokenBalance([voter1]);
-    //     expect(after.sub(before)).eq(2322);
-    //   });
-    //   it("should retrieve correct choice summery after one cycle", async () => {
-    //     // cycle 3
-    //     for (let i = 0; i < 100; i++) {
-    //       await network.provider.send("evm_mine");
-    //     }
-    //     let info = await arena.choiceSummery(topic, choiceA);
-    //     expect(info.shares).equal(3678);
-    //     expect(info.tokens).equal(2178);
+    it("voter 1 withdraws", async () => {
+      // should recieve 2322 tokens
+      // cycle 2
+      let [before] = await _snapshotTokenBalance([voter1]);
+      await arena.connect(voter1).withdrawPosition(topic, choiceA, 0);
+      let [after] = await _snapshotTokenBalance([voter1]);
+      expect(after.sub(before)).eq(2322);
+    });
+    it("should retrieve correct choice summery after one cycle", async () => {
+      // cycle 3
+      for (let i = 0; i < 100; i++) {
+        await network.provider.send("evm_mine");
+      }
+      let info = await arena.choiceSummery(topic, choiceA);
+      expect(info.shares).equal(3678);
+      expect(info.tokens).equal(2178);
 
-    //     let info1 = await arena.aggregatedVoterPosition(
-    //       topic,
-    //       choiceA,
-    //       voter1.address
-    //     );
-    //     expect(info1.tokens).eq(0);
-    //     expect(info1.shares).eq(0);
+      let info1 = await arena.aggregatedVoterPosition(
+        topic,
+        choiceA,
+        voter1.address
+      );
+      expect(info1.tokens).eq(0);
+      expect(info1.shares).eq(0);
 
-    //     let info2 = await arena.aggregatedVoterPosition(
-    //       topic,
-    //       choiceA,
-    //       voter2.address
-    //     );
-    //     expect(info2.tokens).eq(1548);
-    //     expect(info2.shares).eq(3048);
-    //   });
-    //   it("should retrieve correct position info after voter 1 votes", async () => {
-    //     // cycle 3
+      let info2 = await arena.aggregatedVoterPosition(
+        topic,
+        choiceA,
+        voter2.address
+      );
+      expect(info2.tokens).eq(1548);
+      expect(info2.shares).eq(3048);
+    });
+    it("should retrieve correct position info after voter 1 votes", async () => {
+      // cycle 3
 
-    //     await arena.connect(voter1).vote(topic, choiceA, 1000);
+      await arena.connect(voter1).vote(topic, choiceA, 1000);
 
-    //     let info = await arena.choiceSummery(topic, choiceA);
-    //     expect(info.tokens).equal(2927);
-    //     expect(info.shares).equal(3678);
+      let info = await arena.choiceSummery(topic, choiceA);
+      expect(info.tokens).equal(2927);
+      expect(info.shares).equal(3678);
 
-    //     let info2 = await arena.aggregatedVoterPosition(
-    //       topic,
-    //       choiceA,
-    //       voter2.address
-    //     );
-    //     expect(info2.tokens).eq(1647);
-    //     expect(info2.shares).eq(3048);
-    //     let info3 = await arena.aggregatedVoterPosition(
-    //       topic,
-    //       choiceA,
-    //       voter3.address
-    //     );
-    //     expect(info3.tokens).eq(650);
-    //     expect(info3.shares).eq(630);
+      let info2 = await arena.aggregatedVoterPosition(
+        topic,
+        choiceA,
+        voter2.address
+      );
+      expect(info2.tokens).eq(1647);
+      expect(info2.shares).eq(3048);
+      let info3 = await arena.aggregatedVoterPosition(
+        topic,
+        choiceA,
+        voter3.address
+      );
+      expect(info3.tokens).eq(650);
+      expect(info3.shares).eq(630);
 
-    //     let info1 = await arena.aggregatedVoterPosition(
-    //       topic,
-    //       choiceA,
-    //       voter1.address
-    //     );
-    //     expect(info1.tokens).eq(630);
-    //     expect(info1.shares).eq(0);
-    //   });
-    //   it("should retrive correct info after one other cycle", async () => {
-    //     for (let i = 0; i < 100; i++) {
-    //       await network.provider.send("evm_mine");
-    //     }
+      let info1 = await arena.aggregatedVoterPosition(
+        topic,
+        choiceA,
+        voter1.address
+      );
+      expect(info1.tokens).eq(630);
+      expect(info1.shares).eq(0);
+    });
+    it("should retrive correct info after one other cycle", async () => {
+      for (let i = 0; i < 100; i++) {
+        await network.provider.send("evm_mine");
+      }
 
-    //     let info = await arena.choiceSummery(topic, choiceA);
-    //     expect(info.tokens).equal(2927);
-    //     expect(info.shares).equal(6605);
+      let info = await arena.choiceSummery(topic, choiceA);
+      expect(info.tokens).equal(2927);
+      expect(info.shares).equal(6605);
 
-    //     let info2 = await arena.aggregatedVoterPosition(
-    //       topic,
-    //       choiceA,
-    //       voter2.address
-    //     );
-    //     expect(info2.tokens).eq(1647);
-    //     expect(info2.shares).eq(4695);
-    //     let info3 = await arena.aggregatedVoterPosition(
-    //       topic,
-    //       choiceA,
-    //       voter3.address
-    //     );
-    //     expect(info3.tokens).eq(650);
-    //     expect(info3.shares).eq(1280);
+      let info2 = await arena.aggregatedVoterPosition(
+        topic,
+        choiceA,
+        voter2.address
+      );
+      expect(info2.tokens).eq(1647);
+      expect(info2.shares).eq(4695);
+      let info3 = await arena.aggregatedVoterPosition(
+        topic,
+        choiceA,
+        voter3.address
+      );
+      expect(info3.tokens).eq(650);
+      expect(info3.shares).eq(1280);
 
-    //     let info1 = await arena.aggregatedVoterPosition(
-    //       topic,
-    //       choiceA,
-    //       voter1.address
-    //     );
-    //     expect(info1.tokens).eq(630);
-    //     expect(info1.shares).eq(630);
-    //   });
+      let info1 = await arena.aggregatedVoterPosition(
+        topic,
+        choiceA,
+        voter1.address
+      );
+      expect(info1.tokens).eq(630);
+      expect(info1.shares).eq(630);
+    });
   });
 });

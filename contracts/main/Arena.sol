@@ -12,6 +12,7 @@ import "hardhat/console.sol";
 
 contract Arena is Initializable, AccessControlUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
+    using TopicUtils for Topic;
 
     mapping(address => uint256) public claimableBalance; // amount of "info._token" that an address can withdraw from the arena
 
@@ -257,65 +258,81 @@ contract Arena is Initializable, AccessControlUpgradeable {
 
         uint256 activeCycle = getActiveCycle(topicId);
         uint256 firstCycle = voteData.firstCycle;
+        uint256 deductibleShares;
 
         FeeData memory feeData = FeeData(
             topics(topicId),
             voteData.cycles[firstCycle],
             new uint256[](activeCycle + 1),
             new uint256[](activeCycle + 1),
+            new uint256[](activeCycle + 1),
+            new uint256[](activeCycle + 1),
+            new uint256[](activeCycle + 1),
             new uint256[](activeCycle + 1)
         );
 
         totalSum = feeData.cycle.totalSum;
-        feeData.cycleShares[firstCycle] =
-            (feeData.cycle.totalSum * feeData.topic.sharePerCyclePercentage) /
-            1e4;
+        feeData.cycleShares[firstCycle] = feeData.topic.getShare(
+            feeData.cycle.totalSum
+        );
 
         for (uint256 i = firstCycle + 1; i <= activeCycle; i++) {
             // update total shares
-            totalShares +=
-                (totalSum * feeData.topic.sharePerCyclePercentage) /
-                1e4;
+            totalShares += feeData.topic.getShare(totalSum);
 
             // pointer to current cycles data
             feeData.cycle = voteData.cycles[i];
 
-            // if no investments in this cycle, move on to the next cycle
-            if (feeData.cycle.totalSum == 0) continue;
+            uint256 cycleTotalSum = feeData.cycle.totalSum -
+                feeData.deductibleSum[i];
 
-            totalSum += feeData.cycle.totalSum;
+            totalSum += cycleTotalSum;
+
+            if (totalSum == 0) continue;
 
             // update cycle shares
-            feeData.cycleShares[i] =
-                (feeData.cycle.totalSum *
-                    feeData.topic.sharePerCyclePercentage) /
-                1e4;
+            feeData.cycleShares[i] = feeData.topic.getShare(cycleTotalSum);
 
             for (int256 it = int256(i) - 1; it >= 0; it--) {
                 uint256 j = uint256(it);
                 uint256 share = (i - j) *
                     feeData.cycleShares[j] -
-                    feeData.cycleSharesPaid[j];
+                    feeData.cycleSharesPaid[j] +
+                    feeData.deductiblShares[j];
                 uint256 fee = (feeData.cycle.generatedFees * share) /
                     totalShares;
 
-                uint256 feeShare = (fee *
-                    feeData.topic.sharePerCyclePercentage) / 1e4;
+                uint256 feeShare = feeData.topic.getShare(fee);
 
                 feeData.cycleShares[j] += feeShare;
                 feeData.cycleSharesPaid[j] += (i - j) * feeShare;
                 feeData.cycleFeesEarned[j] += fee;
                 totalSum += fee;
             }
+
+            for (uint256 w = 0; w < voteData.withdrawals[i].length; w++) {
+                Withdraw memory withdraw = voteData.withdrawals[i][w];
+                feeData.deductibleSum[withdraw.cycle] += withdraw.tokens;
+                feeData.deductibleFees[withdraw.cycle] += withdraw.fees;
+
+                feeData.cycleShares[withdraw.cycle] -= feeData.topic.getShare(
+                    withdraw.tokens + withdraw.fees
+                );
+                feeData.cycleSharesPaid[withdraw.cycle] -= withdraw.paidShares;
+
+                deductibleShares += withdraw.shares;
+                totalSum -= withdraw.tokens + withdraw.fees;
+                totalShares -= withdraw.shares;
+            }
         }
 
-        {
-            earnedFees = feeData.cycleFeesEarned[targetCycle];
-            shares =
-                (activeCycle - targetCycle) *
-                feeData.cycleShares[targetCycle] -
-                feeData.cycleSharesPaid[targetCycle];
-        }
+        earnedFees =
+            feeData.cycleFeesEarned[targetCycle] -
+            feeData.deductibleFees[targetCycle];
+        shares =
+            (activeCycle - targetCycle) *
+            feeData.cycleShares[targetCycle] -
+            feeData.cycleSharesPaid[targetCycle];
     }
 
     function voterPosition(
@@ -338,17 +355,59 @@ contract Arena is Initializable, AccessControlUpgradeable {
             choiceId,
             cycle
         );
+        uint256 cycleTotalSum = cycleData.totalSum - cycleData.deductibleSum;
         tokens =
             position.tokens +
-            ((position.tokens * earnedFees) / cycleData.totalSum);
-        shares = (position.tokens * cycleShares) / cycleData.totalSum;
+            ((position.tokens * earnedFees) / cycleTotalSum);
+        shares = (position.tokens * cycleShares) / cycleTotalSum;
     }
 
     function withdrawPosition(
         uint256 topicId,
         uint256 choiceId,
         uint256 positionIndex
-    ) public {}
+    ) public {
+        Topic memory topic = topicData.topics[topicId];
+
+        Position storage position = positionsData.positions[msg.sender][
+            topicId
+        ][choiceId][positionIndex];
+        uint256 activeCycle = getActiveCycle(topicId);
+        uint256 cycle = (position.blockNumber - topic.startBlock) /
+            topic.cycleDuration;
+        Cycle storage cycleData = choiceData
+        .choiceVoteData[topicId][choiceId].cycles[cycle];
+
+        ChoiceVoteData storage voteData = choiceData.choiceVoteData[topicId][
+            choiceId
+        ];
+
+        (uint256 tokens, uint256 shares) = voterPosition(
+            topicId,
+            choiceId,
+            positionIndex,
+            msg.sender
+        );
+        {
+            uint256 principalShare = topic.getShare(position.tokens);
+            uint256 totalFees = (tokens - position.tokens);
+            uint256 feeShare = topic.getShare(totalFees);
+            uint256 paidShares = ((activeCycle - cycle) *
+                (principalShare + feeShare)) - shares;
+
+            voteData.withdrawals[activeCycle].push(
+                Withdraw(cycle, position.tokens, totalFees, shares, paidShares)
+            );
+
+            cycleData.deductibleSum += position.tokens;
+            cycleData.paidFees += totalFees;
+            voteData.totalSum -= tokens;
+            position.tokens = 0;
+        }
+        IERC20Upgradeable(info.token).safeTransfer(msg.sender, tokens);
+        positionsData.nextClaimIndex[msg.sender][topicId][choiceId]++;
+        emit Withdaw(msg.sender, topicId, choiceId, positionIndex, tokens);
+    }
 
     function aggregatedVoterPosition(
         uint256 topicId,

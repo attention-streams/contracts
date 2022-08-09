@@ -34,24 +34,25 @@ setAccountIfExists(process.env.PRIVATE_KEY_OWNER);
 setAccountIfExists(process.env.PRIVATE_KEY_DEV);
 setAccountIfExists(process.env.PRIVATE_KEY_USER);
 
-const config = {
+const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.4",
-    allowUnlimitedContractSize: true,
-    optimizer: {
-      enabled: true,
-      runs: 5000,
-      allowUnlimitedContractSize: true,
-
-      details: { yul: false },
-    },
+    compilers: [
+      {
+        version: "0.8.4",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 100000000,
+          },
+        },
+      },
+    ],
   },
-  allowUnlimitedContractSize: true,
 
   networks: {
     local: {
-      url: "http://127.0.0.1:8545",
       allowUnlimitedContractSize: true,
+      url: "http://127.0.0.1:8545",
       accounts: {
         mnemonic:
           "myth like bonus scare over problem client lizard pioneer submit female collect",
@@ -78,9 +79,7 @@ const config = {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: "USD",
   },
-  etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
-  },
+
   mocha: { timeout: 10 * 60 * 1000 },
 };
 

@@ -18,19 +18,27 @@ struct ArenaInfo {
 }
 
 struct Cycle {
-    uint256 totalShares; // some of all shares invested in this cycle
-    uint256 totalSharesPaid; // used to efficiently update aggregates
     uint256 totalSum; // sum of all tokens invested in this cycle
-    uint256 totalFees; // total fees accumulated on this cycle (to be distributed to voters)
     uint256 generatedFees; // total fees generated in this cycle
+    uint256 deductibleSum;
+    uint256 paidFees;
+}
+
+struct Withdraw {
+    uint256 cycle;
+    uint256 tokens;
+    uint256 fees;
+    uint256 shares;
+    uint256 paidShares;
 }
 
 struct ChoiceVoteData {
     uint256 totalSum; // sum of all tokens invested in this choice
-    uint256 totalFess; // total fees generated in this choice
-    uint256 totalFeesPaid; // total fees claimd by users
     uint256 firstCycle; // cycle of the first vote
+    uint256 totalFeesPaid;
+    uint256 totalSharesPaid;
     mapping(uint256 => Cycle) cycles; // cycleId => cycle info
+    mapping(uint256 => Withdraw[]) withdrawals; // cycleId => listOf withdrawals
 }
 
 struct Choice {
@@ -81,9 +89,22 @@ struct TopicData {
 struct FeeData {
     Topic topic;
     Cycle cycle;
+    uint256[] deductibleSum;
+    uint256[] deductiblShares;
+    uint256[] deductibleFees;
     uint256[] cycleShares;
     uint256[] cycleSharesPaid;
     uint256[] cycleFeesEarned;
+}
+
+library TopicUtils {
+    function getShare(Topic memory topic, uint256 amount)
+        internal
+        pure
+        returns (uint256)
+    {
+        return (amount * topic.sharePerCyclePercentage) / 1e4;
+    }
 }
 
 library FeeUtils {
