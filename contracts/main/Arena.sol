@@ -51,15 +51,11 @@ contract Arena is Initializable, AccessControlUpgradeable {
     }
 
     // ============== core state views =============== //
-    function getNextTopicId() public view returns (uint256) {
+    function nextTopicId() public view returns (uint256) {
         return topicData.topics.length;
     }
 
-    function getNextChoiceIdInTopic(uint256 topicId)
-        public
-        view
-        returns (uint256)
-    {
+    function nextChoiceId(uint256 topicId) public view returns (uint256) {
         return choiceData.topicChoices[topicId].length;
     }
 
@@ -134,7 +130,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
             "Arena: ACCUMULATIVE_FEE_EXCEEDED"
         );
 
-        emit AddTopic(getNextTopicId(), topic);
+        emit AddTopic(nextTopicId(), topic);
         topicData.topics.push(topic);
     }
 
@@ -168,7 +164,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
                 info.choiceCreationFee
             );
         }
-        emit AddChoice(getNextChoiceIdInTopic(topicId), topicId, choice);
+        emit AddChoice(nextChoiceId(topicId), topicId, choice);
         choiceData.topicChoices[topicId].push(choice);
     }
 
@@ -255,19 +251,20 @@ contract Arena is Initializable, AccessControlUpgradeable {
             uint256 totalShares
         )
     {
-        uint256 activeCycle = getActiveCycle(topicId);
-        uint256 firstCycle = choiceData
-        .choiceVoteData[topicId][choiceId].firstCycle;
-
-        FeeData memory feeData;
-
-        feeData.topic = topics(topicId);
-        feeData.cycle = choiceData.choiceVoteData[topicId][choiceId].cycles[
-            firstCycle
+        ChoiceVoteData storage voteData = choiceData.choiceVoteData[topicId][
+            choiceId
         ];
-        feeData.cycleShares = new uint256[](activeCycle + 1);
-        feeData.cycleSharesPaid = new uint256[](activeCycle + 1);
-        feeData.cycleFeesEarned = new uint256[](activeCycle + 1);
+
+        uint256 activeCycle = getActiveCycle(topicId);
+        uint256 firstCycle = voteData.firstCycle;
+
+        FeeData memory feeData = FeeData(
+            topics(topicId),
+            voteData.cycles[firstCycle],
+            new uint256[](activeCycle + 1),
+            new uint256[](activeCycle + 1),
+            new uint256[](activeCycle + 1)
+        );
 
         totalSum = feeData.cycle.totalSum;
         feeData.cycleShares[firstCycle] =
@@ -275,26 +272,13 @@ contract Arena is Initializable, AccessControlUpgradeable {
             1e4;
 
         for (uint256 i = firstCycle + 1; i <= activeCycle; i++) {
-            if (totalSum == 0) {
-                feeData.cycle = choiceData
-                .choiceVoteData[topicId][choiceId].cycles[i - 1];
-                totalSum = feeData.cycle.totalSum;
-                feeData.cycleShares[i - 1] =
-                    (feeData.cycle.totalSum *
-                        feeData.topic.sharePerCyclePercentage) /
-                    1e4;
-            }
-            if (totalSum == 0) continue;
-
             // update total shares
             totalShares +=
                 (totalSum * feeData.topic.sharePerCyclePercentage) /
                 1e4;
 
             // pointer to current cycles data
-            feeData.cycle = choiceData.choiceVoteData[topicId][choiceId].cycles[
-                i
-            ];
+            feeData.cycle = voteData.cycles[i];
 
             // if no investments in this cycle, move on to the next cycle
             if (feeData.cycle.totalSum == 0) continue;
@@ -364,45 +348,7 @@ contract Arena is Initializable, AccessControlUpgradeable {
         uint256 topicId,
         uint256 choiceId,
         uint256 positionIndex
-    ) public {
-        // Topic memory topic = topicData.topics[topicId];
-        // Position storage position = positionsData.positions[msg.sender][
-        //     topicId
-        // ][choiceId][positionIndex];
-        // uint256 activeCycle = getActiveCycle(topicId);
-        // uint256 cycle = (position.blockNumber - topic.startBlock) /
-        //     topic.cycleDuration;
-        // Cycle storage cycleData = choiceData
-        // .choiceVoteData[topicId][choiceId].cycles[cycle];
-        // ChoiceVoteData storage voteData = choiceData.choiceVoteData[topicId][
-        //     choiceId
-        // ];
-        // (uint256 tokens, uint256 shares) = voterPosition(
-        //     topicId,
-        //     choiceId,
-        //     positionIndex,
-        //     msg.sender
-        // );
-        // {
-        //     uint256 principalShare = (position.tokens *
-        //         topic.sharePerCyclePercentage) / 10000;
-        //     uint256 totalFees = (tokens - position.tokens);
-        //     uint256 feeShare = (totalFees * topic.sharePerCyclePercentage) /
-        //         10000;
-        //     uint256 paidShares = ((activeCycle - cycle) *
-        //         (principalShare + feeShare)) - shares;
-        //     cycleData.totalFees -= totalFees;
-        //     cycleData.totalShares -= principalShare + feeShare;
-        //     cycleData.totalSharesPaid -= paidShares;
-        //     cycleData.totalSum -= position.tokens;
-        //     voteData.totalShares -= principalShare;
-        //     voteData.totalSum -= tokens;
-        //     position.tokens = 0;
-        // }
-        // IERC20Upgradeable(info.token).safeTransfer(msg.sender, tokens);
-        // positionsData.nextClaimIndex[msg.sender][topicId][choiceId]++;
-        // emit Withdaw(msg.sender, topicId, choiceId, positionIndex, tokens);
-    }
+    ) public {}
 
     function aggregatedVoterPosition(
         uint256 topicId,

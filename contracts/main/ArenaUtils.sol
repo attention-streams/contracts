@@ -28,6 +28,7 @@ struct Cycle {
 struct ChoiceVoteData {
     uint256 totalSum; // sum of all tokens invested in this choice
     uint256 totalFess; // total fees generated in this choice
+    uint256 totalFeesPaid; // total fees claimd by users
     uint256 firstCycle; // cycle of the first vote
     mapping(uint256 => Cycle) cycles; // cycleId => cycle info
 }
