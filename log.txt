@@ -1,0 +1,269 @@
+No need to generate any newer typings.
+
+
+  Attention Streams Setup
+    Arena creation
+      1) should deploy arena with valid configuration
+      2) should properly retrieve the deployed arena info
+      3) should fail to create arena with fee percentage more than 100%
+    Topic Creation
+      4) "before all" hook for "should create the first valid topic with id of # 0"
+    Topic Creation Fee
+      5) should create an arena with with topicCreationFee of 10 tokens
+      6) should fail to create topic if contract can't spend funds
+      7) should fail to create topic if balance is low
+      8) should subtract topicCreationFee amount from creator and add it to arena funds
+    Choice Creation
+      9) "before all" hook for "should create valid choice with id # 0"
+
+  Test Voting mechanism
+    Core voting mechanism
+      10) should setup a clean attention stream
+      11) should fail to vote with less than min contribution amount
+      12) should retrieve correct position info after voter 1 puts 1000 token on choice A
+      13) should retrieve correct position info after one cycle and voter 2 vote
+      14) should retrieve correct info after one more cycle
+      15) should retrieve correct info after third cycle
+      16) should retrieve correct accumulative choice A info 
+      17) should get correct info after voter a votes 3000 tokens on the next cycle
+      18) should get correct info after voter 2 puts 2000 tokens in the same cycle
+      19) voter 1 votes on choice B, this should not affect choice A data
+      20) should get correct info of both choice A and B on cycle 5
+      21) should retrieve correct accumulative choice A info 
+    test voting fee distribution to choice, topic and arena funds
+      22) should setup a clean attention stream
+      23) should confirm that no votes are on choice A
+      24) should confirm voter 1 votes on choice A
+      25) should confirm fee distribution from voter 1 to choice A
+      26) should confirm fee distribution from voter 1 to topic
+      27) should confirm fee distribution from voter 1 to arena
+    test withdrawals
+      28) "before all" hook for "should print zero share "
+
+
+  0 passing (4s)
+  28 failing
+
+  1) Attention Streams Setup
+       Arena creation
+         should deploy arena with valid configuration:
+     ProviderError: VM Exception while processing transaction: out of gas
+      at HttpProvider.request (node_modules/hardhat/src/internal/core/providers/http.ts:78:19)
+      at HDWalletProvider.request (node_modules/hardhat/src/internal/core/providers/accounts.ts:188:34)
+      at processTicksAndRejections (node:internal/process/task_queues:96:5)
+      at async EthersProviderWrapper.send (node_modules/@nomiclabs/hardhat-ethers/src/internal/ethers-provider-wrapper.ts:13:20)
+
+  2) Attention Streams Setup
+       Arena creation
+         should properly retrieve the deployed arena info:
+     TypeError: Cannot read properties of undefined (reading 'functions')
+      at Context.<anonymous> (test/creations.test.ts:29:37)
+      at processImmediate (node:internal/timers:466:21)
+
+  3) Attention Streams Setup
+       Arena creation
+         should fail to create arena with fee percentage more than 100%:
+     AssertionError: Expected transaction to be reverted, but other exception was thrown: ProviderError: VM Exception while processing transaction: out of gas
+  
+
+  4) Attention Streams Setup
+       Topic Creation
+         "before all" hook for "should create the first valid topic with id of # 0":
+     ProviderError: VM Exception while processing transaction: out of gas
+      at HttpProvider.request (node_modules/hardhat/src/internal/core/providers/http.ts:78:19)
+      at HDWalletProvider.request (node_modules/hardhat/src/internal/core/providers/accounts.ts:188:34)
+      at processTicksAndRejections (node:internal/process/task_queues:96:5)
+      at async EthersProviderWrapper.send (node_modules/@nomiclabs/hardhat-ethers/src/internal/ethers-provider-wrapper.ts:13:20)
+
+  5) Attention Streams Setup
+       Topic Creation Fee
+         should create an arena with with topicCreationFee of 10 tokens:
+     ProviderError: VM Exception while processing transaction: out of gas
+      at HttpProvider.request (node_modules/hardhat/src/internal/core/providers/http.ts:78:19)
+      at HDWalletProvider.request (node_modules/hardhat/src/internal/core/providers/accounts.ts:188:34)
+      at processTicksAndRejections (node:internal/process/task_queues:96:5)
+      at async EthersProviderWrapper.send (node_modules/@nomiclabs/hardhat-ethers/src/internal/ethers-provider-wrapper.ts:13:20)
+
+  6) Attention Streams Setup
+       Topic Creation Fee
+         should fail to create topic if contract can't spend funds:
+     AssertionError: Expected transaction to be reverted with ERC20: insufficient allowance, but other exception was thrown: TypeError: Cannot read properties of undefined (reading 'connect')
+  
+
+  7) Attention Streams Setup
+       Topic Creation Fee
+         should fail to create topic if balance is low:
+     TypeError: Cannot read properties of undefined (reading 'info')
+      at Context.<anonymous> (test/creations.test.ts:149:56)
+
+  8) Attention Streams Setup
+       Topic Creation Fee
+         should subtract topicCreationFee amount from creator and add it to arena funds:
+     TypeError: Cannot read properties of undefined (reading 'info')
+      at fundDevAccountAndApprove (test/creations.test.ts:166:32)
+      at async Context.<anonymous> (test/creations.test.ts:193:7)
+
+  9) Attention Streams Setup
+       Choice Creation
+         "before all" hook for "should create valid choice with id # 0":
+     ProviderError: VM Exception while processing transaction: out of gas
+      at HttpProvider.request (node_modules/hardhat/src/internal/core/providers/http.ts:78:19)
+      at HDWalletProvider.request (node_modules/hardhat/src/internal/core/providers/accounts.ts:188:34)
+      at processTicksAndRejections (node:internal/process/task_queues:96:5)
+      at async EthersProviderWrapper.send (node_modules/@nomiclabs/hardhat-ethers/src/internal/ethers-provider-wrapper.ts:13:20)
+
+  10) Test Voting mechanism
+       Core voting mechanism
+         should setup a clean attention stream:
+     ProviderError: VM Exception while processing transaction: out of gas
+      at HttpProvider.request (node_modules/hardhat/src/internal/core/providers/http.ts:78:19)
+      at HDWalletProvider.request (node_modules/hardhat/src/internal/core/providers/accounts.ts:188:34)
+      at processTicksAndRejections (node:internal/process/task_queues:96:5)
+      at async EthersProviderWrapper.send (node_modules/@nomiclabs/hardhat-ethers/src/internal/ethers-provider-wrapper.ts:13:20)
+
+  11) Test Voting mechanism
+       Core voting mechanism
+         should fail to vote with less than min contribution amount:
+     AssertionError: Expected transaction to be reverted with Arena: LOW_AMOUNT, but other exception was thrown: TypeError: Cannot read properties of undefined (reading 'connect')
+  
+
+  12) Test Voting mechanism
+       Core voting mechanism
+         should retrieve correct position info after voter 1 puts 1000 token on choice A:
+     TypeError: Cannot read properties of undefined (reading 'connect')
+      at vote (scripts/deploy.ts:89:6)
+      at Context.<anonymous> (test/voting.test.ts:283:28)
+
+  13) Test Voting mechanism
+       Core voting mechanism
+         should retrieve correct position info after one cycle and voter 2 vote:
+     TypeError: Cannot read properties of undefined (reading 'connect')
+      at vote (scripts/deploy.ts:89:6)
+      at Context.<anonymous> (test/voting.test.ts:297:28)
+      at runMicrotasks (<anonymous>)
+      at processTicksAndRejections (node:internal/process/task_queues:96:5)
+
+  14) Test Voting mechanism
+       Core voting mechanism
+         should retrieve correct info after one more cycle:
+     TypeError: Cannot read properties of undefined (reading 'aggregatedVoterPosition')
+      at validateVoter1and2PositionData (test/voting.test.ts:252:39)
+      at Context.<anonymous> (test/voting.test.ts:311:13)
+      at runMicrotasks (<anonymous>)
+      at processTicksAndRejections (node:internal/process/task_queues:96:5)
+
+  15) Test Voting mechanism
+       Core voting mechanism
+         should retrieve correct info after third cycle:
+     TypeError: Cannot read properties of undefined (reading 'aggregatedVoterPosition')
+      at validateVoter1and2PositionData (test/voting.test.ts:252:39)
+      at Context.<anonymous> (test/voting.test.ts:317:13)
+      at runMicrotasks (<anonymous>)
+      at processTicksAndRejections (node:internal/process/task_queues:96:5)
+
+  16) Test Voting mechanism
+       Core voting mechanism
+         should retrieve correct accumulative choice A info :
+     TypeError: Cannot read properties of undefined (reading 'choiceSummery')
+      at Context.<anonymous> (test/voting.test.ts:320:30)
+      at processImmediate (node:internal/timers:466:21)
+
+  17) Test Voting mechanism
+       Core voting mechanism
+         should get correct info after voter a votes 3000 tokens on the next cycle:
+     TypeError: Cannot read properties of undefined (reading 'connect')
+      at vote (scripts/deploy.ts:89:6)
+      at Context.<anonymous> (test/voting.test.ts:327:28)
+      at runMicrotasks (<anonymous>)
+      at processTicksAndRejections (node:internal/process/task_queues:96:5)
+
+  18) Test Voting mechanism
+       Core voting mechanism
+         should get correct info after voter 2 puts 2000 tokens in the same cycle:
+     TypeError: Cannot read properties of undefined (reading 'connect')
+      at vote (scripts/deploy.ts:89:6)
+      at Context.<anonymous> (test/voting.test.ts:338:28)
+
+  19) Test Voting mechanism
+       Core voting mechanism
+         voter 1 votes on choice B, this should not affect choice A data:
+     TypeError: Cannot read properties of undefined (reading 'connect')
+      at vote (scripts/deploy.ts:89:6)
+      at Context.<anonymous> (test/voting.test.ts:349:28)
+
+  20) Test Voting mechanism
+       Core voting mechanism
+         should get correct info of both choice A and B on cycle 5:
+     TypeError: Cannot read properties of undefined (reading 'aggregatedVoterPosition')
+      at validateVoter1and2PositionData (test/voting.test.ts:252:39)
+      at Context.<anonymous> (test/voting.test.ts:372:13)
+      at runMicrotasks (<anonymous>)
+      at processTicksAndRejections (node:internal/process/task_queues:96:5)
+
+  21) Test Voting mechanism
+       Core voting mechanism
+         should retrieve correct accumulative choice A info :
+     TypeError: Cannot read properties of undefined (reading 'choiceSummery')
+      at Context.<anonymous> (test/voting.test.ts:387:30)
+      at runMicrotasks (<anonymous>)
+      at processTicksAndRejections (node:internal/process/task_queues:96:5)
+
+  22) Test Voting mechanism
+       test voting fee distribution to choice, topic and arena funds
+         should setup a clean attention stream:
+     ProviderError: VM Exception while processing transaction: out of gas
+      at HttpProvider.request (node_modules/hardhat/src/internal/core/providers/http.ts:78:19)
+      at HDWalletProvider.request (node_modules/hardhat/src/internal/core/providers/accounts.ts:188:34)
+      at runMicrotasks (<anonymous>)
+      at processTicksAndRejections (node:internal/process/task_queues:96:5)
+      at async EthersProviderWrapper.send (node_modules/@nomiclabs/hardhat-ethers/src/internal/ethers-provider-wrapper.ts:13:20)
+
+  23) Test Voting mechanism
+       test voting fee distribution to choice, topic and arena funds
+         should confirm that no votes are on choice A:
+     TypeError: Cannot read properties of undefined (reading 'choiceSummery')
+      at Context.<anonymous> (test/voting.test.ts:429:32)
+      at processImmediate (node:internal/timers:466:21)
+
+  24) Test Voting mechanism
+       test voting fee distribution to choice, topic and arena funds
+         should confirm voter 1 votes on choice A:
+     TypeError: Cannot read properties of undefined (reading 'balanceOf')
+      at _snapshotTokenBalance (test/voting.test.ts:399:44)
+      at runMicrotasks (<anonymous>)
+      at processTicksAndRejections (node:internal/process/task_queues:96:5)
+      at async Context.<anonymous> (test/voting.test.ts:434:29)
+
+  25) Test Voting mechanism
+       test voting fee distribution to choice, topic and arena funds
+         should confirm fee distribution from voter 1 to choice A:
+     TypeError: Cannot read properties of undefined (reading 'topicChoices')
+      at Context.<anonymous> (test/voting.test.ts:443:42)
+      at processImmediate (node:internal/timers:466:21)
+
+  26) Test Voting mechanism
+       test voting fee distribution to choice, topic and arena funds
+         should confirm fee distribution from voter 1 to topic:
+     TypeError: Cannot read properties of undefined (reading 'topics')
+      at Context.<anonymous> (test/voting.test.ts:452:42)
+      at processImmediate (node:internal/timers:466:21)
+
+  27) Test Voting mechanism
+       test voting fee distribution to choice, topic and arena funds
+         should confirm fee distribution from voter 1 to arena:
+     TypeError: Cannot read properties of undefined (reading 'info')
+      at Context.<anonymous> (test/voting.test.ts:460:42)
+      at processImmediate (node:internal/timers:466:21)
+
+  28) Test Voting mechanism
+       test withdrawals
+         "before all" hook for "should print zero share ":
+     ProviderError: VM Exception while processing transaction: out of gas
+      at HttpProvider.request (node_modules/hardhat/src/internal/core/providers/http.ts:78:19)
+      at HDWalletProvider.request (node_modules/hardhat/src/internal/core/providers/accounts.ts:188:34)
+      at runMicrotasks (<anonymous>)
+      at processTicksAndRejections (node:internal/process/task_queues:96:5)
+      at async EthersProviderWrapper.send (node_modules/@nomiclabs/hardhat-ethers/src/internal/ethers-provider-wrapper.ts:13:20)
+
+
+

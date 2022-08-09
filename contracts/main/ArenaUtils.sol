@@ -22,13 +22,13 @@ struct Cycle {
     uint256 totalSharesPaid; // used to efficiently update aggregates
     uint256 totalSum; // sum of all tokens invested in this cycle
     uint256 totalFees; // total fees accumulated on this cycle (to be distributed to voters)
+    uint256 generatedFees; // total fees generated in this cycle
 }
 
 struct ChoiceVoteData {
     uint256 totalSum; // sum of all tokens invested in this choice
-    uint256 totalShares; // total shares of this choice
     uint256 totalFess; // total fees generated in this choice
-    uint256 updatedAt; // block at which data was last updated
+    uint256 firstCycle; // cycle of the first vote
     mapping(uint256 => Cycle) cycles; // cycleId => cycle info
 }
 
@@ -76,6 +76,13 @@ struct ChoiceData {
 struct TopicData {
     Topic[] topics;
     mapping(uint256 => bool) isTopicDeleted; // indicates if a topic is deleted or not. (if deleted, not voting can happen)
+}
+struct FeeData {
+    Topic topic;
+    Cycle cycle;
+    uint256[] cycleShares;
+    uint256[] cycleSharesPaid;
+    uint256[] cycleFeesEarned;
 }
 
 library FeeUtils {

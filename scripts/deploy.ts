@@ -104,7 +104,7 @@ async function deployStandardArena() {
   params.token = "0x93055D4D59CE4866424E1814b84986bFD44920b9";
   let t = await deployArena(params);
   await t.deployed();
-  console.log("Deployed at ", t.address);
+  // console.log("Deployed at ", t.address);
 }
 
 async function addStandardTopic(arena: Arena) {
@@ -190,6 +190,7 @@ async function approveContractToSpendToken() {
 }
 
 async function main() {
+  await deployStandardArena();
   if (network.name == "rinkeby") {
     let [owner] = await ethers.getSigners();
     let arenaAddress = "0x99b4ba32a258Add555B751C8C8B6a6673a284247";

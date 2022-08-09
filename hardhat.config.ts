@@ -35,8 +35,32 @@ setAccountIfExists(process.env.PRIVATE_KEY_DEV);
 setAccountIfExists(process.env.PRIVATE_KEY_USER);
 
 const config = {
-  solidity: "0.8.4",
+  solidity: {
+    version: "0.8.4",
+    allowUnlimitedContractSize: true,
+    optimizer: {
+      enabled: true,
+      runs: 5000,
+      allowUnlimitedContractSize: true,
+
+      details: { yul: false },
+    },
+  },
+  allowUnlimitedContractSize: true,
+
   networks: {
+    local: {
+      url: "http://127.0.0.1:8545",
+      allowUnlimitedContractSize: true,
+      accounts: {
+        mnemonic:
+          "myth like bonus scare over problem client lizard pioneer submit female collect",
+        initialIndex: 0,
+        // Ref: https://developers.rsk.co/rsk/architecture/account-based/#derivation-path-info
+        path: "m/44'/60'/0'/0/",
+        count: 10,
+      },
+    },
     rinkeby: {
       url: process.env.RINKEBY_URL !== undefined ? process.env.RINKEBY_URL : "",
       accounts: accounts,
