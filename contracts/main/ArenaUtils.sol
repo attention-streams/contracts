@@ -67,6 +67,7 @@ struct Topic {
     uint32 fundingPeriod; // how often funds are distributed to leading choices, in terms of # of cycles. ignored if no external funding available
     uint16 fundingPercentage; // percentage of funds transferred to leading choices
     address payable funds;
+    string metaDataUrl;
 }
 
 struct PositionData {

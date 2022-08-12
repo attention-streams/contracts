@@ -7,6 +7,7 @@ import "hardhat-gas-reporter";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-ethers";
 import "@openzeppelin/hardhat-upgrades";
+import "@nomiclabs/hardhat-etherscan";
 require("solidity-coverage");
 
 dotenv.config();
@@ -78,6 +79,12 @@ const config: HardhatUserConfig = {
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: "USD",
+  },
+
+  etherscan: {
+    apiKey: {
+      goerli: process.env.ETHERSCAN_API_KEY!,
+    },
   },
 
   mocha: { timeout: 10 * 60 * 1000 },

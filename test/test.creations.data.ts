@@ -26,6 +26,7 @@ export interface TopicParams {
   fundingPeriod: number;
   fundingPercentage: number;
   funds: string;
+  metaDataUrl: string;
 }
 
 export interface ChoiceParams {
@@ -75,6 +76,7 @@ export function getValidTopicParams(): TopicParams {
     fundingPeriod: 0,
     fundingPercentage: 0,
     funds: "0x71bE63f3384f5fb98995898A86B02Fb2426c5788",
+    metaDataUrl: "",
   };
 }
 
@@ -86,8 +88,8 @@ export function getValidArenaParams(): ArenaParams {
     maxChoiceFeePercentage: 3000, // 1 percent
     maxTopicFeePercentage: 500, // 5 percent
     arenaFeePercentage: 1000, // 10 percent
-    choiceCreationFee: BigNumber.from(0),
-    topicCreationFee: BigNumber.from(0),
+    choiceCreationFee: BigNumber.from(1000),
+    topicCreationFee: BigNumber.from(1000),
     funds: "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a",
   };
 }

@@ -12,7 +12,7 @@ import {
   getValidTopicParams,
   TopicParams,
 } from "../test/test.creations.data";
-import { Arena } from "../typechain";
+import { Arena, IERC20 } from "../typechain";
 import { wallets } from "./rinkeby.wallets";
 
 async function deployAttentionToken() {
@@ -101,15 +101,18 @@ export {
 
 async function deployStandardArena() {
   let params = getValidArenaParams();
-  params.token = "0x93055D4D59CE4866424E1814b84986bFD44920b9";
+  params.funds = "0xaa6cD66cA508F22fe125e83342c7dc3dbE779250";
   let t = await deployArena(params);
   await t.deployed();
-  // console.log("Deployed at ", t.address);
+  console.log("Deployed at ", t.address);
+  return t as Arena;
 }
 
 async function addStandardTopic(arena: Arena) {
   let params = getValidTopicParams();
   params.cycleDuration = 2;
+  params.funds = "0xaa6cD66cA508F22fe125e83342c7dc3dbE779250";
+  params.metaDataUrl = "http://168.119.127.117:6040/topic1.json";
   let t = await addTopic(arena, params);
   await t.wait(1);
   console.log("Topic Added");
@@ -117,6 +120,9 @@ async function addStandardTopic(arena: Arena) {
 
 async function addChoiceA(arena: Arena, topicId: BigNumber) {
   let params = getValidChoiceParams();
+  params.funds = "0xaa6cD66cA508F22fe125e83342c7dc3dbE779250";
+  params.description = "First Choice";
+  params.metaDataUrl = "http://168.119.127.117:6040/choice1.json";
   let t = await addChoice(arena, topicId, params);
   await t.wait(1);
   console.log("Choice Added");
@@ -189,8 +195,38 @@ async function approveContractToSpendToken() {
   }
 }
 
+import hre from "hardhat";
+
 async function main() {
-  await deployStandardArena();
+  // let arena = await ethers.getContractAt(
+  //   "Arena",
+  //   "0x29eB89E03F317B87aB3510bE0ED748CBab916D21"
+  // );
+
+  try {
+    await hre.run("verify:verify", {
+      address: "0xbD8f7a4ADb8dd775Bb8F0746C2A2E177110E00F8",
+      constructorArguments: [],
+    });
+  } catch (e) {
+    console.error("[DEPLOY] Failed to verify contract!");
+    console.log(e);
+  }
+
+  // let uni = await ethers.getContractAt(
+  //   "IERC20",
+  //   "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"
+  // );
+
+  // await uni.approve(arena.address, ethers.utils.parseEther("1000000000"));
+
+  // await addStandardTopic(arena);
+  // await addChoiceA(arena, BigNumber.from(0));
+
+  // let m = await ethers.getContractFactory("Multicall2");
+  // let multicall = await m.deploy();
+  // console.log(multicall.address);
+
   if (network.name == "rinkeby") {
     let [owner] = await ethers.getSigners();
     let arenaAddress = "0x99b4ba32a258Add555B751C8C8B6a6673a284247";
