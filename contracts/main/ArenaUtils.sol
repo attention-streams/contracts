@@ -37,6 +37,7 @@ struct Choice {
     address payable funds; // fees are paid to this address
     uint16 feePercentage; // fees paid to choice from votes
     uint256 fundingTarget; // cannot receive funds more than this amount
+    string metaDataUrl;
 }
 struct Position {
     // share are dynamically calculated as follows
@@ -62,6 +63,7 @@ struct Topic {
 struct PositionData {
     mapping(address => mapping(uint256 => mapping(uint256 => Position[]))) positions; // positions of each user in each choice of each topic // address => (topicId => (choiceId => Position[]))
     mapping(address => mapping(uint256 => mapping(uint256 => uint256))) positionsLength; // address => (topicId => (choiceId => positions length))
+    mapping(address => mapping(uint256 => mapping(uint256 => uint256))) nextClaimIndex;
     mapping(address => mapping(uint256 => mapping(uint256 => uint256))) nextPositionToWithdraw; // address => (topicId => (choiceId => next position to withdraw))
 }
 

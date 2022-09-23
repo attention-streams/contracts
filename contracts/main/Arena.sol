@@ -22,6 +22,13 @@ contract Arena is Initializable, AccessControlUpgradeable {
     event RemoveTopic(uint256 topicId);
     event AddChoice(uint256 choiceId, uint256 topicId, Choice choice);
     event RemoveChoice(uint256 choiceId, uint256 topicId);
+    event Withdaw(
+        address user,
+        uint256 topicId,
+        uint256 choiceId,
+        uint256 positionIndex,
+        uint256 amount
+    );
     event Vote(
         address user,
         uint256 amount,
@@ -76,6 +83,22 @@ contract Arena is Initializable, AccessControlUpgradeable {
         returns (bool)
     {
         return choiceData.isChoiceDeleted[topicId][choiceId];
+    }
+
+    function positionsLength(
+        address user,
+        uint256 topicId,
+        uint256 choiceId
+    ) public view returns (uint256) {
+        return positionsData.positionsLength[user][topicId][choiceId];
+    }
+
+    function nextClaimIndex(
+        address user,
+        uint256 topicId,
+        uint256 choiceId
+    ) public view returns (uint256) {
+        return positionsData.nextClaimIndex[user][topicId][choiceId];
     }
 
     // ============== core state functions =============== //
@@ -295,22 +318,27 @@ contract Arena is Initializable, AccessControlUpgradeable {
             positionIndex,
             msg.sender
         );
-        uint256 principalShare = (position.tokens *
-            topic.sharePerCyclePercentage) / 10000;
-        uint256 totalFees = (tokens - position.tokens);
-        uint256 feeShare = (totalFees * topic.sharePerCyclePercentage) / 10000;
-        uint256 paidShares = ((activeCycle - cycle) *
-            (principalShare + feeShare)) - shares;
+        {
+            uint256 principalShare = (position.tokens *
+                topic.sharePerCyclePercentage) / 10000;
+            uint256 totalFees = (tokens - position.tokens);
+            uint256 feeShare = (totalFees * topic.sharePerCyclePercentage) /
+                10000;
+            uint256 paidShares = ((activeCycle - cycle) *
+                (principalShare + feeShare)) - shares;
 
-        cycleData.totalFees -= totalFees;
-        cycleData.totalShares -= principalShare + feeShare;
-        cycleData.totalSharesPaid -= paidShares;
-        cycleData.totalSum -= position.tokens;
+            cycleData.totalFees -= totalFees;
+            cycleData.totalShares -= principalShare + feeShare;
+            cycleData.totalSharesPaid -= paidShares;
+            cycleData.totalSum -= position.tokens;
 
-        voteData.totalShares -= principalShare;
-        voteData.totalSum -= tokens;
-        position.tokens = 0;
+            voteData.totalShares -= principalShare;
+            voteData.totalSum -= tokens;
+            position.tokens = 0;
+        }
         IERC20Upgradeable(info.token).safeTransfer(msg.sender, tokens);
+        positionsData.nextClaimIndex[msg.sender][topicId][choiceId]++;
+        emit Withdaw(msg.sender, topicId, choiceId, positionIndex, tokens);
     }
 
     function choiceSharesAtCycle(
