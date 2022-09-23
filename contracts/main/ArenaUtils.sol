@@ -28,7 +28,7 @@ struct ChoiceVoteData {
     uint256 totalSum; // sum of all tokens invested in this choice
     uint256 totalShares; // total shares of this choice
     uint256 totalFess; // total fees generated in this choice
-    uint256 updatedAt; // block at which data was last updated
+    uint256 updatedAt; // timestamp at which data was last updated
     mapping(uint256 => Cycle) cycles; // cycleId => cycle info
 }
 
@@ -43,13 +43,13 @@ struct Position {
     // share are dynamically calculated as follows
     // tokensInvested * (rate*cyclesInPosition) + checkPointShares
     uint256 tokens; // current number of tokens in position
-    uint256 blockNumber; // the last block that user changed it's position
+    uint256 timestamp; // the last timestamp that user changed it's position
     uint256 checkPointShares; // for history keeping after user changes the amount of tokens in position
 }
 
 struct Topic {
-    uint32 cycleDuration; // share distribution cycle. in terms of # of blocks - ex. once every 100 blocks
-    uint32 startBlock; // block to open voting
+    uint32 cycleDuration; // share distribution cycle. in terms of seconds
+    uint32 startTime; // time to open voting
     uint16 sharePerCyclePercentage; // percentage of a position given as "shares" in each cycle
     uint16 prevContributorsFeePercentage; // percentage of a vote given to the previous voters
     uint16 topicFeePercentage; // percentage of a vote given to the topic
@@ -63,7 +63,7 @@ struct Topic {
 struct PositionData {
     mapping(address => mapping(uint256 => mapping(uint256 => Position[]))) positions; // positions of each user in each choice of each topic // address => (topicId => (choiceId => Position[]))
     mapping(address => mapping(uint256 => mapping(uint256 => uint256))) positionsLength; // address => (topicId => (choiceId => positions length))
-    mapping(address => mapping(uint256 => mapping(uint256 => uint256))) nextClaimIndex;
+    mapping(address => mapping(uint256 => mapping(uint256 => uint256))) nextClaimIndex; // address => (topicId => (choiceId => next claim index))
     mapping(address => mapping(uint256 => mapping(uint256 => uint256))) nextPositionToWithdraw; // address => (topicId => (choiceId => next position to withdraw))
 }
 
@@ -75,7 +75,7 @@ struct ChoiceData {
 
 struct TopicData {
     Topic[] topics;
-    mapping(uint256 => bool) isTopicDeleted; // indicates if a topic is deleted or not. (if deleted, not voting can happen)
+    mapping(uint256 => bool) isTopicDeleted; // indicates if a topic is deleted or not. (if deleted, no voting can happen)
 }
 
 library FeeUtils {

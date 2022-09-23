@@ -38,6 +38,9 @@ describe("Test Voting mechanism", async () => {
   async function _deployTopic() {
     const topicParams = getValidTopicParams();
     topicParams.funds = topicFunds.address;
+    topicParams.startTime = (
+      await ethers.provider.getBlock("latest")
+    ).timestamp;
     const _topicTx = await addTopic(arena, topicParams);
     await _topicTx.wait(1);
   }
@@ -122,6 +125,13 @@ describe("Test Voting mechanism", async () => {
   ): Promise<BigNumber> {
     const totalFees = await getTotalFees(choiceId, amount);
     return amount.sub(totalFees);
+  }
+
+  // increase time by once cycle
+  async function increaseCycle(cycles: number = 1) {
+    const cycleDuration = 100;
+    await network.provider.send("evm_increaseTime", [cycleDuration * cycles]);
+    await network.provider.send("evm_mine", []);
   }
 
   describe("Core voting mechanism", async () => {
@@ -291,9 +301,9 @@ describe("Test Voting mechanism", async () => {
       await validateVoter1and2PositionData(choiceA, 0);
     });
     it("should retrieve correct position info after one cycle and voter 2 vote", async () => {
-      for (let i = 0; i < 100; i++) {
-        await network.provider.send("evm_mine");
-      }
+      // increase evm timestamp by 100 seconds
+      await increaseCycle();
+
       const tx = await vote(
         arena,
         topic,
@@ -305,15 +315,11 @@ describe("Test Voting mechanism", async () => {
       await validateVoter1and2PositionData(choiceA, 1);
     });
     it("should retrieve correct info after one more cycle", async () => {
-      for (let i = 0; i < 100; i++) {
-        await network.provider.send("evm_mine");
-      }
+      await increaseCycle();
       await validateVoter1and2PositionData(choiceA, 2);
     });
     it("should retrieve correct info after third cycle", async () => {
-      for (let i = 0; i < 100; i++) {
-        await network.provider.send("evm_mine");
-      }
+      await increaseCycle();
       await validateVoter1and2PositionData(choiceA, 3);
     });
     it("should retrieve correct accumulative choice A info ", async () => {
@@ -321,9 +327,7 @@ describe("Test Voting mechanism", async () => {
       expect(info.tokens).equal(2250);
     });
     it("should get correct info after voter a votes 3000 tokens on the next cycle", async () => {
-      for (let i = 0; i < 100; i++) {
-        await network.provider.send("evm_mine");
-      }
+      await increaseCycle();
       const tx = await vote(
         arena,
         topic,
@@ -366,9 +370,7 @@ describe("Test Voting mechanism", async () => {
       expect(positionOnB.shares).equal(0);
     });
     it("should get correct info of both choice A and B on cycle 5", async () => {
-      for (let i = 0; i < 100; i++) {
-        await network.provider.send("evm_mine");
-      }
+      await increaseCycle();
       await validateVoter1and2PositionData(choiceA, 5); // check that position A not changed
 
       let positionOnB = await arena.aggregatedVoterPosition(
@@ -381,9 +383,7 @@ describe("Test Voting mechanism", async () => {
       expect(positionOnB.shares).equal(700);
     });
     it("should retrieve correct accumulative choice A info ", async () => {
-      for (let i = 0; i < 200; i++) {
-        await network.provider.send("evm_mine");
-      }
+      await increaseCycle(2);
       let info = await arena.choiceSummery(topic, choiceA);
       expect(info.shares).equal(25494);
       expect(info.tokens).equal(5998);
@@ -485,9 +485,7 @@ describe("Test Voting mechanism", async () => {
     });
     it("get correct shares after one cycle", async () => {
       // cycle 2
-      for (let i = 0; i < 100; i++) {
-        await network.provider.send("evm_mine");
-      }
+      await increaseCycle();
       let info = await arena.choiceSummery(topic, choiceA);
       expect(info.shares).equal(3750);
       expect(info.tokens).equal(3750);
@@ -524,9 +522,7 @@ describe("Test Voting mechanism", async () => {
     });
     it("should retrieve correct choice summery after one cycle", async () => {
       // cycle 3
-      for (let i = 0; i < 100; i++) {
-        await network.provider.send("evm_mine");
-      }
+      await increaseCycle();
       let info = await arena.choiceSummery(topic, choiceA);
       expect(info.shares).equal(3678);
       expect(info.tokens).equal(2178);
@@ -580,10 +576,8 @@ describe("Test Voting mechanism", async () => {
       expect(info1.shares).eq(0);
     });
     it("should retrive correct info after one other cycle", async () => {
-      for (let i = 0; i < 100; i++) {
-        await network.provider.send("evm_mine");
-      }
-
+      // cycle 4
+      await increaseCycle();
       let info = await arena.choiceSummery(topic, choiceA);
       expect(info.tokens).equal(2927);
       expect(info.shares).equal(6605);
