@@ -54,7 +54,7 @@ contract Choice {
         ) {
             CycleMetadata storage cycleMetadata_ = cycleMetadata[cycle__];
 
-            if (cycleMetadata_.exists == false) continue; // todo: figoure out a way to avoid this
+            if (cycleMetadata_.exists == false) continue; // todo: figure out a way to avoid this
 
             shares_ += (cycle__ - cycle_) * tokens_;
 
@@ -84,7 +84,11 @@ contract Choice {
 
         lastVoteOrWithdrawalCycle = currentCycle_;
 
-        uint256 fee = (amount * feeRate) / 10000;
+        uint256 fee = 0;
+        if (currentCycle_ > 0) {
+            fee = (amount * feeRate) / 10000;
+            amount = amount - fee;
+        }
 
         CycleMetadata storage cycleMetadata_ = cycleMetadata[currentCycle_];
 
