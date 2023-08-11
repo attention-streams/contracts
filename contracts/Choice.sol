@@ -46,7 +46,7 @@ contract Choice {
 
         (uint256 currentCycleIndex, ) = accrue(0);
 
-        for (uint256 i = startIndex + 1; i <= cycles.length; i++) {
+        for (uint256 i = startIndex + 1; i <= cycles.length; ) {
             CycleMetadata memory cycle = cycles[i];
             shares +=
                 (accrualRate *
@@ -56,6 +56,10 @@ contract Choice {
             uint256 earnedFees = (cycle.fees * shares) / cycle.shares;
             tokens += earnedFees;
             startIndex = i;
+
+            unchecked {
+                ++i;
+            }
         }
 
         cycles[currentCycleIndex].tokens -= tokens;
