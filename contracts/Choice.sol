@@ -5,148 +5,140 @@ pragma solidity ^0.8.9;
 import "./interfaces/ITopic.sol";
 
 struct CycleMetadata {
+    uint256 cycle; // cycle number
     uint256 tokens;
     uint256 shares;
     uint256 fees;
-    bool exists;
+    bool hasVotes;
 }
 
 struct VoteMetadata {
-    uint256 cycle;
+    uint256 cycleIndex;
     uint256 tokens;
     bool withdrawn; // no partial withdrawal yet
 }
 
 contract Choice {
-    address public immutable topic;
+    address public immutable topicAddress;
     uint256 public immutable feeRate; // scale 10000
+    uint256 public immutable accrualRate; // scale 10000
 
-    uint256 lastVoteOrWithdrawalCycle;
+    CycleMetadata[] public cycles;
+    mapping(address => VoteMetadata[]) public userVotes; // users can vote multiple times
 
-    mapping(uint256 => CycleMetadata) public cycleMetadata; // cycle => CycleMetadata
-    mapping(address => VoteMetadata[]) public userVotesMetadata; // user => VoteMetadata[] users can vote multiple times
+    error AlreadyWithdrawn();
+    error ZeroAmount();
 
-    constructor(address _topic, uint256 _feeRate) {
-        topic = _topic;
-        feeRate = _feeRate;
+    constructor(address topic, uint256 feeRateValue, uint256 accrualRateValue) {
+        topicAddress = topic;
+        feeRate = feeRateValue;
+        accrualRate = accrualRateValue;
     }
 
-    function withdraw(uint256 _votesMetadataIndex) external {
-        VoteMetadata storage voteMetadata_ = userVotesMetadata[msg.sender][
-            _votesMetadataIndex
-        ]; // reverts on invalid index
+    function withdraw(uint256 voteIndex) external {
+        VoteMetadata storage position = userVotes[msg.sender][voteIndex]; // reverts on invalid index
 
-        require(
-            voteMetadata_.withdrawn == false && voteMetadata_.tokens > 0,
-            "You have already withdrawn your tokens"
-        );
+        if (position.withdrawn) revert AlreadyWithdrawn();
+        position.withdrawn = true;
+        uint256 tokens = position.tokens;
+        uint256 startIndex = position.cycleIndex;
+        uint256 shares;
 
-        uint256 currentCycle_ = ITopic(topic).currentCycle();
+        (uint256 currentCycleIndex, ) = accrue(0);
 
-        uint256 tokens_ = voteMetadata_.tokens;
-        uint256 cycle_ = voteMetadata_.cycle;
-        uint256 shares_ = 0;
-
-        for (
-            uint256 cycle__ = voteMetadata_.cycle + 1;
-            cycle__ <= currentCycle_;
-            cycle__++
-        ) {
-            CycleMetadata storage cycleMetadata_ = cycleMetadata[cycle__];
-
-            if (cycleMetadata_.exists == false) continue; // todo: figure out a way to avoid this
-
-            shares_ += (cycle__ - cycle_) * tokens_;
-
-            uint256 earnedFees = (cycleMetadata_.fees * shares_) /
-                cycleMetadata_.shares;
-
-            tokens_ += earnedFees;
-            cycle_ = cycle__;
-
-            cycleMetadata_.tokens -= tokens_;
-            cycleMetadata_.shares -= shares_;
+        for (uint256 i = startIndex + 1; i <= cycles.length; i++) {
+            CycleMetadata memory cycle = cycles[i];
+            shares +=
+                (accrualRate *
+                    (cycle.cycle - cycles[startIndex].cycle) *
+                    tokens) /
+                10000;
+            uint256 earnedFees = (cycle.fees * shares) / cycle.shares;
+            tokens += earnedFees;
+            startIndex = i;
         }
 
-        voteMetadata_.withdrawn = true;
+        cycles[currentCycleIndex].tokens -= tokens;
+        cycles[currentCycleIndex].shares -= shares;
 
         // todo: transfer tokens
         // todo: event
     }
 
-    function vote(uint256 amount) public {
-        // todo: transfer in tokens
-        uint256 currentCycle_ = ITopic(topic).currentCycle();
-        uint256 lastVoteOrWithdrawalCycle_ = lastVoteOrWithdrawalCycle;
+    function vote(uint256 amount) external {
+        if (amount <= 0) revert ZeroAmount();
 
-        if (currentCycle_ != lastVoteOrWithdrawalCycle_)
-            accrue(currentCycle_, lastVoteOrWithdrawalCycle_);
-
-        lastVoteOrWithdrawalCycle = currentCycle_;
-
-        uint256 fee = 0;
-        if (currentCycle_ > 0) {
-            fee = (amount * feeRate) / 10000;
-            amount = amount - fee;
-        }
-
-        CycleMetadata storage cycleMetadata_ = cycleMetadata[currentCycle_];
-
-        cycleMetadata_.tokens += amount;
-        cycleMetadata_.fees += fee;
+        (uint256 currentCycleIndex, uint256 voteAmount) = accrue(amount);
 
         // record voter metadata
-        VoteMetadata[] storage votesMetadata_ = userVotesMetadata[msg.sender];
-
-        if (votesMetadata_.length == 0) {
-            votesMetadata_.push(
+        VoteMetadata[] storage votes = userVotes[msg.sender];
+        uint256 length = votes.length;
+        if (length == 0 || votes[length - 1].cycleIndex != currentCycleIndex) {
+            votes.push(
                 VoteMetadata({
-                    cycle: currentCycle_,
-                    tokens: amount,
+                    cycleIndex: currentCycleIndex,
+                    tokens: voteAmount,
                     withdrawn: false
                 })
             );
         } else {
-            VoteMetadata storage lastVoteMetadata_ = votesMetadata_[
-                votesMetadata_.length - 1
-            ];
-
-            if (lastVoteMetadata_.cycle == currentCycle_) {
-                lastVoteMetadata_.tokens += amount;
-            } else {
-                votesMetadata_.push(
-                    VoteMetadata({
-                        cycle: currentCycle_,
-                        tokens: amount,
-                        withdrawn: false
-                    })
-                );
-            }
+            votes[length - 1].tokens += voteAmount;
         }
 
+        // todo: transfer in tokens
         // todo: event
     }
 
     function accrue(
-        uint256 _currentCycle,
-        uint256 _lastVoteOrWithdrawalCycle
-    ) internal {
-        CycleMetadata memory lastCycleMetadata_ = cycleMetadata[
-            _lastVoteOrWithdrawalCycle
-        ];
+        uint256 amount
+    ) internal returns (uint256 cycleIndex, uint256 voteAmount) {
+        uint256 currentCycle = ITopic(topicAddress).currentCycle();
+        uint256 length = cycles.length;
 
-        // carry over
-        uint256 carryTokens_ = lastCycleMetadata_.tokens;
-        uint256 carryShares_ = lastCycleMetadata_.shares;
+        if (length == 0) {
+            cycles.push(
+                CycleMetadata({
+                    cycle: currentCycle,
+                    tokens: amount,
+                    shares: 0,
+                    fees: 0,
+                    hasVotes: amount > 0
+                })
+            );
 
-        uint256 newShares = carryTokens_ *
-            (_currentCycle - _lastVoteOrWithdrawalCycle);
+            return (0, amount);
+        }
 
-        cycleMetadata[_currentCycle] = CycleMetadata({
-            tokens: carryTokens_,
-            shares: carryShares_ + newShares,
-            fees: 0,
-            exists: true
+        uint256 fee = (amount * feeRate) / 10000;
+        voteAmount = amount - fee;
+
+        CycleMetadata memory lastCycle = cycles[length - 1];
+
+        if (lastCycle.cycle == currentCycle) {
+            cycles[length - 1].tokens += voteAmount;
+            cycles[length - 1].fees += fee;
+            return (length - 1, voteAmount);
+        }
+
+        // carry
+        CycleMetadata memory newCycle = CycleMetadata({
+            cycle: currentCycle,
+            tokens: lastCycle.tokens + voteAmount,
+            shares: lastCycle.shares +
+                (accrualRate *
+                    (currentCycle - lastCycle.cycle) *
+                    lastCycle.tokens) /
+                10000,
+            fees: fee,
+            hasVotes: voteAmount > 0
         });
+
+        if (!lastCycle.hasVotes) {
+            cycles[length - 1] = newCycle;
+            return (length - 1, voteAmount);
+        } else {
+            cycles.push(newCycle);
+            return (length, voteAmount);
+        }
     }
 }
