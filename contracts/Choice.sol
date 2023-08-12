@@ -137,12 +137,12 @@ contract Choice {
             hasVotes: voteAmount > 0
         });
 
-        if (!lastCycle.hasVotes) {
-            cycles[length - 1] = newCycle;
-            return (length - 1, voteAmount);
-        } else {
+        if (lastCycle.hasVotes) {
             cycles.push(newCycle);
             return (length, voteAmount);
+        } else {
+            cycles[length - 1] = newCycle;
+            return (length - 1, voteAmount);
         }
     }
 }

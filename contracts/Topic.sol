@@ -9,7 +9,7 @@ contract Topic {
     uint256 public immutable totalCycles;
     uint256 public immutable accrualRate;
 
-    address[] choices;
+    address[] public choices;
 
     constructor(
         uint256 _startTime,
