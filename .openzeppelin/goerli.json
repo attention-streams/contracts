@@ -1,0 +1,573 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0x9Dd45f4315B8626B51296b9833d9413215E90Fd3",
+    "txHash": "0xda05f83006c60400db132191d3baba84d2f8f967e89fb16d34e828adfe9a691b"
+  },
+  "proxies": [
+    {
+      "address": "0x9b7b03dEaE9346bbe6f1bD1B0A112E9329aF9661",
+      "txHash": "0x10469c5f2cce9b778a7f265c9dcbbb722b04663d2f74d0341212157f5fcf6be8",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "a2f78db8e7419673621c31b0d6da5d1c4977f20b2589912958746559481a28ab": {
+      "address": "0xB7B115c66FF91346deDAcA187F342b81Ccf8f8B1",
+      "txHash": "0xdfee02ec7fa807a4280a69aa82d2c2395d4c909e60058f66ebf1aff368096386",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ERC165Upgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol:41"
+          },
+          {
+            "label": "_roles",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)34_storage)",
+            "contract": "AccessControlUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "AccessControlUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:259"
+          },
+          {
+            "label": "claimableBalance",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "Arena",
+            "src": "contracts/main/Arena.sol:14"
+          },
+          {
+            "label": "info",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_struct(ArenaInfo)3572_storage",
+            "contract": "Arena",
+            "src": "contracts/main/Arena.sol:16"
+          },
+          {
+            "label": "topicData",
+            "offset": 0,
+            "slot": "159",
+            "type": "t_struct(TopicData)3698_storage",
+            "contract": "Arena",
+            "src": "contracts/main/Arena.sol:17"
+          },
+          {
+            "label": "positionsData",
+            "offset": 0,
+            "slot": "161",
+            "type": "t_struct(PositionData)3669_storage",
+            "contract": "Arena",
+            "src": "contracts/main/Arena.sol:18"
+          },
+          {
+            "label": "choiceData",
+            "offset": 0,
+            "slot": "165",
+            "type": "t_struct(ChoiceData)3689_storage",
+            "contract": "Arena",
+            "src": "contracts/main/Arena.sol:19"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_address_payable": {
+            "label": "address payable",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(Choice)3606_storage)dyn_storage": {
+            "label": "struct Choice[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(Position)3613_storage)dyn_storage": {
+            "label": "struct Position[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(Topic)3634_storage)dyn_storage": {
+            "label": "struct Topic[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_uint256,t_array(t_struct(Position)3613_storage)dyn_storage)))": {
+            "label": "mapping(address => mapping(uint256 => mapping(uint256 => struct Position[])))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_uint256,t_uint256)))": {
+            "label": "mapping(address => mapping(uint256 => mapping(uint256 => uint256)))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)34_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_array(t_struct(Choice)3606_storage)dyn_storage)": {
+            "label": "mapping(uint256 => struct Choice[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_array(t_struct(Position)3613_storage)dyn_storage)": {
+            "label": "mapping(uint256 => struct Position[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_bool)": {
+            "label": "mapping(uint256 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_uint256,t_array(t_struct(Position)3613_storage)dyn_storage))": {
+            "label": "mapping(uint256 => mapping(uint256 => struct Position[]))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))": {
+            "label": "mapping(uint256 => mapping(uint256 => bool))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_uint256,t_struct(ChoiceVoteData)3595_storage))": {
+            "label": "mapping(uint256 => mapping(uint256 => struct ChoiceVoteData))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(uint256 => mapping(uint256 => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(ChoiceVoteData)3595_storage)": {
+            "label": "mapping(uint256 => struct ChoiceVoteData)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(Cycle)3581_storage)": {
+            "label": "mapping(uint256 => struct Cycle)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(ArenaInfo)3572_storage": {
+            "label": "struct ArenaInfo",
+            "members": [
+              {
+                "label": "name",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "token",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "minContributionAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "maxChoiceFeePercentage",
+                "type": "t_uint16",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "maxTopicFeePercentage",
+                "type": "t_uint16",
+                "offset": 2,
+                "slot": "3"
+              },
+              {
+                "label": "arenaFeePercentage",
+                "type": "t_uint16",
+                "offset": 4,
+                "slot": "3"
+              },
+              {
+                "label": "choiceCreationFee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "topicCreationFee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "funds",
+                "type": "t_address_payable",
+                "offset": 0,
+                "slot": "6"
+              }
+            ],
+            "numberOfBytes": "224"
+          },
+          "t_struct(Choice)3606_storage": {
+            "label": "struct Choice",
+            "members": [
+              {
+                "label": "description",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "funds",
+                "type": "t_address_payable",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "feePercentage",
+                "type": "t_uint16",
+                "offset": 20,
+                "slot": "1"
+              },
+              {
+                "label": "fundingTarget",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "metaDataUrl",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(ChoiceData)3689_storage": {
+            "label": "struct ChoiceData",
+            "members": [
+              {
+                "label": "topicChoices",
+                "type": "t_mapping(t_uint256,t_array(t_struct(Choice)3606_storage)dyn_storage)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "choiceVoteData",
+                "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_struct(ChoiceVoteData)3595_storage))",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "isChoiceDeleted",
+                "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_bool))",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_struct(ChoiceVoteData)3595_storage": {
+            "label": "struct ChoiceVoteData",
+            "members": [
+              {
+                "label": "totalSum",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "totalShares",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "totalFess",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "updatedAt",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "cycles",
+                "type": "t_mapping(t_uint256,t_struct(Cycle)3581_storage)",
+                "offset": 0,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          },
+          "t_struct(Cycle)3581_storage": {
+            "label": "struct Cycle",
+            "members": [
+              {
+                "label": "totalShares",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "totalSharesPaid",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "totalSum",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "totalFees",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(Position)3613_storage": {
+            "label": "struct Position",
+            "members": [
+              {
+                "label": "tokens",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "timestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "checkPointShares",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_struct(PositionData)3669_storage": {
+            "label": "struct PositionData",
+            "members": [
+              {
+                "label": "positions",
+                "type": "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_uint256,t_array(t_struct(Position)3613_storage)dyn_storage)))",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "positionsLength",
+                "type": "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_uint256,t_uint256)))",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "nextClaimIndex",
+                "type": "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_uint256,t_uint256)))",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "nextPositionToWithdraw",
+                "type": "t_mapping(t_address,t_mapping(t_uint256,t_mapping(t_uint256,t_uint256)))",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(RoleData)34_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Topic)3634_storage": {
+            "label": "struct Topic",
+            "members": [
+              {
+                "label": "cycleDuration",
+                "type": "t_uint32",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "startTime",
+                "type": "t_uint32",
+                "offset": 4,
+                "slot": "0"
+              },
+              {
+                "label": "sharePerCyclePercentage",
+                "type": "t_uint16",
+                "offset": 8,
+                "slot": "0"
+              },
+              {
+                "label": "prevContributorsFeePercentage",
+                "type": "t_uint16",
+                "offset": 10,
+                "slot": "0"
+              },
+              {
+                "label": "topicFeePercentage",
+                "type": "t_uint16",
+                "offset": 12,
+                "slot": "0"
+              },
+              {
+                "label": "maxChoiceFeePercentage",
+                "type": "t_uint16",
+                "offset": 14,
+                "slot": "0"
+              },
+              {
+                "label": "relativeSupportThreshold",
+                "type": "t_uint32",
+                "offset": 16,
+                "slot": "0"
+              },
+              {
+                "label": "fundingPeriod",
+                "type": "t_uint32",
+                "offset": 20,
+                "slot": "0"
+              },
+              {
+                "label": "fundingPercentage",
+                "type": "t_uint16",
+                "offset": 24,
+                "slot": "0"
+              },
+              {
+                "label": "funds",
+                "type": "t_address_payable",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(TopicData)3698_storage": {
+            "label": "struct TopicData",
+            "members": [
+              {
+                "label": "topics",
+                "type": "t_array(t_struct(Topic)3634_storage)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "isTopicDeleted",
+                "type": "t_mapping(t_uint256,t_bool)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint16": {
+            "label": "uint16",
+            "numberOfBytes": "2"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint32": {
+            "label": "uint32",
+            "numberOfBytes": "4"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    }
+  }
+}
