@@ -6,7 +6,6 @@ import "./interfaces/ITopic.sol";
 
 struct CycleMetadata {
     uint256 cycle; // cycle number
-    uint256 tokens;
     uint256 shares;
     uint256 fees;
     bool hasVotes;
@@ -23,16 +22,18 @@ contract Choice {
     uint256 public immutable feeRate; // scale 10000
     uint256 public immutable accrualRate; // scale 10000
 
+    uint256 public tokens;
+
     CycleMetadata[] public cycles;
     mapping(address => VoteMetadata[]) public userVotes; // users can vote multiple times
 
     error AlreadyWithdrawn();
     error ZeroAmount();
 
-    constructor(address topic, uint256 feeRateValue, uint256 accrualRateValue) {
+    constructor(address topic) {
         topicAddress = topic;
-        feeRate = feeRateValue;
-        accrualRate = accrualRateValue;
+        feeRate = ITopic(topic).choiceFeeRate();
+        accrualRate = ITopic(topic).accrualRate();
     }
 
     function withdraw(uint256 voteIndex) external {
@@ -40,29 +41,27 @@ contract Choice {
 
         if (position.withdrawn) revert AlreadyWithdrawn();
         position.withdrawn = true;
-        uint256 tokens = position.tokens;
-        uint256 startIndex = position.cycleIndex;
+        uint256 positionTokens = position.tokens;
         uint256 shares;
 
-        (uint256 currentCycleIndex, ) = accrue(0);
-
-        for (uint256 i = startIndex + 1; i <= cycles.length; ) {
+        (uint256 currentCycleIndex, ) = updateCycle(0);
+        uint256 len = cycles.length;
+        for (uint256 i = position.cycleIndex + 1; i < len; ) {
             CycleMetadata memory cycle = cycles[i];
             shares +=
                 (accrualRate *
-                    (cycle.cycle - cycles[startIndex].cycle) *
-                    tokens) /
+                    (cycle.cycle - cycles[i - 1].cycle) *
+                    positionTokens) /
                 10000;
             uint256 earnedFees = (cycle.fees * shares) / cycle.shares;
-            tokens += earnedFees;
-            startIndex = i;
+            positionTokens += earnedFees;
 
             unchecked {
                 ++i;
             }
         }
 
-        cycles[currentCycleIndex].tokens -= tokens;
+        tokens -= positionTokens;
         cycles[currentCycleIndex].shares -= shares;
 
         // todo: transfer tokens
@@ -72,7 +71,25 @@ contract Choice {
     function vote(uint256 amount) external {
         if (amount <= 0) revert ZeroAmount();
 
-        (uint256 currentCycleIndex, uint256 voteAmount) = accrue(amount);
+        uint256 currentCycleIndex;
+
+        // cast the vote
+        if (cycles.length == 0) {
+            cycles.push(
+                CycleMetadata({
+                    cycle: ITopic(topicAddress).currentCycle(),
+                    shares: 0,
+                    fees: 0,
+                    hasVotes: amount > 0
+                })
+            );
+
+            tokens = amount;
+        } else {
+            uint256 fee;
+            (currentCycleIndex, fee) = updateCycle(amount);
+            amount -= fee;
+        }
 
         // record voter metadata
         VoteMetadata[] storage votes = userVotes[msg.sender];
@@ -81,68 +98,52 @@ contract Choice {
             votes.push(
                 VoteMetadata({
                     cycleIndex: currentCycleIndex,
-                    tokens: voteAmount,
+                    tokens: amount,
                     withdrawn: false
                 })
             );
         } else {
-            votes[length - 1].tokens += voteAmount;
+            votes[length - 1].tokens += amount;
         }
 
         // todo: transfer in tokens
         // todo: event
     }
 
-    function accrue(
+    function updateCycle(
         uint256 amount
-    ) internal returns (uint256 cycleIndex, uint256 voteAmount) {
+    ) internal returns (uint256 cycleIndex, uint256 fee) {
         uint256 currentCycle = ITopic(topicAddress).currentCycle();
-        uint256 length = cycles.length;
 
-        if (length == 0) {
-            cycles.push(
-                CycleMetadata({
-                    cycle: currentCycle,
-                    tokens: amount,
-                    shares: 0,
-                    fees: 0,
-                    hasVotes: amount > 0
-                })
-            );
+        cycleIndex = cycles.length - 1;
+        fee = (amount * feeRate) / 10000;
 
-            return (0, amount);
-        }
-
-        uint256 fee = (amount * feeRate) / 10000;
-        voteAmount = amount - fee;
-
-        CycleMetadata memory lastCycle = cycles[length - 1];
+        CycleMetadata memory lastCycle = cycles[cycleIndex];
 
         if (lastCycle.cycle == currentCycle) {
-            cycles[length - 1].tokens += voteAmount;
-            cycles[length - 1].fees += fee;
-            return (length - 1, voteAmount);
-        }
-
-        // carry
-        CycleMetadata memory newCycle = CycleMetadata({
-            cycle: currentCycle,
-            tokens: lastCycle.tokens + voteAmount,
-            shares: lastCycle.shares +
-                (accrualRate *
-                    (currentCycle - lastCycle.cycle) *
-                    lastCycle.tokens) /
-                10000,
-            fees: fee,
-            hasVotes: voteAmount > 0
-        });
-
-        if (lastCycle.hasVotes) {
-            cycles.push(newCycle);
-            return (length, voteAmount);
+            tokens += amount;
+            cycles[cycleIndex].fees = lastCycle.fees + fee;
         } else {
-            cycles[length - 1] = newCycle;
-            return (length - 1, voteAmount);
+            // carry
+            CycleMetadata memory newCycle = CycleMetadata({
+                cycle: currentCycle,
+                shares: lastCycle.shares +
+                    (accrualRate * (currentCycle - lastCycle.cycle) * tokens) /
+                    10000,
+                fees: fee,
+                hasVotes: amount > 0
+            });
+
+            tokens += amount;
+
+            if (lastCycle.hasVotes) {
+                cycles.push(newCycle);
+                unchecked {
+                    ++cycleIndex;
+                }
+            } else {
+                cycles[cycleIndex] = newCycle;
+            }
         }
     }
 }

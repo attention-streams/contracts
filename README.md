@@ -11,4 +11,9 @@ REPORT_GAS=true npx hardhat test
 npx hardhat node
 npx hardhat run scripts/deploy.ts
 ```
+
 # attention
+
+todo:
+[ ] The public and external function signatures and public storage items in https://github.com/spsina/attention/blob/main/contracts/Choice.sol are ok, except the constructor should only take the topic. The contributorFee and cycleShareGrowth( or shareAccrualRate -- whatever we decide to call it) should be defined in the topic and read from the topic when setting the immutables.
+@
