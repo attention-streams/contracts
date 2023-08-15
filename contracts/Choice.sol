@@ -80,10 +80,9 @@ contract Choice {
                     cycle: ITopic(topicAddress).currentCycle(),
                     shares: 0,
                     fees: 0,
-                    hasVotes: amount > 0
+                    hasVotes: true
                 })
             );
-
             tokens = amount;
         } else {
             uint256 fee;
@@ -114,7 +113,6 @@ contract Choice {
         uint256 amount
     ) internal returns (uint256 cycleIndex, uint256 fee) {
         uint256 currentCycle = ITopic(topicAddress).currentCycle();
-
         cycleIndex = cycles.length - 1;
         fee = (amount * feeRate) / 10000;
 
