@@ -4,6 +4,8 @@ pragma solidity ^0.8.9;
 
 import "./interfaces/ITopic.sol";
 
+import "hardhat/console.sol";
+
 struct CycleMetadata {
     uint256 cycle; // cycle number
     uint256 shares;
@@ -114,9 +116,11 @@ contract Choice {
     ) internal returns (uint256 cycleIndex, uint256 fee) {
         uint256 currentCycle = ITopic(topicAddress).currentCycle();
         cycleIndex = cycles.length - 1;
-        fee = (amount * feeRate) / 10000;
-
         CycleMetadata memory lastCycle = cycles[cycleIndex];
+
+        if (lastCycle.cycle > 0) {
+            fee = (amount * feeRate) / 10000;
+        }
 
         if (lastCycle.cycle == currentCycle) {
             tokens += amount;
