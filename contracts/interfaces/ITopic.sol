@@ -10,7 +10,9 @@ interface ITopic {
 
     function accrualRate() external view returns (uint256);
 
-    function choiceFeeRate() external view returns (uint256);
+    /// @notice The contributor fee % for all choices in this topic. Uses 4 digits of precision; e.g. 10.25% = 1025.
+    /// This is the fee that goes to previous contributors.
+    function contributorFee() external view returns (uint256);
 
     function currentCycle() external view returns (uint256);
 }
