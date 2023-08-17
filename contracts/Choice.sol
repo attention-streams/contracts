@@ -4,8 +4,6 @@ pragma solidity ^0.8.9;
 
 import "./interfaces/ITopic.sol";
 
-import "hardhat/console.sol";
-
 struct CycleMetadata {
     uint256 cycle; // cycle number
     uint256 shares;
