@@ -122,7 +122,7 @@ contract Choice {
 
         if (lastCycle.cycle == currentCycle) {
             tokens += amount;
-            cycles[cycleIndex].fees = lastCycle.fees + fee;
+            lastCycle.fees += fee;
         } else {
             // carry
             CycleMetadata memory newCycle = CycleMetadata({
