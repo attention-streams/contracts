@@ -19,7 +19,7 @@ struct VoteMetadata {
 
 contract Choice {
     address public immutable topicAddress;
-    uint256 public immutable feeRate; // scale 10000
+    uint256 public immutable contributorFee; // scale 10000
     uint256 public immutable accrualRate; // scale 10000
 
     uint256 public tokens;
@@ -32,7 +32,7 @@ contract Choice {
 
     constructor(address topic) {
         topicAddress = topic;
-        feeRate = ITopic(topic).choiceFeeRate();
+        contributorFee = ITopic(topic).contributorFee();
         accrualRate = ITopic(topic).accrualRate();
     }
 
@@ -117,7 +117,7 @@ contract Choice {
         CycleMetadata memory lastCycle = cycles[cycleIndex];
 
         if (lastCycle.cycle > 0) {
-            fee = (amount * feeRate) / 10000;
+            fee = (amount * contributorFee) / 10000;
         }
 
         if (lastCycle.cycle == currentCycle) {

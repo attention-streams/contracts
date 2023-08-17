@@ -8,7 +8,7 @@ contract Topic {
     uint256 public immutable cycleDuration;
     uint256 public immutable totalCycles;
     uint256 public immutable accrualRate;
-    uint256 public immutable choiceFeeRate;
+    uint256 public immutable contributorFee;
 
     address[] public choices;
 
@@ -17,13 +17,13 @@ contract Topic {
         uint256 _cycleDuration,
         uint256 _totalCycles,
         uint256 _accrualRate,
-        uint256 _choiceFeeRate
+        uint256 _contributorFee
     ) {
         startTime = _startTime;
         cycleDuration = _cycleDuration;
         totalCycles = _totalCycles;
         accrualRate = _accrualRate;
-        choiceFeeRate = _choiceFeeRate;
+        contributorFee = _contributorFee;
     }
 
     function choicesLength() external view returns (uint256) {
