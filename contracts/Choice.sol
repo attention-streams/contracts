@@ -112,23 +112,23 @@ contract Choice {
     function updateCycle(
         uint256 amount
     ) internal returns (uint256 cycleIndex, uint256 fee) {
-        uint256 currentCycle = ITopic(topicAddress).currentCycle();
+        uint256 currentCycleNumber = ITopic(topicAddress).currentCycle();
         cycleIndex = cycles.length - 1;
-        CycleMetadata lastCycle = cycles[cycleIndex];
+        CycleMetadata currentCycle = cycles[cycleIndex];
 
-        if (lastCycle.cycle > 0) {
+        if (currentCycle.cycle > 0) {
             fee = (amount * contributorFee) / 10000;
         }
 
-        if (lastCycle.cycle == currentCycle) {
+        if (currentCycle.cycle == currentCycleNumber) {
             tokens += amount;
-            lastCycle.fees += fee;
+            currentCycle.fees += fee;
         } else {
             // carry
             CycleMetadata memory newCycle = CycleMetadata({
-                cycle: currentCycle,
-                shares: lastCycle.shares +
-                    (accrualRate * (currentCycle - lastCycle.cycle) * tokens) /
+                cycle: currentCycleNumber,
+                shares: currentCycle.shares +
+                    (accrualRate * (currentCycleNumber - currentCycle.cycle) * tokens) /
                     10000,
                 fees: fee,
                 hasVotes: amount > 0
@@ -136,7 +136,7 @@ contract Choice {
 
             tokens += amount;
 
-            if (lastCycle.hasVotes) {
+            if (currentCycle.hasVotes) {
                 cycles.push(newCycle);
                 unchecked {
                     ++cycleIndex;
