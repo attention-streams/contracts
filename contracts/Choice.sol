@@ -53,7 +53,7 @@ contract Choice {
         for (uint256 i = startCycle; i <= currentCycleIndex; ) {
             Cycle cycle = cycles[i];
             unchecked {
-                Cycle prevCycle = cycles[i - i];
+                Cycle prevCycle = cycles[i - 1];
             }
             shares +=
                 (accrualRate *
