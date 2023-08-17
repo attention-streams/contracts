@@ -44,10 +44,10 @@ contract Choice {
         uint256 positionTokens = position.tokens;
         uint256 shares;
 
-        (uint256 currentCycleIndex, ) = updateCycle(0);
-        uint256 len = cycles.length;
-        for (uint256 i = position.cycleIndex + 1; i < len; ) {
-            CycleMetadata memory cycle = cycles[i];
+        (uint256 foo, ) = updateCycle(0);
+        uint256 currentCycleIndex = cycles.length - 1;
+        for (uint256 i = position.cycleIndex + 1; i <= currentCycleIndex; ) {
+            CycleMetadata cycle = cycles[i];
             shares +=
                 (accrualRate *
                     (cycle.cycle - cycles[i - 1].cycle) *
@@ -114,7 +114,7 @@ contract Choice {
     ) internal returns (uint256 cycleIndex, uint256 fee) {
         uint256 currentCycle = ITopic(topicAddress).currentCycle();
         cycleIndex = cycles.length - 1;
-        CycleMetadata memory lastCycle = cycles[cycleIndex];
+        CycleMetadata lastCycle = cycles[cycleIndex];
 
         if (lastCycle.cycle > 0) {
             fee = (amount * contributorFee) / 10000;
