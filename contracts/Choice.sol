@@ -14,7 +14,7 @@ struct Cycle {
 struct Vote {
     uint256 cycleIndex;
     uint256 tokens;
-    bool withdrawn; // no partial withdrawal yet
+    bool withdrawn;
 }
 
 contract Choice {
