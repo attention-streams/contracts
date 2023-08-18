@@ -4,17 +4,17 @@ pragma solidity ^0.8.9;
 
 import "./interfaces/ITopic.sol";
 
-struct CycleMetadata {
+struct Cycle {
     uint256 cycle; // cycle number
     uint256 shares;
     uint256 fees;
     bool hasVotes;
 }
 
-struct VoteMetadata {
+struct Vote {
     uint256 cycleIndex;
     uint256 tokens;
-    bool withdrawn; // no partial withdrawal yet
+    bool withdrawn;
 }
 
 contract Choice {
@@ -24,11 +24,10 @@ contract Choice {
 
     uint256 public tokens;
 
-    CycleMetadata[] public cycles;
-    mapping(address => VoteMetadata[]) public userVotes; // users can vote multiple times
+    Cycle[] public cycles;
+    mapping(address => Vote[]) public userVotes; // addresses can contribute multiple times to the same choice
 
     error AlreadyWithdrawn();
-    error ZeroAmount();
 
     constructor(address topic) {
         topicAddress = topic;
@@ -37,20 +36,30 @@ contract Choice {
     }
 
     function withdraw(uint256 voteIndex) external {
-        VoteMetadata storage position = userVotes[msg.sender][voteIndex]; // reverts on invalid index
+        Vote storage position = userVotes[msg.sender][voteIndex]; // reverts on invalid index
 
         if (position.withdrawn) revert AlreadyWithdrawn();
         position.withdrawn = true;
+
         uint256 positionTokens = position.tokens;
         uint256 shares;
+        uint256 currentCycleIndex;
+        uint256 startCycle;
 
-        (uint256 currentCycleIndex, ) = updateCycle(0);
-        uint256 len = cycles.length;
-        for (uint256 i = position.cycleIndex + 1; i < len; ) {
-            CycleMetadata memory cycle = cycles[i];
+        updateCycle(0);
+
+        unchecked {  // updateCycle() will always add a cycle to cycles if none exists
+            currentCycleIndex = cycles.length - 1;
+            startCycle = position.cycleIndex + 1; // can't realistically overflow
+        }
+
+        for (uint256 i = startCycle; i <= currentCycleIndex; ) {
+            Cycle storage cycle = cycles[i];
+            Cycle storage prevCycle = cycles[i - 1];
+
             shares +=
                 (accrualRate *
-                    (cycle.cycle - cycles[i - 1].cycle) *
+                    (cycle.cycle - prevCycle.cycle) *
                     positionTokens) /
                 10000;
             uint256 earnedFees = (cycle.fees * shares) / cycle.shares;
@@ -61,89 +70,89 @@ contract Choice {
             }
         }
 
-        tokens -= positionTokens;
-        cycles[currentCycleIndex].shares -= shares;
+        unchecked {
+            tokens -= positionTokens;  // TODO: send position tokens out
+            cycles[currentCycleIndex].shares -= shares;
+        }
 
-        // todo: transfer tokens
         // todo: event
     }
 
     function vote(uint256 amount) external {
-        if (amount <= 0) revert ZeroAmount();
+        tokens += amount;  // TODO: send tokens in
+        updateCycle(amount);
 
         uint256 currentCycleIndex;
 
-        // cast the vote
-        if (cycles.length == 0) {
+        unchecked {  // updateCycle() will always add a cycle to cycles if none exists
+            currentCycleIndex = cycles.length - 1;
+
+            if (currentCycleIndex > 0) {
+                // There are no contributor fees in the cycle where the first contribution was made.
+                amount -= amount * contributorFee / 10000;
+            }
+        }
+
+        Vote[] storage votes = userVotes[msg.sender];
+
+        votes.push(
+            Vote({
+                cycleIndex: currentCycleIndex,
+                tokens: amount,
+                withdrawn: false
+            })
+        );
+
+        // todo: event
+    }
+
+    function updateCycle(uint256 amount) internal {
+        uint256 currentCycleNumber = ITopic(topicAddress).currentCycle();
+        uint256 length = cycles.length;
+
+        if (length == 0) { // Create the first cycle in the array using the first contribution.
             cycles.push(
-                CycleMetadata({
-                    cycle: ITopic(topicAddress).currentCycle(),
+                Cycle({
+                    cycle: currentCycleNumber,
                     shares: 0,
                     fees: 0,
                     hasVotes: true
                 })
             );
-            tokens = amount;
-        } else {
+        }
+        else { // Not the first contribution.
+
+            uint256 currentCycleIndex = length - 1;
+
+            Cycle storage currentCycle = cycles[currentCycleIndex];
+
             uint256 fee;
-            (currentCycleIndex, fee) = updateCycle(amount);
-            amount -= fee;
-        }
 
-        // record voter metadata
-        VoteMetadata[] storage votes = userVotes[msg.sender];
-        uint256 length = votes.length;
-        if (length == 0 || votes[length - 1].cycleIndex != currentCycleIndex) {
-            votes.push(
-                VoteMetadata({
-                    cycleIndex: currentCycleIndex,
-                    tokens: amount,
-                    withdrawn: false
-                })
-            );
-        } else {
-            votes[length - 1].tokens += amount;
-        }
-
-        // todo: transfer in tokens
-        // todo: event
-    }
-
-    function updateCycle(
-        uint256 amount
-    ) internal returns (uint256 cycleIndex, uint256 fee) {
-        uint256 currentCycle = ITopic(topicAddress).currentCycle();
-        cycleIndex = cycles.length - 1;
-        CycleMetadata memory lastCycle = cycles[cycleIndex];
-
-        if (lastCycle.cycle > 0) {
-            fee = (amount * contributorFee) / 10000;
-        }
-
-        if (lastCycle.cycle == currentCycle) {
-            tokens += amount;
-            cycles[cycleIndex].fees = lastCycle.fees + fee;
-        } else {
-            // carry
-            CycleMetadata memory newCycle = CycleMetadata({
-                cycle: currentCycle,
-                shares: lastCycle.shares +
-                    (accrualRate * (currentCycle - lastCycle.cycle) * tokens) /
-                    10000,
-                fees: fee,
-                hasVotes: amount > 0
-            });
-
-            tokens += amount;
-
-            if (lastCycle.hasVotes) {
-                cycles.push(newCycle);
-                unchecked {
-                    ++cycleIndex;
-                }
-            } else {
-                cycles[cycleIndex] = newCycle;
+            if (currentCycleIndex > 0) {  // No contributor fees on the first cycle that has a contribution.
+                fee = (amount * contributorFee) / 10000;
             }
-        }
+
+            if (currentCycle.cycle == currentCycleNumber) {
+                currentCycle.fees += fee;
+            } else { // Add a new cycle to the array using values from the previous one.
+                Cycle memory newCycle = Cycle({
+                    cycle: currentCycleNumber,
+                    shares: currentCycle.shares +
+                (accrualRate * (currentCycleNumber - currentCycle.cycle) * tokens) /
+                10000,
+                    fees: fee,
+                    hasVotes: amount > 0
+                });
+
+                // We're only interested in adding cycles that have contributions, since we use the stored
+                // cycles to compute fees at withdrawal time.
+                if (currentCycle.hasVotes) { // Keep cycles with contributions.
+                    cycles.push(newCycle); // Push our new cycle in front.
+                } else {
+                    // If the previous cycle only has withdrawals (no contributions), overwrite it with the current one.
+                    cycles[currentCycleIndex] = newCycle;
+                }
+            } // end else (add new cycle)
+        } // end else (not the first contribution)
     }
 }
