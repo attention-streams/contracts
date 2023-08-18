@@ -28,7 +28,6 @@ contract Choice {
     mapping(address => Vote[]) public userVotes; // addresses can contribute multiple times to the same choice
 
     error AlreadyWithdrawn();
-    error ZeroAmount();
 
     constructor(address topic) {
         topicAddress = topic;
@@ -76,8 +75,6 @@ contract Choice {
     }
 
     function vote(uint256 amount) external {
-        if (amount <= 0) revert ZeroAmount();
-
         updateCycle(amount);
         unchecked {  // updateCycle() will always add a cycle to cycles if none exists
             uint256 currentCycleIndex = cycles.length - 1;
