@@ -70,8 +70,10 @@ contract Choice {
             }
         }
 
-        tokens -= positionTokens;
-        cycles[currentCycleIndex].shares -= shares;
+        unchecked {
+            tokens -= positionTokens;
+            cycles[currentCycleIndex].shares -= shares;
+        }
 
         // todo: transfer tokens
         // todo: event
