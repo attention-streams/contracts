@@ -40,20 +40,23 @@ contract Choice {
 
         if (position.withdrawn) revert AlreadyWithdrawn();
         position.withdrawn = true;
+
         uint256 positionTokens = position.tokens;
         uint256 shares;
+        uint256 currentCycleIndex;
+        uint256 startCycle;
 
         updateCycle(0);
+
         unchecked {  // updateCycle() will always add a cycle to cycles if none exists
-            uint256 currentCycleIndex = cycles.length - 1;
-            uint256 startCycle = position.cycleIndex + 1; // can't realistically overflow
+            currentCycleIndex = cycles.length - 1;
+            startCycle = position.cycleIndex + 1; // can't realistically overflow
         }
 
         for (uint256 i = startCycle; i <= currentCycleIndex; ) {
             Cycle cycle = cycles[i];
-            unchecked {
-                Cycle prevCycle = cycles[i - 1];
-            }
+            Cycle prevCycle = cycles[i - 1];
+
             shares +=
                 (accrualRate *
                     (cycle.cycle - prevCycle.cycle) *
@@ -76,8 +79,11 @@ contract Choice {
 
     function vote(uint256 amount) external {
         updateCycle(amount);
+
+        uint256 currentCycleIndex;
+
         unchecked {  // updateCycle() will always add a cycle to cycles if none exists
-            uint256 currentCycleIndex = cycles.length - 1;
+            currentCycleIndex = cycles.length - 1;
 
             if (currentCycleIndex > 0) {
                 // There are no contributor fees in the cycle where the first contribution was made.
