@@ -71,15 +71,15 @@ contract Choice {
         }
 
         unchecked {
-            tokens -= positionTokens;
+            tokens -= positionTokens;  // TODO: send position tokens out
             cycles[currentCycleIndex].shares -= shares;
         }
 
-        // todo: transfer tokens
         // todo: event
     }
 
     function vote(uint256 amount) external {
+        tokens += amount;  // TODO: send tokens in
         updateCycle(amount);
 
         uint256 currentCycleIndex;
@@ -103,7 +103,6 @@ contract Choice {
             })
         );
 
-        // todo: transfer in tokens
         // todo: event
     }
 
@@ -120,7 +119,6 @@ contract Choice {
                     hasVotes: true
                 })
             );
-            tokens = amount;
         }
         else { // Not the first contribution.
 
@@ -135,7 +133,6 @@ contract Choice {
             }
 
             if (currentCycle.cycle == currentCycleNumber) {
-                tokens += amount;
                 currentCycle.fees += fee;
             } else { // carry
                 Cycle memory newCycle = Cycle({
@@ -146,8 +143,6 @@ contract Choice {
                     fees: fee,
                     hasVotes: amount > 0
                 });
-
-                tokens += amount;
 
                 // We're only interested in storing cycles that have contributions, since we use the stored
                 // cycles to compute fees at withdrawal time.
