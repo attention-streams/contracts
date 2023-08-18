@@ -54,8 +54,8 @@ contract Choice {
         }
 
         for (uint256 i = startCycle; i <= currentCycleIndex; ) {
-            Cycle cycle = cycles[i];
-            Cycle prevCycle = cycles[i - 1];
+            Cycle storage cycle = cycles[i];
+            Cycle storage prevCycle = cycles[i - 1];
 
             shares +=
                 (accrualRate *
@@ -122,7 +122,7 @@ contract Choice {
         }
         else { // Not the first contribution.
 
-            Cycle currentCycle = cycles[currentCycleIndex];
+            Cycle storage currentCycle = cycles[currentCycleIndex];
 
             uint256 fee;
 
