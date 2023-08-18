@@ -25,7 +25,7 @@ contract Choice {
     uint256 public tokens;
 
     Cycle[] public cycles;
-    mapping(address => Vote[]) public userVotes; // users can vote multiple times
+    mapping(address => Vote[]) public userVotes; // addresses can contribute multiple times to the same choice
 
     error AlreadyWithdrawn();
     error ZeroAmount();
@@ -89,22 +89,14 @@ contract Choice {
         }
 
         Vote[] storage votes = userVotes[msg.sender];
-        uint256 length = votes.length;
-        unchecked {
-            Vote currentVote = votes[length - 1];
-        }
 
-        if (length == 0 || currentVote.cycleIndex != currentCycleIndex) {
-            votes.push(
-                VoteMetadata({
-                    cycleIndex: currentCycleIndex,
-                    tokens: amount,
-                    withdrawn: false
-                })
-            );
-        } else {
-            currentVote.tokens += amount;
-        }
+        votes.push(
+            VoteMetadata({
+                cycleIndex: currentCycleIndex,
+                tokens: amount,
+                withdrawn: false
+            })
+        );
 
         // todo: transfer in tokens
         // todo: event
