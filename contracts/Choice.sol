@@ -88,7 +88,7 @@ contract Choice {
         Vote[] storage votes = userVotes[msg.sender];
 
         votes.push(
-            VoteMetadata({
+            Vote({
                 cycleIndex: currentCycleIndex,
                 tokens: amount,
                 withdrawn: false
@@ -105,7 +105,7 @@ contract Choice {
 
         if (currentCycleIndex == -1) { // Create the first cycle in the array using the first contribution.
             cycles.push(
-                CycleMetadata({
+                Cycle({
                     cycle: currentCycleNumber,
                     shares: 0,
                     fees: 0,
@@ -128,7 +128,7 @@ contract Choice {
                 tokens += amount;
                 currentCycle.fees += fee;
             } else { // carry
-                Cycle memory newCycle = CycleMetadata({
+                Cycle memory newCycle = Cycle({
                     cycle: currentCycleNumber,
                     shares: currentCycle.shares +
                 (accrualRate * (currentCycleNumber - currentCycle.cycle) * tokens) /
@@ -139,7 +139,7 @@ contract Choice {
 
                 tokens += amount;
 
-                // We're only interested in storing cycles that have contributions, since we used the stored
+                // We're only interested in storing cycles that have contributions, since we use the stored
                 // cycles to compute fees at withdrawal time.
                 if (currentCycle.hasVotes) { // Keep cycles with contributions.
                     cycles.push(newCycle);
