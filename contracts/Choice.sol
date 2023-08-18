@@ -134,7 +134,7 @@ contract Choice {
 
             if (currentCycle.cycle == currentCycleNumber) {
                 currentCycle.fees += fee;
-            } else { // carry
+            } else { // Add a new cycle to the array using values from the previous one.
                 Cycle memory newCycle = Cycle({
                     cycle: currentCycleNumber,
                     shares: currentCycle.shares +
@@ -144,15 +144,15 @@ contract Choice {
                     hasVotes: amount > 0
                 });
 
-                // We're only interested in storing cycles that have contributions, since we use the stored
+                // We're only interested in adding cycles that have contributions, since we use the stored
                 // cycles to compute fees at withdrawal time.
                 if (currentCycle.hasVotes) { // Keep cycles with contributions.
-                    cycles.push(newCycle);
+                    cycles.push(newCycle); // Push our new cycle in front.
                 } else {
                     // If the previous cycle only has withdrawals (no contributions), overwrite it with the current one.
                     cycles[currentCycleIndex] = newCycle;
                 }
-            } // end else (carry)
+            } // end else (add new cycle)
         } // end else (not the first contribution)
     }
 }
