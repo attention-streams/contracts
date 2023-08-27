@@ -25,7 +25,7 @@ contract Choice {
     uint256 public tokens;
 
     Cycle[] public cycles;
-    mapping(address => Vote[]) public userVotes; // addresses can contribute multiple times to the same choice
+    mapping(address => Vote[]) public userVotes; // Addresses can contribute multiple times to the same choice.
 
     error AlreadyWithdrawn();
 
@@ -36,7 +36,7 @@ contract Choice {
     }
 
     /// @return The number of shares all contributors hold.
-    /// The total shares can be compared between two competing choices to see which has more support.
+    /// The total shares can be compared between two choices to see which has more support.
     function totalShares() public view returns (uint256){
         uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
 
@@ -58,7 +58,7 @@ contract Choice {
 
         updateCyclesAddingAmount(0);
 
-        unchecked {  // updateCycle() will always add a cycle to cycles if none exists
+        unchecked {  // updateCyclesAddingAmount() will always add a cycle if none exists
             lastStoredCycleIndex = cycles.length - 1;
             startIndex = position.cycleIndex + 1; // can't realistically overflow
         }
@@ -94,11 +94,11 @@ contract Choice {
 
         uint256 lastStoredCycleIndex;
 
-        unchecked {  // updateCycle() will always add a cycle to cycles if none exists
+        unchecked {  // updateCyclesAddingAmount() will always add a cycle if none exists
             lastStoredCycleIndex = cycles.length - 1;
 
             if (lastStoredCycleIndex > 0) {
-                // Contributor fees are only charged in the cycles after the one in which the first contribution was made.
+                // Contributor fees are only charged in cycles after the one in which the first contribution was made.
                 amount -= amount * contributorFee / 10000;
             }
         }
@@ -163,7 +163,7 @@ contract Choice {
                     // If the previous cycle only has withdrawals (no contributions), overwrite it with the current one.
                     cycles[lastStoredCycleIndex] = newCycle;
                 }
-            } // end else (add new cycle)
-        } // end else (not the first contribution)
+            } // end else (Add a new cycle...)
+        } // end else (Not the first contribution.)
     }
 }
