@@ -35,9 +35,9 @@ contract Choice {
         accrualRate = ITopic(topic).accrualRate();
     }
 
-    /// @return totalShares The number of shares all contributors hold.
+    /// @return The number of shares all contributors hold.
     /// The total shares can be compared between two choices to see which has more support.
-    function totalShares() public view returns (uint256 totalShares){
+    function totalShares() public view returns (uint256){
         uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
 
         Cycle storage lastStoredCycle = cycles[cycles.length - 1];
@@ -45,33 +45,25 @@ contract Choice {
         return lastStoredCycle.shares + accrualRate * (currentCycleNumber - lastStoredCycle.number) * tokens / 10000;
     }
 
-    function checkPosition(uint256 voteIndex) public view returns (uint256 tokens, uint256 shares) {
-        uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
+    function checkPosition(uint256 voteIndex) public view returns (uint256 positionTokens, uint256 shares) {
+        (positionTokens , shares) = positionToLastStoredCycle(voteIndex);
 
+        uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
         Cycle storage lastStoredCycle = cycles[cycles.length - 1];
 
-        (tokens , shares) = positionUntilLastStoredCycle(voteIndex);
-        shares += accrualRate * (currentCycleNumber - lastStoredCycle.number) * tokens / 10000;
+        shares += accrualRate * (currentCycleNumber - lastStoredCycle.number) * positionTokens / 10000;
     }
 
-    // TODO: create this function by factoring out some code in the withdraw function
-    function positionUntilLastStoredCycle(uint256 voteIndex) internal view returns (uint256 tokens, uint256 shares){
-        tokens = 29;
-        shares = 32;
-    }
-
-    function withdraw(uint256 voteIndex) external {
-        Vote storage position = userVotes[msg.sender][voteIndex]; // reverts on invalid index
+    function positionToLastStoredCycle(uint256 voteIndex) internal view
+        returns (uint256 positionTokens, uint256 shares){
+        Vote storage position = userVotes[msg.sender][voteIndex]; // reverts on invalid index TODO: better error message
 
         if (position.withdrawn) revert AlreadyWithdrawn();
-        position.withdrawn = true;
 
-        uint256 positionTokens = position.tokens;
-        uint256 shares;
+        positionTokens = position.tokens;
+
         uint256 lastStoredCycleIndex;
         uint256 startIndex;
-
-        updateCyclesAddingAmount(0);
 
         unchecked {  // updateCyclesAddingAmount() will always add a cycle if none exists
             lastStoredCycleIndex = cycles.length - 1;
@@ -83,10 +75,10 @@ contract Choice {
             Cycle storage prevStoredCycle = cycles[i - 1];
 
             shares +=
-                (accrualRate *
-                    (cycle.number - prevStoredCycle.number) *
-                    positionTokens) /
-                10000;
+            (accrualRate *
+            (cycle.number - prevStoredCycle.number) *
+                positionTokens) /
+            10000;
             uint256 earnedFees = (cycle.fees * shares) / cycle.shares;
             positionTokens += earnedFees;
 
@@ -95,8 +87,22 @@ contract Choice {
             }
         }
 
+    }
+
+    function withdraw(uint256 voteIndex) external {
+        Vote storage position = userVotes[msg.sender][voteIndex]; // reverts on invalid index TODO: better error message
+
+        updateCyclesAddingAmount(0);
+
+        (uint256 positionTokens , uint256 shares) = positionToLastStoredCycle(voteIndex);
+
+        position.withdrawn = true;
+
+        uint256 lastStoredCycleIndex;
+
         unchecked {
-            tokens -= positionTokens;  // TODO: send position tokens out
+            lastStoredCycleIndex = cycles.length - 1;
+            tokens -= positionTokens;  // TODO: transfer position tokens to msg.sender
             cycles[lastStoredCycleIndex].shares -= shares;
         }
 
@@ -104,7 +110,7 @@ contract Choice {
     }
 
     function vote(uint256 amount) external {
-        tokens += amount;  // TODO: send tokens in
+        tokens += amount;  // TODO: transfer tokens from msg.sender
         updateCyclesAddingAmount(amount);
 
         uint256 lastStoredCycleIndex;
@@ -118,9 +124,7 @@ contract Choice {
             }
         }
 
-        Vote[] storage votes = userVotes[msg.sender];
-
-        votes.push(
+        userVotes[msg.sender].push(
             Vote({
                 cycleIndex: lastStoredCycleIndex,
                 tokens: amount,
