@@ -35,14 +35,29 @@ contract Choice {
         accrualRate = ITopic(topic).accrualRate();
     }
 
-    /// @return The number of shares all contributors hold.
+    /// @return totalShares The number of shares all contributors hold.
     /// The total shares can be compared between two choices to see which has more support.
-    function totalShares() public view returns (uint256){
+    function totalShares() public view returns (uint256 totalShares){
         uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
 
         Cycle storage lastStoredCycle = cycles[cycles.length - 1];
 
         return lastStoredCycle.shares + accrualRate * (currentCycleNumber - lastStoredCycle.number) * tokens / 10000;
+    }
+
+    function checkPosition(uint256 voteIndex) public view returns (uint256 tokens, uint256 shares) {
+        uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
+
+        Cycle storage lastStoredCycle = cycles[cycles.length - 1];
+
+        (tokens , shares) = positionUntilLastStoredCycle(voteIndex);
+        shares += accrualRate * (currentCycleNumber - lastStoredCycle.number) * tokens / 10000;
+    }
+
+    // TODO: create this function by factoring out some code in the withdraw function
+    function positionUntilLastStoredCycle(uint256 voteIndex) internal view returns (uint256 tokens, uint256 shares){
+        tokens = 29;
+        shares = 32;
     }
 
     function withdraw(uint256 voteIndex) external {
