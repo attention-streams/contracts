@@ -56,7 +56,7 @@ contract Choice {
         uint256 lastStoredCycleIndex;
         uint256 startIndex;
 
-        updateCycle(0);
+        updateCyclesAddingAmount(0);
 
         unchecked {  // updateCycle() will always add a cycle to cycles if none exists
             lastStoredCycleIndex = cycles.length - 1;
@@ -90,7 +90,7 @@ contract Choice {
 
     function vote(uint256 amount) external {
         tokens += amount;  // TODO: send tokens in
-        updateCycle(amount);
+        updateCyclesAddingAmount(amount);
 
         uint256 lastStoredCycleIndex;
 
@@ -116,7 +116,7 @@ contract Choice {
         // todo: event
     }
 
-    function updateCycle(uint256 amount) internal {
+    function updateCyclesAddingAmount(uint256 amount) internal {
         uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
         uint256 length = cycles.length;
 
