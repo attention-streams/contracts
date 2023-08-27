@@ -43,7 +43,7 @@ contract Choice {
 
         uint256 positionTokens = position.tokens;
         uint256 shares;
-        uint256 lastStoredCycle;
+        uint256 lastStoredCycleIndex;
         uint256 startCycle;
 
         updateCycle(0);
