@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.9;
 
@@ -8,10 +8,10 @@ struct Cycle {
     uint256 number;
     uint256 shares;
     uint256 fees;
-    bool hasVotes;
+    bool hasContributions;
 }
 
-struct Vote {
+struct Contribution {
     uint256 cycleIndex;
     uint256 tokens;
     bool withdrawn;
@@ -25,7 +25,11 @@ contract Choice {
     uint256 public tokens;
 
     Cycle[] public cycles;
-    mapping(address => Vote[]) public userVotes; // Addresses can contribute multiple times to the same choice.
+
+    // Addresses can contribute multiple times to the same choice, so the value is an array of Contributions.
+    // The index of a Contribution in this array is used in the checkPosition() and withdraw() functions and
+    // is returned by the contribute() function.
+    mapping(address => Contribution[]) public contributionsByAddress;
 
     error AlreadyWithdrawn();
 
@@ -45,8 +49,8 @@ contract Choice {
         return lastStoredCycle.shares + accrualRate * (currentCycleNumber - lastStoredCycle.number) * tokens / 10000;
     }
 
-    function checkPosition(uint256 voteIndex) public view returns (uint256 positionTokens, uint256 shares) {
-        (positionTokens , shares) = positionToLastStoredCycle(voteIndex);
+    function checkPosition(address addr, uint256 index) public view returns (uint256 positionTokens, uint256 shares) {
+        (positionTokens , shares) = positionToLastStoredCycle(addr, index);
 
         uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
         Cycle storage lastStoredCycle = cycles[cycles.length - 1];
@@ -54,9 +58,9 @@ contract Choice {
         shares += accrualRate * (currentCycleNumber - lastStoredCycle.number) * positionTokens / 10000;
     }
 
-    function positionToLastStoredCycle(uint256 voteIndex) internal view
+    function positionToLastStoredCycle(address addr, uint256 index) internal view
         returns (uint256 positionTokens, uint256 shares){
-        Vote storage position = userVotes[msg.sender][voteIndex]; // reverts on invalid index TODO: better error message
+        Contribution storage position = contributionsByAddress[addr][index]; // reverts on invalid index TODO: better error message
 
         if (position.withdrawn) revert AlreadyWithdrawn();
 
@@ -89,12 +93,13 @@ contract Choice {
 
     }
 
-    function withdraw(uint256 voteIndex) external {
-        Vote storage position = userVotes[msg.sender][voteIndex]; // reverts on invalid index TODO: better error message
+    function withdraw(uint256 index) external {
+        address addr = msg.sender;
+        Contribution storage position = contributionsByAddress[addr][index]; // reverts on invalid index TODO: better error message
 
         updateCyclesAddingAmount(0);
 
-        (uint256 positionTokens , uint256 shares) = positionToLastStoredCycle(voteIndex);
+        (uint256 positionTokens , uint256 shares) = positionToLastStoredCycle(addr, index);
 
         position.withdrawn = true;
 
@@ -106,10 +111,12 @@ contract Choice {
             cycles[lastStoredCycleIndex].shares -= shares;
         }
 
-        // todo: event
+        // TODO: event
     }
 
-    function vote(uint256 amount) external {
+    /// @return index The index used as input to withdraw() and checkPosition()
+    function contribute(uint256 amount) external returns (uint256 index){
+        address addr = msg.sender;
         tokens += amount;  // TODO: transfer tokens from msg.sender
         updateCyclesAddingAmount(amount);
 
@@ -124,15 +131,17 @@ contract Choice {
             }
         }
 
-        userVotes[msg.sender].push(
-            Vote({
+        contributionsByAddress[addr].push(
+            Contribution({
                 cycleIndex: lastStoredCycleIndex,
                 tokens: amount,
                 withdrawn: false
             })
         );
 
-        // todo: event
+        // TODO: event
+
+        return contributionsByAddress[addr].length - 1;
     }
 
     function updateCyclesAddingAmount(uint256 amount) internal {
@@ -145,7 +154,7 @@ contract Choice {
                     number: currentCycleNumber,
                     shares: 0,
                     fees: 0,
-                    hasVotes: true
+                    hasContributions: true
                 })
             );
         }
@@ -171,12 +180,12 @@ contract Choice {
                 (accrualRate * (currentCycleNumber - lastStoredCycleNumber) * tokens) /
                 10000,
                     fees: fee,
-                    hasVotes: amount > 0
+                    hasContributions: amount > 0
                 });
 
                 // We're only interested in adding cycles that have contributions, since we use the stored
                 // cycles to compute fees at withdrawal time.
-                if (lastStoredCycle.hasVotes) { // Keep cycles with contributions.
+                if (lastStoredCycle.hasContributions) { // Keep cycles with contributions.
                     cycles.push(newCycle); // Push our new cycle in front.
                 } else {
                     // If the previous cycle only has withdrawals (no contributions), overwrite it with the current one.
