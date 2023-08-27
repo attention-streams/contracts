@@ -14,5 +14,5 @@ interface ITopic {
     /// This is the fee that goes to previous contributors.
     function contributorFee() external view returns (uint256);
 
-    function currentCycle() external view returns (uint256);
+    function currentCycleNumber() external view returns (uint256);
 }

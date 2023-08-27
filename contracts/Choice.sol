@@ -107,7 +107,7 @@ contract Choice {
     }
 
     function updateCycle(uint256 amount) internal {
-        uint256 currentCycleNumber = ITopic(topicAddress).currentCycle();
+        uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
         uint256 length = cycles.length;
 
         if (length == 0) { // Create the first cycle in the array using the first contribution.

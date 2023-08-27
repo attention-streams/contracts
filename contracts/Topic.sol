@@ -30,7 +30,7 @@ contract Topic {
         return choices.length;
     }
 
-    function currentCycle() public view returns (uint256) {
+    function currentCycleNumber() public view returns (uint256) {
         return (block.timestamp - startTime) / cycleDuration;
     }
 
