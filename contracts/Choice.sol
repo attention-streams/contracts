@@ -31,6 +31,9 @@ contract Choice {
     // is returned by the contribute() function.
     mapping(address => Contribution[]) public contributionsByAddress;
 
+    event Withdrew(address indexed addr, uint256 index, uint256 tokens, uint256 shares);
+    event Contributed(address indexed addr, uint256 index, uint256 tokens);
+
     error AlreadyWithdrawn();
 
     constructor(address topic) {
@@ -111,12 +114,14 @@ contract Choice {
             cycles[lastStoredCycleIndex].shares -= shares;
         }
 
-        // TODO: event
+        emit Withdrew(addr, index, positionTokens, shares);
     }
 
     /// @return index The index used as input to withdraw() and checkPosition()
     function contribute(uint256 amount) external returns (uint256 index){
         address addr = msg.sender;
+        uint256 originalAmount = amount;
+
         tokens += amount;  // TODO: transfer tokens from msg.sender
         updateCyclesAddingAmount(amount);
 
@@ -139,9 +144,9 @@ contract Choice {
             })
         );
 
-        // TODO: event
+        index = contributionsByAddress[addr].length - 1;
 
-        return contributionsByAddress[addr].length - 1;
+        emit Contributed(addr, index, originalAmount);
     }
 
     function updateCyclesAddingAmount(uint256 amount) internal {
