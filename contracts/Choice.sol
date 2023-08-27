@@ -35,6 +35,16 @@ contract Choice {
         accrualRate = ITopic(topic).accrualRate();
     }
 
+    /// @return The number of shares all contributors hold.
+    /// The total shares can be compared between two competing choices to see which has more support.
+    function totalShares() public view returns (uint256){
+        uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
+
+        Cycle storage lastStoredCycle = cycles[cycles.length - 1];
+
+        return lastStoredCycle.shares + accrualRate * (currentCycleNumber - lastStoredCycle.number) * tokens / 10000;
+    }
+
     function withdraw(uint256 voteIndex) external {
         Vote storage position = userVotes[msg.sender][voteIndex]; // reverts on invalid index
 
@@ -44,7 +54,7 @@ contract Choice {
         uint256 positionTokens = position.tokens;
         uint256 shares;
         uint256 lastStoredCycleIndex;
-        uint256 startCycle;
+        uint256 startIndex;
 
         updateCycle(0);
 
@@ -125,7 +135,7 @@ contract Choice {
             uint256 lastStoredCycleIndex = length - 1;
 
             Cycle storage lastStoredCycle = cycles[lastStoredCycleIndex];
-            uint256 lastStoredCycleNumber = lastStoreCycle.number;
+            uint256 lastStoredCycleNumber = lastStoredCycle.number;
 
             uint256 fee;
 
