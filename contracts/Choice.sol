@@ -5,7 +5,7 @@ pragma solidity ^0.8.9;
 import "./interfaces/ITopic.sol";
 
 struct Cycle {
-    uint256 cycle; // cycle number
+    uint256 number;
     uint256 shares;
     uint256 fees;
     bool hasVotes;
@@ -43,23 +43,23 @@ contract Choice {
 
         uint256 positionTokens = position.tokens;
         uint256 shares;
-        uint256 currentCycleIndex;
+        uint256 lastStoredCycleIndex;
         uint256 startCycle;
 
         updateCycle(0);
 
         unchecked {  // updateCycle() will always add a cycle to cycles if none exists
-            currentCycleIndex = cycles.length - 1;
-            startCycle = position.cycleIndex + 1; // can't realistically overflow
+            lastStoredCycleIndex = cycles.length - 1;
+            startIndex = position.cycleIndex + 1; // can't realistically overflow
         }
 
-        for (uint256 i = startCycle; i <= currentCycleIndex; ) {
+        for (uint256 i = startIndex; i <= lastStoredCycleIndex; ) {
             Cycle storage cycle = cycles[i];
-            Cycle storage prevCycle = cycles[i - 1];
+            Cycle storage prevStoredCycle = cycles[i - 1];
 
             shares +=
                 (accrualRate *
-                    (cycle.cycle - prevCycle.cycle) *
+                    (cycle.number - prevStoredCycle.number) *
                     positionTokens) /
                 10000;
             uint256 earnedFees = (cycle.fees * shares) / cycle.shares;
@@ -72,7 +72,7 @@ contract Choice {
 
         unchecked {
             tokens -= positionTokens;  // TODO: send position tokens out
-            cycles[currentCycleIndex].shares -= shares;
+            cycles[lastStoredCycleIndex].shares -= shares;
         }
 
         // todo: event
@@ -82,13 +82,13 @@ contract Choice {
         tokens += amount;  // TODO: send tokens in
         updateCycle(amount);
 
-        uint256 currentCycleIndex;
+        uint256 lastStoredCycleIndex;
 
         unchecked {  // updateCycle() will always add a cycle to cycles if none exists
-            currentCycleIndex = cycles.length - 1;
+            lastStoredCycleIndex = cycles.length - 1;
 
-            if (currentCycleIndex > 0) {
-                // There are no contributor fees in the cycle where the first contribution was made.
+            if (lastStoredCycleIndex > 0) {
+                // Contributor fees are only charged in the cycles after the one in which the first contribution was made.
                 amount -= amount * contributorFee / 10000;
             }
         }
@@ -97,7 +97,7 @@ contract Choice {
 
         votes.push(
             Vote({
-                cycleIndex: currentCycleIndex,
+                cycleIndex: lastStoredCycleIndex,
                 tokens: amount,
                 withdrawn: false
             })
@@ -113,7 +113,7 @@ contract Choice {
         if (length == 0) { // Create the first cycle in the array using the first contribution.
             cycles.push(
                 Cycle({
-                    cycle: currentCycleNumber,
+                    number: currentCycleNumber,
                     shares: 0,
                     fees: 0,
                     hasVotes: true
@@ -122,23 +122,24 @@ contract Choice {
         }
         else { // Not the first contribution.
 
-            uint256 currentCycleIndex = length - 1;
+            uint256 lastStoredCycleIndex = length - 1;
 
-            Cycle storage currentCycle = cycles[currentCycleIndex];
+            Cycle storage lastStoredCycle = cycles[lastStoredCycleIndex];
+            uint256 lastStoredCycleNumber = lastStoreCycle.number;
 
             uint256 fee;
 
-            if (currentCycleIndex > 0) {  // No contributor fees on the first cycle that has a contribution.
+            if (lastStoredCycleIndex > 0) {  // No contributor fees on the first cycle that has a contribution.
                 fee = (amount * contributorFee) / 10000;
             }
 
-            if (currentCycle.cycle == currentCycleNumber) {
-                currentCycle.fees += fee;
+            if (lastStoredCycleNumber == currentCycleNumber) {
+                lastStoredCycle.fees += fee;
             } else { // Add a new cycle to the array using values from the previous one.
                 Cycle memory newCycle = Cycle({
-                    cycle: currentCycleNumber,
-                    shares: currentCycle.shares +
-                (accrualRate * (currentCycleNumber - currentCycle.cycle) * tokens) /
+                    number: currentCycleNumber,
+                    shares: lastStoredCycle.shares +
+                (accrualRate * (currentCycleNumber - lastStoredCycleNumber) * tokens) /
                 10000,
                     fees: fee,
                     hasVotes: amount > 0
@@ -146,11 +147,11 @@ contract Choice {
 
                 // We're only interested in adding cycles that have contributions, since we use the stored
                 // cycles to compute fees at withdrawal time.
-                if (currentCycle.hasVotes) { // Keep cycles with contributions.
+                if (lastStoredCycle.hasVotes) { // Keep cycles with contributions.
                     cycles.push(newCycle); // Push our new cycle in front.
                 } else {
                     // If the previous cycle only has withdrawals (no contributions), overwrite it with the current one.
-                    cycles[currentCycleIndex] = newCycle;
+                    cycles[lastStoredCycleIndex] = newCycle;
                 }
             } // end else (add new cycle)
         } // end else (not the first contribution)
