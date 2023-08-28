@@ -9,6 +9,7 @@ contract Topic {
     uint256 public immutable totalCycles;
     uint256 public immutable accrualRate;
     uint256 public immutable contributorFee;
+    address public immutable token;
 
     address[] public choices;
 
@@ -17,13 +18,15 @@ contract Topic {
         uint256 _cycleDuration,
         uint256 _totalCycles,
         uint256 _accrualRate,
-        uint256 _contributorFee
+        uint256 _contributorFee,
+        address _token
     ) {
         startTime = _startTime;
         cycleDuration = _cycleDuration;
         totalCycles = _totalCycles;
         accrualRate = _accrualRate;
         contributorFee = _contributorFee;
+        token = _token;
     }
 
     function choicesLength() external view returns (uint256) {

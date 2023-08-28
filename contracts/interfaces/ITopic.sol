@@ -15,4 +15,6 @@ interface ITopic {
     function contributorFee() external view returns (uint256);
 
     function currentCycleNumber() external view returns (uint256);
+
+    function token() external view returns (address);
 }

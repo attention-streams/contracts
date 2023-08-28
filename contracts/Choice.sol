@@ -2,6 +2,9 @@
 
 pragma solidity ^0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20";
+
 import "./interfaces/ITopic.sol";
 
 struct Cycle {
@@ -18,9 +21,13 @@ struct Contribution {
 }
 
 contract Choice {
+    using SafeERC20 for IERC20;
+
     address public immutable topicAddress;
     uint256 public immutable contributorFee; // scale 10000
     uint256 public immutable accrualRate; // scale 10000
+
+    address public immutable token; // vote token
 
     uint256 public tokens;
 
@@ -31,7 +38,12 @@ contract Choice {
     // is returned by the contribute() function.
     mapping(address => Contribution[]) public contributionsByAddress;
 
-    event Withdrew(address indexed addr, uint256 index, uint256 tokens, uint256 shares);
+    event Withdrew(
+        address indexed addr,
+        uint256 index,
+        uint256 tokens,
+        uint256 shares
+    );
     event Contributed(address indexed addr, uint256 index, uint256 tokens);
 
     error AlreadyWithdrawn();
@@ -40,29 +52,44 @@ contract Choice {
         topicAddress = topic;
         contributorFee = ITopic(topic).contributorFee();
         accrualRate = ITopic(topic).accrualRate();
+        token = ITopic(topic).token();
     }
 
     /// @return The number of shares all contributors hold.
     /// The total shares can be compared between two choices to see which has more support.
-    function totalShares() public view returns (uint256){
+    function totalShares() public view returns (uint256) {
         uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
 
         Cycle storage lastStoredCycle = cycles[cycles.length - 1];
 
-        return lastStoredCycle.shares + accrualRate * (currentCycleNumber - lastStoredCycle.number) * tokens / 10000;
+        return
+            lastStoredCycle.shares +
+            (accrualRate *
+                (currentCycleNumber - lastStoredCycle.number) *
+                tokens) /
+            10000;
     }
 
-    function checkPosition(address addr, uint256 index) public view returns (uint256 positionTokens, uint256 shares) {
-        (positionTokens , shares) = positionToLastStoredCycle(addr, index);
+    function checkPosition(
+        address addr,
+        uint256 index
+    ) public view returns (uint256 positionTokens, uint256 shares) {
+        (positionTokens, shares) = positionToLastStoredCycle(addr, index);
 
         uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
         Cycle storage lastStoredCycle = cycles[cycles.length - 1];
 
-        shares += accrualRate * (currentCycleNumber - lastStoredCycle.number) * positionTokens / 10000;
+        shares +=
+            (accrualRate *
+                (currentCycleNumber - lastStoredCycle.number) *
+                positionTokens) /
+            10000;
     }
 
-    function positionToLastStoredCycle(address addr, uint256 index) internal view
-        returns (uint256 positionTokens, uint256 shares){
+    function positionToLastStoredCycle(
+        address addr,
+        uint256 index
+    ) internal view returns (uint256 positionTokens, uint256 shares) {
         Contribution storage position = contributionsByAddress[addr][index]; // reverts on invalid index TODO: better error message
 
         if (position.withdrawn) revert AlreadyWithdrawn();
@@ -72,7 +99,8 @@ contract Choice {
         uint256 lastStoredCycleIndex;
         uint256 startIndex;
 
-        unchecked {  // updateCyclesAddingAmount() will always add a cycle if none exists
+        unchecked {
+            // updateCyclesAddingAmount() will always add a cycle if none exists
             lastStoredCycleIndex = cycles.length - 1;
             startIndex = position.cycleIndex + 1; // can't realistically overflow
         }
@@ -82,10 +110,10 @@ contract Choice {
             Cycle storage prevStoredCycle = cycles[i - 1];
 
             shares +=
-            (accrualRate *
-            (cycle.number - prevStoredCycle.number) *
-                positionTokens) /
-            10000;
+                (accrualRate *
+                    (cycle.number - prevStoredCycle.number) *
+                    positionTokens) /
+                10000;
             uint256 earnedFees = (cycle.fees * shares) / cycle.shares;
             positionTokens += earnedFees;
 
@@ -93,7 +121,6 @@ contract Choice {
                 ++i;
             }
         }
-
     }
 
     function withdraw(uint256 index) external {
@@ -102,7 +129,10 @@ contract Choice {
 
         updateCyclesAddingAmount(0);
 
-        (uint256 positionTokens , uint256 shares) = positionToLastStoredCycle(addr, index);
+        (uint256 positionTokens, uint256 shares) = positionToLastStoredCycle(
+            addr,
+            index
+        );
 
         position.withdrawn = true;
 
@@ -110,29 +140,32 @@ contract Choice {
 
         unchecked {
             lastStoredCycleIndex = cycles.length - 1;
-            tokens -= positionTokens;  // TODO: transfer position tokens to msg.sender
+            tokens -= positionTokens;
             cycles[lastStoredCycleIndex].shares -= shares;
         }
+
+        IERC20(topicAddress).safeTransfer(addr, positionTokens);
 
         emit Withdrew(addr, index, positionTokens, shares);
     }
 
     /// @return index The index used as input to withdraw() and checkPosition()
-    function contribute(uint256 amount) external returns (uint256 index){
+    function contribute(uint256 amount) external returns (uint256 index) {
         address addr = msg.sender;
         uint256 originalAmount = amount;
 
-        tokens += amount;  // TODO: transfer tokens from msg.sender
+        tokens += amount;
         updateCyclesAddingAmount(amount);
 
         uint256 lastStoredCycleIndex;
 
-        unchecked {  // updateCyclesAddingAmount() will always add a cycle if none exists
+        unchecked {
+            // updateCyclesAddingAmount() will always add a cycle if none exists
             lastStoredCycleIndex = cycles.length - 1;
 
             if (lastStoredCycleIndex > 0) {
                 // Contributor fees are only charged in cycles after the one in which the first contribution was made.
-                amount -= amount * contributorFee / 10000;
+                amount -= (amount * contributorFee) / 10000;
             }
         }
 
@@ -146,6 +179,12 @@ contract Choice {
 
         index = contributionsByAddress[addr].length - 1;
 
+        IERC20(topicAddress).safeTransferFrom(
+            addr,
+            address(this),
+            originalAmount
+        );
+
         emit Contributed(addr, index, originalAmount);
     }
 
@@ -153,7 +192,8 @@ contract Choice {
         uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
         uint256 length = cycles.length;
 
-        if (length == 0) { // Create the first cycle in the array using the first contribution.
+        if (length == 0) {
+            // Create the first cycle in the array using the first contribution.
             cycles.push(
                 Cycle({
                     number: currentCycleNumber,
@@ -162,8 +202,8 @@ contract Choice {
                     hasContributions: true
                 })
             );
-        }
-        else { // Not the first contribution.
+        } else {
+            // Not the first contribution.
 
             uint256 lastStoredCycleIndex = length - 1;
 
@@ -172,25 +212,30 @@ contract Choice {
 
             uint256 fee;
 
-            if (lastStoredCycleIndex > 0) {  // No contributor fees on the first cycle that has a contribution.
+            if (lastStoredCycleIndex > 0) {
+                // No contributor fees on the first cycle that has a contribution.
                 fee = (amount * contributorFee) / 10000;
             }
 
             if (lastStoredCycleNumber == currentCycleNumber) {
                 lastStoredCycle.fees += fee;
-            } else { // Add a new cycle to the array using values from the previous one.
+            } else {
+                // Add a new cycle to the array using values from the previous one.
                 Cycle memory newCycle = Cycle({
                     number: currentCycleNumber,
                     shares: lastStoredCycle.shares +
-                (accrualRate * (currentCycleNumber - lastStoredCycleNumber) * tokens) /
-                10000,
+                        (accrualRate *
+                            (currentCycleNumber - lastStoredCycleNumber) *
+                            tokens) /
+                        10000,
                     fees: fee,
                     hasContributions: amount > 0
                 });
 
                 // We're only interested in adding cycles that have contributions, since we use the stored
                 // cycles to compute fees at withdrawal time.
-                if (lastStoredCycle.hasContributions) { // Keep cycles with contributions.
+                if (lastStoredCycle.hasContributions) {
+                    // Keep cycles with contributions.
                     cycles.push(newCycle); // Push our new cycle in front.
                 } else {
                     // If the previous cycle only has withdrawals (no contributions), overwrite it with the current one.
