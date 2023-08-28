@@ -1,9 +1,11 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.9;
 
+import "./interfaces/ITopic.sol";
 import "./Choice.sol";
 
-contract Topic {
+contract Topic is ITopic {
     uint256 public immutable startTime;
     uint256 public immutable cycleDuration;
     uint256 public immutable totalCycles;
