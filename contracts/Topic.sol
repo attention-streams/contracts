@@ -31,7 +31,11 @@ contract Topic is ITopic {
         token = _token;
     }
 
-    function choicesLength() external view returns (uint256) {
+    function deployChoice() external {
+        choices.push(address(new Choice(address(this))));
+    }
+
+    function choicesLength() public view returns (uint256) {
         return choices.length;
     }
 
@@ -39,7 +43,4 @@ contract Topic is ITopic {
         return (block.timestamp - startTime) / cycleDuration;
     }
 
-    function deployChoice() external {
-        choices.push(address(new Choice(address(this))));
-    }
 }

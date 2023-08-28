@@ -7,18 +7,18 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./interfaces/ITopic.sol";
 
-struct Cycle {
-    uint256 number;
-    uint256 shares;
-    uint256 fees;
-    bool hasContributions;
-}
+    struct Cycle {
+        uint256 number;
+        uint256 shares;
+        uint256 fees;
+        bool hasContributions;
+    }
 
-struct Contribution {
-    uint256 cycleIndex;
-    uint256 tokens;
-    bool withdrawn;
-}
+    struct Contribution {
+        uint256 cycleIndex;
+        uint256 tokens;
+        bool withdrawn;
+    }
 
 contract Choice {
     using SafeERC20 for IERC20;
@@ -44,7 +44,12 @@ contract Choice {
         uint256 tokens,
         uint256 shares
     );
-    event Contributed(address indexed addr, uint256 index, uint256 tokens);
+
+    event Contributed(
+        address indexed addr,
+        uint256 index,
+        uint256 tokens
+    );
 
     error AlreadyWithdrawn();
 
@@ -69,54 +74,43 @@ contract Choice {
         shares += pendingShares(positionTokens);
     }
 
-    /// @return The number of shares that have not been added to the last stored cycle.
-    /// This is the number of shares that will be added to the last stored cycle when updateCyclesAddingAmount() is called.
-    function pendingShares(uint256 _tokens) internal view returns (uint256) {
-        uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
+    /// @return index The index used as input to withdraw() and checkPosition()
+    function contribute(uint256 amount) external returns (uint256 index) {
+        address addr = msg.sender;
+        uint256 originalAmount = amount;
 
-        Cycle memory lastStoredCycle = cycles[cycles.length - 1];
-
-        return
-            (accrualRate *
-                (currentCycleNumber - lastStoredCycle.number) *
-                _tokens) / 10000;
-    }
-
-    function positionToLastStoredCycle(
-        address addr,
-        uint256 index
-    ) internal view returns (uint256 positionTokens, uint256 shares) {
-        Contribution storage position = contributionsByAddress[addr][index]; // reverts on invalid index TODO: better error message
-
-        if (position.withdrawn) revert AlreadyWithdrawn();
-
-        positionTokens = position.tokens;
+        tokens += amount;
+        updateCyclesAddingAmount(amount);
 
         uint256 lastStoredCycleIndex;
-        uint256 startIndex;
 
         unchecked {
-            // updateCyclesAddingAmount() will always add a cycle if none exists
+        // updateCyclesAddingAmount() will always add a cycle if none exists
             lastStoredCycleIndex = cycles.length - 1;
-            startIndex = position.cycleIndex + 1; // can't realistically overflow
-        }
 
-        for (uint256 i = startIndex; i <= lastStoredCycleIndex; ) {
-            Cycle storage cycle = cycles[i];
-            Cycle storage prevStoredCycle = cycles[i - 1];
-
-            shares +=
-                (accrualRate *
-                    (cycle.number - prevStoredCycle.number) *
-                    positionTokens) /
-                10000;
-            uint256 earnedFees = (cycle.fees * shares) / cycle.shares;
-            positionTokens += earnedFees;
-
-            unchecked {
-                ++i;
+            if (lastStoredCycleIndex > 0) {
+                // Contributor fees are only charged in cycles after the one in which the first contribution was made.
+                amount -= (amount * contributorFee) / 10000;
             }
         }
+
+        contributionsByAddress[addr].push(
+            Contribution({
+                cycleIndex: lastStoredCycleIndex,
+                tokens: amount,
+                withdrawn: false
+            })
+        );
+
+        index = contributionsByAddress[addr].length - 1;
+
+        IERC20(topicAddress).safeTransferFrom(
+            addr,
+            address(this),
+            originalAmount
+        );
+
+        emit Contributed(addr, index, originalAmount);
     }
 
     function withdraw(uint256 index) external {
@@ -145,43 +139,54 @@ contract Choice {
         emit Withdrew(addr, index, positionTokens, shares);
     }
 
-    /// @return index The index used as input to withdraw() and checkPosition()
-    function contribute(uint256 amount) external returns (uint256 index) {
-        address addr = msg.sender;
-        uint256 originalAmount = amount;
+    /// @return The number of shares that have not been added to the last stored cycle.
+    /// This is the number of shares that will be added to the last stored cycle when updateCyclesAddingAmount() is called.
+    function pendingShares(uint256 _tokens) internal view returns (uint256) {
+        uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
 
-        tokens += amount;
-        updateCyclesAddingAmount(amount);
+        Cycle memory lastStoredCycle = cycles[cycles.length - 1];
+
+        return
+        (accrualRate *
+        (currentCycleNumber - lastStoredCycle.number) *
+            _tokens) / 10000;
+    }
+
+    function positionToLastStoredCycle(
+        address addr,
+        uint256 index
+    ) internal view returns (uint256 positionTokens, uint256 shares) {
+        Contribution storage position = contributionsByAddress[addr][index]; // reverts on invalid index TODO: better error message
+
+        if (position.withdrawn) revert AlreadyWithdrawn();
+
+        positionTokens = position.tokens;
 
         uint256 lastStoredCycleIndex;
+        uint256 startIndex;
 
         unchecked {
-            // updateCyclesAddingAmount() will always add a cycle if none exists
+        // updateCyclesAddingAmount() will always add a cycle if none exists
             lastStoredCycleIndex = cycles.length - 1;
-
-            if (lastStoredCycleIndex > 0) {
-                // Contributor fees are only charged in cycles after the one in which the first contribution was made.
-                amount -= (amount * contributorFee) / 10000;
-            }
+            startIndex = position.cycleIndex + 1; // can't realistically overflow
         }
 
-        contributionsByAddress[addr].push(
-            Contribution({
-                cycleIndex: lastStoredCycleIndex,
-                tokens: amount,
-                withdrawn: false
-            })
-        );
+        for (uint256 i = startIndex; i <= lastStoredCycleIndex;) {
+            Cycle storage cycle = cycles[i];
+            Cycle storage prevStoredCycle = cycles[i - 1];
 
-        index = contributionsByAddress[addr].length - 1;
+            shares +=
+            (accrualRate *
+            (cycle.number - prevStoredCycle.number) *
+                positionTokens) /
+            10000;
+            uint256 earnedFees = (cycle.fees * shares) / cycle.shares;
+            positionTokens += earnedFees;
 
-        IERC20(topicAddress).safeTransferFrom(
-            addr,
-            address(this),
-            originalAmount
-        );
-
-        emit Contributed(addr, index, originalAmount);
+            unchecked {
+                ++i;
+            }
+        }
     }
 
     function updateCyclesAddingAmount(uint256 amount) internal {
@@ -220,10 +225,10 @@ contract Choice {
                 Cycle memory newCycle = Cycle({
                     number: currentCycleNumber,
                     shares: lastStoredCycle.shares +
-                        (accrualRate *
-                            (currentCycleNumber - lastStoredCycleNumber) *
-                            tokens) /
-                        10000,
+                (accrualRate *
+                (currentCycleNumber - lastStoredCycleNumber) *
+                    tokens) /
+                10000,
                     fees: fee,
                     hasContributions: amount > 0
                 });
