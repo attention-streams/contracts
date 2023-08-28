@@ -59,13 +59,19 @@ contract Choice {
         return cycles[cycles.length - 1].shares + pendingShares(tokens);
     }
 
-    /// @param positionIndex The positionIndex returned by the contribute() function.
-    function checkPosition(
-        address addr,
-        uint256 positionIndex
-    ) external view returns (uint256 positionTokens, uint256 shares) {
-        (positionTokens, shares) = positionToLastStoredCycle(addr, positionIndex);
-        shares += pendingShares(positionTokens);
+    /// Check the number of tokens and shares for an address with only one position.
+    function checkPosition(address addr) external view returns (uint256 positionTokens, uint256 shares) {
+        uint256 numPositions = positionsByAddress[addr].length;
+
+        if(numPositions == 1){
+            return checkPosition(addr, 0);
+        }
+
+        if (numPositions > 1) {
+            revert NotOnlyPosition();
+        }
+
+        revert PositionDoesNotExist();
     }
 
     /// @return positionIndex will be reused as input to withdraw(), checkPosition(), split() and merge().
@@ -116,6 +122,15 @@ contract Choice {
         }
 
         revert PositionDoesNotExist();
+    }
+
+    /// @param positionIndex The positionIndex returned by the contribute() function.
+    function checkPosition(
+        address addr,
+        uint256 positionIndex
+    ) public view returns (uint256 positionTokens, uint256 shares) {
+        (positionTokens, shares) = positionToLastStoredCycle(addr, positionIndex);
+        shares += pendingShares(positionTokens);
     }
 
     /// @param positionIndex The positionIndex returned by the contribute() function.
