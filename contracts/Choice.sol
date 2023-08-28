@@ -58,7 +58,7 @@ contract Choice {
     /// @return The number of shares all contributors hold.
     /// The total shares can be compared between two choices to see which has more support.
     function totalShares() external view returns (uint256) {
-        return cycles[cycles.length - 1].shares + peindingShares();
+        return cycles[cycles.length - 1].shares + pendingShares();
     }
 
     function checkPosition(
