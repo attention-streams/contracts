@@ -27,7 +27,7 @@ contract Choice {
     uint256 public immutable contributorFee; // scale 10000
     uint256 public immutable accrualRate; // scale 10000
 
-    address public immutable token; // vote token
+    address public immutable token; // contribution token
 
     uint256 public tokens;
 
