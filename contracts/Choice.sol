@@ -36,14 +36,15 @@ contract Choice {
     Cycle[] public cycles;
 
     // Addresses can contribute multiple times to the same choice, so the value is an array of Contributions.
-    // The index of a Contribution in this array is used in checkPosition(), withdraw(), split(), and merge(), and is
-    // returned by contribute().
+    // The index of a Contribution in this array is used in checkPosition(), withdraw(), splitPosition(),
+    // mergePositions(), and transferPositions() and is returned by contribute().
     mapping(address => Contribution[]) public positionsByAddress;
 
     event Withdrew(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 shares);
     event Contributed(address indexed addr, uint256 positionIndex, uint256 tokens);
 
     error PositionDoesNotExist();
+    error NotOnlyPosition();
 
     constructor(address topic) {
         topicAddress = topic;
@@ -104,8 +105,21 @@ contract Choice {
         emit Contributed(addr, positionIndex, originalAmount);
     }
 
+    /// Withdraw only position
+    function withdraw() external {
+        uint256 numPositions = positionsByAddress[msg.sender].length;
+
+        if(numPositions == 1){
+            withdraw(0);
+        } else if (numPositions > 1) {
+            revert NotOnlyPosition();
+        }
+
+        revert PositionDoesNotExist();
+    }
+
     /// @param positionIndex The positionIndex returned by the contribute() function.
-    function withdraw(uint256 positionIndex) external {
+    function withdraw(uint256 positionIndex) public {
         address addr = msg.sender;
 
         updateCyclesAddingAmount(0);
