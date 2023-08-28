@@ -42,9 +42,24 @@ contract Choice {
 
     event Withdrew(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 shares);
     event Contributed(address indexed addr, uint256 positionIndex, uint256 tokens);
+    event PositionTransferred(address indexed sender, address indexed recipient, uint256 positionIndex);
 
     error PositionDoesNotExist();
     error NotOnlyPosition();
+
+    modifier singlePosition(address addr) {
+        uint256 numPositions = positionsByAddress[addr].length;
+
+        if (numPositions == 0) {
+            revert PositionDoesNotExist();
+        }
+
+        if (numPositions > 1) {
+            revert NotOnlyPosition();
+        }
+
+        _;
+    }
 
     constructor(address topic) {
         topicAddress = topic;
@@ -60,21 +75,13 @@ contract Choice {
     }
 
     /// Check the number of tokens and shares for an address with only one position.
-    function checkPosition(address addr) external view returns (uint256 positionTokens, uint256 shares) {
-        uint256 numPositions = positionsByAddress[addr].length;
-
-        if(numPositions == 1){
-            return checkPosition(addr, 0);
-        }
-
-        if (numPositions > 1) {
-            revert NotOnlyPosition();
-        }
-
-        revert PositionDoesNotExist();
+    function checkPosition(
+        address addr
+    ) external view singlePosition(addr) returns(uint256 positionTokens, uint256 shares) {
+        return checkPosition(addr, 0);
     }
 
-    /// @return positionIndex will be reused as input to withdraw(), checkPosition(), split() and merge().
+    /// @return positionIndex will be reused as input to withdraw(), checkPosition(), and other functions
     function contribute(uint256 amount) external returns (uint256 positionIndex) {
         address addr = msg.sender;
         uint256 originalAmount = amount;
@@ -112,16 +119,29 @@ contract Choice {
     }
 
     /// Withdraw only position
-    function withdraw() external {
-        uint256 numPositions = positionsByAddress[msg.sender].length;
+    function withdraw() external singlePosition(msg.sender) { withdraw(0); }
 
-        if(numPositions == 1){
-            withdraw(0);
-        } else if (numPositions > 1) {
-            revert NotOnlyPosition();
+    /// Transfer only position
+    function transferPosition(address recipient) external singlePosition(msg.sender) {
+        transferPosition(recipient, 0);
+    }
+
+    /// @param recipient the recipient of all the positions to be transferred.
+    /// @param positionIndexes an array of the position indexes that should be transferred.
+    /// A position index is the number returned by contribute() when creating the position.
+    function transferPositions(address recipient, uint256[] calldata positionIndexes) external {
+        uint256 lastIndex;
+
+        unchecked {
+            lastIndex = positionIndexes.length - 1;
         }
 
-        revert PositionDoesNotExist();
+        for(i = 0; i <= lastIndex;){
+            transferPosition(recipient, positionIndexes[i]);
+            unchecked{
+                ++i;
+            }
+        }
     }
 
     /// @param positionIndex The positionIndex returned by the contribute() function.
@@ -131,6 +151,15 @@ contract Choice {
     ) public view returns (uint256 positionTokens, uint256 shares) {
         (positionTokens, shares) = positionToLastStoredCycle(addr, positionIndex);
         shares += pendingShares(positionTokens);
+    }
+
+    /// @param positionIndex The positionIndex returned by the contribute() function.
+    function transferPosition(address recipient, uint256 positionIndex) public {
+        Contribution[] storage fromPositions = positionsByAddress[msg.sender];
+        Contribution[] storage toPositions = positionsByAddress[msg.sender];
+
+        toPositions.push(fromPositions[positionIndex]);
+        delete fromPositions[positionIndex];
     }
 
     /// @param positionIndex The positionIndex returned by the contribute() function.
