@@ -34,20 +34,20 @@ contract Choice {
     Cycle[] public cycles;
 
     // Addresses can contribute multiple times to the same choice, so the value is an array of Contributions.
-    // The index of a Contribution in this array is used in the checkPosition() and withdraw() functions and
-    // is returned by the contribute() function.
-    mapping(address => Contribution[]) public contributionsByAddress;
+    // The index of a Contribution in this array is used in checkPosition(), withdraw(), split(), and merge(), and is
+    // returned by contribute().
+    mapping(address => Contribution[]) public positionsByAddress;
 
     event Withdrew(
         address indexed addr,
-        uint256 index,
+        uint256 positionIndex,
         uint256 tokens,
         uint256 shares
     );
 
     event Contributed(
         address indexed addr,
-        uint256 index,
+        uint256 positionIndex,
         uint256 tokens
     );
 
@@ -66,16 +66,17 @@ contract Choice {
         return cycles[cycles.length - 1].shares + pendingShares(tokens);
     }
 
+    /// @param positionIndex The positionIndex returned by the contribute() function.
     function checkPosition(
         address addr,
-        uint256 index
+        uint256 positionIndex
     ) external view returns (uint256 positionTokens, uint256 shares) {
-        (positionTokens, shares) = positionToLastStoredCycle(addr, index);
+        (positionTokens, shares) = positionToLastStoredCycle(addr, positionIndex);
         shares += pendingShares(positionTokens);
     }
 
-    /// @return index The index used as input to withdraw() and checkPosition()
-    function contribute(uint256 amount) external returns (uint256 index) {
+    /// @return positionIndex will be reused as input to withdraw(), checkPosition(), split() and merge().
+    function contribute(uint256 amount) external returns (uint256 positionIndex) {
         address addr = msg.sender;
         uint256 originalAmount = amount;
 
@@ -85,7 +86,7 @@ contract Choice {
         uint256 lastStoredCycleIndex;
 
         unchecked {
-        // updateCyclesAddingAmount() will always add a cycle if none exists
+            // updateCyclesAddingAmount() will always add a cycle if none exists
             lastStoredCycleIndex = cycles.length - 1;
 
             if (lastStoredCycleIndex > 0) {
@@ -94,7 +95,7 @@ contract Choice {
             }
         }
 
-        contributionsByAddress[addr].push(
+        positionsByAddress[addr].push(
             Contribution({
                 cycleIndex: lastStoredCycleIndex,
                 tokens: amount,
@@ -102,7 +103,9 @@ contract Choice {
             })
         );
 
-        index = contributionsByAddress[addr].length - 1;
+        unchecked {
+            positionIndex = positionsByAddress[addr].length - 1;
+        }
 
         IERC20(topicAddress).safeTransferFrom(
             addr,
@@ -110,20 +113,21 @@ contract Choice {
             originalAmount
         );
 
-        emit Contributed(addr, index, originalAmount);
+        emit Contributed(addr, positionIndex, originalAmount);
     }
 
-    function withdraw(uint256 index) external {
+    /// @param positionIndex The positionIndex returned by the contribute() function.
+    function withdraw(uint256 positionIndex) external {
         address addr = msg.sender;
 
         updateCyclesAddingAmount(0);
 
         (uint256 positionTokens, uint256 shares) = positionToLastStoredCycle(
             addr,
-            index
+            positionIndex
         );
 
-        delete contributionsByAddress[addr][index];
+        delete positionsByAddress[addr][positionIndex];
 
         uint256 lastStoredCycleIndex;
         unchecked {
@@ -134,7 +138,7 @@ contract Choice {
 
         IERC20(topicAddress).safeTransfer(addr, positionTokens);
 
-        emit Withdrew(addr, index, positionTokens, shares);
+        emit Withdrew(addr, positionIndex, positionTokens, shares);
     }
 
     /// @return The number of shares that have not been added to the last stored cycle.
@@ -142,7 +146,11 @@ contract Choice {
     function pendingShares(uint256 _tokens) internal view returns (uint256) {
         uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
 
-        Cycle memory lastStoredCycle = cycles[cycles.length - 1];
+        Cycle storage lastStoredCycle;
+
+        unchecked {
+          lastStoredCycle = cycles[cycles.length - 1];
+        }
 
         return
         (accrualRate *
@@ -152,11 +160,17 @@ contract Choice {
 
     function positionToLastStoredCycle(
         address addr,
-        uint256 index
+        uint256 positionIndex
     ) internal view returns (uint256 positionTokens, uint256 shares) {
-        Contribution storage position = contributionsByAddress[addr][index]; // reverts on invalid index TODO: better error message
+        Contribution[] storage positions = positionsByAddress[addr];
 
-        if (! position.exists) revert PositionDoesNotExist();
+        unchecked{
+            if (positionIndex + 1 > positions.length) revert PositionDoesNotExist();
+        }
+
+        Contribution storage position = positions[positionIndex];
+
+        if (!position.exists) revert PositionDoesNotExist();
 
         positionTokens = position.tokens;
 
@@ -204,7 +218,11 @@ contract Choice {
         } else {
             // Not the first contribution.
 
-            uint256 lastStoredCycleIndex = length - 1;
+            uint256 lastStoredCycleIndex;
+
+            unchecked{
+                lastStoredCycleIndex = length - 1;
+            }
 
             Cycle storage lastStoredCycle = cycles[lastStoredCycleIndex];
             uint256 lastStoredCycleNumber = lastStoredCycle.number;
