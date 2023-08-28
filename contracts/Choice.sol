@@ -17,7 +17,7 @@ import "./interfaces/ITopic.sol";
     struct Contribution {
         uint256 cycleIndex;
         uint256 tokens;
-        bool withdrawn;
+        bool exists;
     }
 
 contract Choice {
@@ -51,7 +51,7 @@ contract Choice {
         uint256 tokens
     );
 
-    error AlreadyWithdrawn();
+    error PositionDoesNotExist();
 
     constructor(address topic) {
         topicAddress = topic;
@@ -98,7 +98,7 @@ contract Choice {
             Contribution({
                 cycleIndex: lastStoredCycleIndex,
                 tokens: amount,
-                withdrawn: false
+                exists: true
             })
         );
 
@@ -115,7 +115,6 @@ contract Choice {
 
     function withdraw(uint256 index) external {
         address addr = msg.sender;
-        Contribution storage position = contributionsByAddress[addr][index]; // reverts on invalid index TODO: better error message
 
         updateCyclesAddingAmount(0);
 
@@ -124,10 +123,9 @@ contract Choice {
             index
         );
 
-        position.withdrawn = true;
+        delete contributionsByAddress[addr][index];
 
         uint256 lastStoredCycleIndex;
-
         unchecked {
             lastStoredCycleIndex = cycles.length - 1;
             tokens -= positionTokens;
@@ -158,7 +156,7 @@ contract Choice {
     ) internal view returns (uint256 positionTokens, uint256 shares) {
         Contribution storage position = contributionsByAddress[addr][index]; // reverts on invalid index TODO: better error message
 
-        if (position.withdrawn) revert AlreadyWithdrawn();
+        if (! position.exists) revert PositionDoesNotExist();
 
         positionTokens = position.tokens;
 
