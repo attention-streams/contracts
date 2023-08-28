@@ -57,33 +57,29 @@ contract Choice {
 
     /// @return The number of shares all contributors hold.
     /// The total shares can be compared between two choices to see which has more support.
-    function totalShares() public view returns (uint256) {
-        uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
-
-        Cycle storage lastStoredCycle = cycles[cycles.length - 1];
-
-        return
-            lastStoredCycle.shares +
-            (accrualRate *
-                (currentCycleNumber - lastStoredCycle.number) *
-                tokens) /
-            10000;
+    function totalShares() external view returns (uint256) {
+        return cycles[cycles.length - 1].shares + peindingShares();
     }
 
     function checkPosition(
         address addr,
         uint256 index
-    ) public view returns (uint256 positionTokens, uint256 shares) {
+    ) external view returns (uint256 positionTokens, uint256 shares) {
         (positionTokens, shares) = positionToLastStoredCycle(addr, index);
+        shares += pendingShares();
+    }
 
+    /// @return The number of shares that have not been added to the last stored cycle.
+    /// This is the number of shares that will be added to the last stored cycle when updateCyclesAddingAmount() is called.
+    function pendingShares() internal view returns (uint256) {
         uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
-        Cycle storage lastStoredCycle = cycles[cycles.length - 1];
 
-        shares +=
+        Cycle memory lastStoredCycle = cycles[cycles.length - 1];
+
+        return
             (accrualRate *
                 (currentCycleNumber - lastStoredCycle.number) *
-                positionTokens) /
-            10000;
+                tokens) / 10000;
     }
 
     function positionToLastStoredCycle(
