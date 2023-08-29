@@ -7,8 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./interfaces/ITopic.sol";
 
-import "hardhat/console.sol";
-
 struct Cycle {
     uint256 number;
     uint256 shares;
@@ -123,6 +121,10 @@ contract Choice {
         returns (uint256 positionTokens, uint256 shares)
     {
         return checkPosition(addr, 0);
+    }
+
+    function positionsLength(address addr) external view returns (uint256) {
+        return positionsByAddress[addr].length;
     }
 
     /// @return positionIndex will be reused as input to withdraw(), checkPosition(), and other functions
