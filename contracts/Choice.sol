@@ -36,8 +36,8 @@ contract Choice {
     Cycle[] public cycles;
 
     // Addresses can contribute multiple times to the same choice, so the value is an array of Contributions.
-    // The index of a Contribution in this array is used in checkPosition(), withdraw(), splitPosition(),
-    // mergePositions(), and transferPositions() and is returned by contribute().
+    // The index of a Contribution in this array is used in checkPosition(), withdraw(), split(), and
+    // transferPositions() and is returned by contribute().
     mapping(address => Contribution[]) public positionsByAddress;
 
     event Withdrew(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 shares);
@@ -50,10 +50,10 @@ contract Choice {
     );
     event Split(
         address indexed addr,
-        uint256 splitPositionIndex,
-        uint256 numSplits,
+        uint256 originalPositionIndex,
+        uint256 numNewPositions,
         uint256 firstNewPositionIndex,
-        uint256 amountPerSplit
+        uint256 amountPerNewPosition
     );
 
     error PositionDoesNotExist();
@@ -172,7 +172,7 @@ contract Choice {
     }
 
     /// Split the position equally into numSplits positions. Any extras will remain in the original position.
-    function split(uint256 positionIndex, uint256 numSplits) external positionExists(msg.sender, positionIndex) {
+    function split(uint256 positionIndex, uint256 numSplits) external {
         Contribution storage position = positionsByAddress[msg.sender][positionIndex];
         split(positionIndex, numSplits - 1, position.tokens / numSplits);
     }
@@ -184,28 +184,6 @@ contract Choice {
     ) public view positionExists(addr, positionIndex) returns (uint256 positionTokens, uint256 shares) {
         (positionTokens, shares) = positionToLastStoredCycle(addr, positionIndex);
         shares += pendingShares(positionTokens);
-    }
-
-    /// @param positionIndex The positionIndex returned by the contribute() function.
-    function transferPosition(
-        address recipient,
-        uint256 positionIndex
-    ) public positionExists(msg.sender, positionIndex) {
-        address sender = msg.sender;
-
-        Contribution[] storage fromPositions = positionsByAddress[sender];
-        Contribution[] storage toPositions = positionsByAddress[recipient];
-
-        toPositions.push(fromPositions[positionIndex]);
-        delete fromPositions[positionIndex];
-
-        uint256 recipientPositionIndex;
-
-        unchecked {
-            recipientPositionIndex = toPositions.length - 1;
-        }
-
-        emit PositionTransferred(sender, recipient, positionIndex, recipientPositionIndex);
     }
 
     /// @param positionIndex The positionIndex returned by the contribute() function.
@@ -230,6 +208,28 @@ contract Choice {
         emit Withdrew(addr, positionIndex, positionTokens, shares);
     }
 
+    /// @param positionIndex The positionIndex returned by the contribute() function.
+    function transferPosition(
+        address recipient,
+        uint256 positionIndex
+    ) public positionExists(msg.sender, positionIndex) {
+        address sender = msg.sender;
+
+        Contribution[] storage fromPositions = positionsByAddress[sender];
+        Contribution[] storage toPositions = positionsByAddress[recipient];
+
+        toPositions.push(fromPositions[positionIndex]);
+        delete fromPositions[positionIndex];
+
+        uint256 recipientPositionIndex;
+
+        unchecked {
+            recipientPositionIndex = toPositions.length - 1;
+        }
+
+        emit PositionTransferred(sender, recipient, positionIndex, recipientPositionIndex);
+    }
+
     /// Create numSplits new positions each containing amount tokens. Tokens to create the splits will be taken
     /// from the position at positionIndex.
     function split(
@@ -245,10 +245,10 @@ contract Choice {
         if (deductAmount > position.tokens) revert SplitMoreThanAvailable();
 
         unchecked{
-            position.tokens -= amount;
+            position.tokens -= deductAmount;
         }
 
-        for(uint256 i; i <= numSplits;){
+        for(uint256 i = 1; i <= numSplits;){
             positions.push(
                 Contribution({
                     cycleIndex: position.cycleIndex,
