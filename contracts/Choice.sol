@@ -156,7 +156,7 @@ contract Choice {
     /// @param positionIndex The positionIndex returned by the contribute() function.
     function transferPosition(address recipient, uint256 positionIndex) public {
         Contribution[] storage fromPositions = positionsByAddress[msg.sender];
-        Contribution[] storage toPositions = positionsByAddress[msg.sender];
+        Contribution[] storage toPositions = positionsByAddress[recipient];
 
         toPositions.push(fromPositions[positionIndex]);
         delete fromPositions[positionIndex];
