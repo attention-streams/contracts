@@ -136,7 +136,7 @@ contract Choice {
             lastIndex = positionIndexes.length - 1;
         }
 
-        for(i = 0; i <= lastIndex;){
+        for(uint256 i = 0; i <= lastIndex;){
             transferPosition(recipient, positionIndexes[i]);
             unchecked{
                 ++i;
