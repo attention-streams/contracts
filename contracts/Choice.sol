@@ -7,18 +7,20 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./interfaces/ITopic.sol";
 
-    struct Cycle {
-        uint256 number;
-        uint256 shares;
-        uint256 fees;
-        bool hasContributions;
-    }
+import "hardhat/console.sol";
 
-    struct Contribution {
-        uint256 cycleIndex;
-        uint256 tokens;
-        bool exists;
-    }
+struct Cycle {
+    uint256 number;
+    uint256 shares;
+    uint256 fees;
+    bool hasContributions;
+}
+
+struct Contribution {
+    uint256 cycleIndex;
+    uint256 tokens;
+    bool exists;
+}
 
 contract Choice {
     using SafeERC20 for IERC20;
@@ -40,8 +42,17 @@ contract Choice {
     // transferPositions() and is returned by contribute().
     mapping(address => Contribution[]) public positionsByAddress;
 
-    event Withdrew(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 shares);
-    event Contributed(address indexed addr, uint256 positionIndex, uint256 tokens);
+    event Withdrew(
+        address indexed addr,
+        uint256 positionIndex,
+        uint256 tokens,
+        uint256 shares
+    );
+    event Contributed(
+        address indexed addr,
+        uint256 positionIndex,
+        uint256 tokens
+    );
     event PositionTransferred(
         address indexed sender,
         address indexed recipient,
@@ -74,11 +85,12 @@ contract Choice {
         _;
     }
 
-    modifier positionExists(address addr, uint256 positionIndex){
+    modifier positionExists(address addr, uint256 positionIndex) {
         Contribution[] storage positions = positionsByAddress[addr];
 
-        unchecked{
-            if (positionIndex + 1 > positions.length) revert PositionDoesNotExist();
+        unchecked {
+            if (positionIndex + 1 > positions.length)
+                revert PositionDoesNotExist();
         }
 
         Contribution storage position = positions[positionIndex];
@@ -104,16 +116,24 @@ contract Choice {
     /// Check the number of tokens and shares for an address with only one position.
     function checkPosition(
         address addr
-    ) external view singlePosition(addr) returns (uint256 positionTokens, uint256 shares) {
+    )
+        external
+        view
+        singlePosition(addr)
+        returns (uint256 positionTokens, uint256 shares)
+    {
         return checkPosition(addr, 0);
     }
 
     /// @return positionIndex will be reused as input to withdraw(), checkPosition(), and other functions
-    function contribute(uint256 amount) external returns (uint256 positionIndex) {
+    function contribute(
+        uint256 amount
+    ) external returns (uint256 positionIndex) {
         address addr = msg.sender;
         uint256 originalAmount = amount;
 
         tokens += amount;
+
         updateCyclesAddingAmount(amount);
 
         uint256 lastStoredCycleIndex;
@@ -124,7 +144,7 @@ contract Choice {
 
             if (lastStoredCycleIndex > 0) {
                 // Contributor fees are only charged in cycles after the one in which the first contribution was made.
-                amount -= amount * contributorFee / 10000;
+                amount -= (amount * contributorFee) / 10000;
             }
         }
 
@@ -140,32 +160,39 @@ contract Choice {
             positionIndex = positionsByAddress[addr].length - 1;
         }
 
-        IERC20(topicAddress).safeTransferFrom(addr, address(this), originalAmount);
+        IERC20(token).safeTransferFrom(addr, address(this), originalAmount);
 
         emit Contributed(addr, positionIndex, originalAmount);
     }
 
     /// Withdraw the only position
-    function withdraw() external singlePosition(msg.sender) { withdraw(0); }
+    function withdraw() external singlePosition(msg.sender) {
+        withdraw(0);
+    }
 
     /// Transfer the only position
-    function transferPosition(address recipient) external singlePosition(msg.sender) {
+    function transferPosition(
+        address recipient
+    ) external singlePosition(msg.sender) {
         transferPosition(recipient, 0);
     }
 
     /// @param recipient the recipient of all the positions to be transferred.
     /// @param positionIndexes an array of the position indexes that should be transferred.
     /// A position index is the number returned by contribute() when creating the position.
-    function transferPositions(address recipient, uint256[] calldata positionIndexes) external {
+    function transferPositions(
+        address recipient,
+        uint256[] calldata positionIndexes
+    ) external {
         uint256 lastIndex;
 
         unchecked {
             lastIndex = positionIndexes.length - 1;
         }
 
-        for(uint256 i; i <= lastIndex;){
+        for (uint256 i; i <= lastIndex; ) {
             transferPosition(recipient, positionIndexes[i]);
-            unchecked{
+            unchecked {
                 ++i;
             }
         }
@@ -173,7 +200,9 @@ contract Choice {
 
     /// Split the position equally into numSplits positions.
     function split(uint256 positionIndex, uint256 numSplits) external {
-        Contribution storage position = positionsByAddress[msg.sender][positionIndex];
+        Contribution storage position = positionsByAddress[msg.sender][
+            positionIndex
+        ];
         split(positionIndex, numSplits - 1, position.tokens / numSplits);
     }
 
@@ -181,18 +210,31 @@ contract Choice {
     function checkPosition(
         address addr,
         uint256 positionIndex
-    ) public view positionExists(addr, positionIndex) returns (uint256 positionTokens, uint256 shares) {
-        (positionTokens, shares) = positionToLastStoredCycle(addr, positionIndex);
+    )
+        public
+        view
+        positionExists(addr, positionIndex)
+        returns (uint256 positionTokens, uint256 shares)
+    {
+        (positionTokens, shares) = positionToLastStoredCycle(
+            addr,
+            positionIndex
+        );
         shares += pendingShares(positionTokens);
     }
 
     /// @param positionIndex The positionIndex returned by the contribute() function.
-    function withdraw(uint256 positionIndex) public positionExists(msg.sender, positionIndex) {
+    function withdraw(
+        uint256 positionIndex
+    ) public positionExists(msg.sender, positionIndex) {
         address addr = msg.sender;
 
         updateCyclesAddingAmount(0);
 
-        (uint256 positionTokens, uint256 shares) = positionToLastStoredCycle(addr, positionIndex);
+        (uint256 positionTokens, uint256 shares) = positionToLastStoredCycle(
+            addr,
+            positionIndex
+        );
 
         delete positionsByAddress[addr][positionIndex];
 
@@ -203,7 +245,7 @@ contract Choice {
             cycles[lastStoredCycleIndex].shares -= shares;
         }
 
-        IERC20(topicAddress).safeTransfer(addr, positionTokens);
+        IERC20(token).safeTransfer(addr, positionTokens);
 
         emit Withdrew(addr, positionIndex, positionTokens, shares);
     }
@@ -227,7 +269,12 @@ contract Choice {
             recipientPositionIndex = toPositions.length - 1;
         }
 
-        emit PositionTransferred(sender, recipient, positionIndex, recipientPositionIndex);
+        emit PositionTransferred(
+            sender,
+            recipient,
+            positionIndex,
+            recipientPositionIndex
+        );
     }
 
     /// Create numSplits new positions each containing amount tokens. Tokens to create the splits will be taken
@@ -244,11 +291,11 @@ contract Choice {
         uint256 deductAmount = amount * numSplits;
         if (deductAmount > position.tokens) revert SplitMoreThanAvailable();
 
-        unchecked{
+        unchecked {
             position.tokens -= deductAmount;
         }
 
-        for(uint256 i = 1; i <= numSplits;){
+        for (uint256 i = 1; i <= numSplits; ) {
             positions.push(
                 Contribution({
                     cycleIndex: position.cycleIndex,
@@ -267,7 +314,13 @@ contract Choice {
             firstNewPositionIndex = positions.length - numSplits;
         }
 
-        emit Split(addr, positionIndex, numSplits, firstNewPositionIndex, amount);
+        emit Split(
+            addr,
+            positionIndex,
+            numSplits,
+            firstNewPositionIndex,
+            amount
+        );
     }
 
     /// @param _tokens The token amount used to compute shares--either from the choice, or an individual position.
@@ -279,16 +332,19 @@ contract Choice {
         Cycle storage lastStoredCycle;
 
         unchecked {
-          lastStoredCycle = cycles[cycles.length - 1];
+            lastStoredCycle = cycles[cycles.length - 1];
         }
 
-        return (accrualRate * (currentCycleNumber - lastStoredCycle.number) * _tokens) / 10000;
+        return
+            (accrualRate *
+                (currentCycleNumber - lastStoredCycle.number) *
+                _tokens) / 10000;
     }
 
     function positionToLastStoredCycle(
         address addr,
         uint256 positionIndex
-    ) internal view returns(uint256 positionTokens, uint256 shares) {
+    ) internal view returns (uint256 positionTokens, uint256 shares) {
         Contribution storage position = positionsByAddress[addr][positionIndex];
 
         positionTokens = position.tokens;
@@ -302,12 +358,16 @@ contract Choice {
             startIndex = position.cycleIndex + 1; // can't realistically overflow
         }
 
-        for (uint256 i = startIndex; i <= lastStoredCycleIndex;) {
+        for (uint256 i = startIndex; i <= lastStoredCycleIndex; ) {
             Cycle storage cycle = cycles[i];
             Cycle storage prevStoredCycle = cycles[i - 1];
 
-            shares += accrualRate * (cycle.number - prevStoredCycle.number) * positionTokens / 10000;
-            uint256 earnedFees = cycle.fees * shares / cycle.shares;
+            shares +=
+                (accrualRate *
+                    (cycle.number - prevStoredCycle.number) *
+                    positionTokens) /
+                10000;
+            uint256 earnedFees = (cycle.fees * shares) / cycle.shares;
             positionTokens += earnedFees;
 
             unchecked {
@@ -318,6 +378,7 @@ contract Choice {
 
     function updateCyclesAddingAmount(uint256 amount) internal {
         uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
+
         uint256 length = cycles.length;
 
         if (length == 0) {
@@ -334,7 +395,7 @@ contract Choice {
             // Not the first contribution.
             uint256 lastStoredCycleIndex;
 
-            unchecked{
+            unchecked {
                 lastStoredCycleIndex = length - 1;
             }
 
@@ -345,7 +406,7 @@ contract Choice {
 
             if (lastStoredCycleIndex > 0) {
                 // No contributor fees on the first cycle that has a contribution.
-                fee = amount * contributorFee / 10000;
+                fee = (amount * contributorFee) / 10000;
             }
 
             if (lastStoredCycleNumber == currentCycleNumber) {
@@ -355,7 +416,10 @@ contract Choice {
                 Cycle memory newCycle = Cycle({
                     number: currentCycleNumber,
                     shares: lastStoredCycle.shares +
-                        accrualRate * (currentCycleNumber - lastStoredCycleNumber) * tokens / 10000,
+                        (accrualRate *
+                            (currentCycleNumber - lastStoredCycleNumber) *
+                            tokens) /
+                        10000,
                     fees: fee,
                     hasContributions: amount > 0
                 });

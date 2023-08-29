@@ -1,6 +1,5 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Choice, Topic__factory } from "../typechain-types";
-import { abi as TopicAbi } from "../artifacts/contracts/Topic.sol/Topic.json";
+import { Choice, IERC20__factory, Topic__factory } from "../typechain-types";
 import { ethers } from "hardhat";
 import { deployMockContract, MockContract } from "ethereum-waffle";
 import { expect } from "chai";
@@ -8,6 +7,7 @@ import { expect } from "chai";
 describe("Choice", async () => {
   let choice: Choice;
   let topic: MockContract;
+  let token: MockContract;
   let admin: SignerWithAddress;
   let userA: SignerWithAddress;
   let userB: SignerWithAddress;
@@ -22,17 +22,21 @@ describe("Choice", async () => {
   describe("Vote", async () => {
     before(async () => {
       const choiceFactory = await ethers.getContractFactory("Choice");
-      topic = await deployMockContract(admin, TopicAbi);
+      topic = await deployMockContract(admin, Topic__factory.abi);
+      token = await deployMockContract(admin, IERC20__factory.abi);
 
-      // await topic.mock.choiceFeeRate.returns(feeRate);
+      await topic.mock.contributorFee.returns(feeRate);
       await topic.mock.accrualRate.returns(10000);
+      await topic.mock.token.returns(token.address);
+      await topic.mock.currentCycleNumber.returns(0);
 
       choice = await choiceFactory.deploy(topic.address);
-
     });
 
     it("after votes and withdraws, tokens must be zero", async () => {
-      await topic.mock.currentCycleNumber.returns(0);
+      await token.mock.transferFrom.returns(true); // allow all transfers from users
+      await token.mock.transfer.returns(true); // allow all transfers to users
+
       await choice.connect(userA).contribute(10000);
       await choice.connect(userB).contribute(10000);
 
@@ -44,5 +48,7 @@ describe("Choice", async () => {
 
       expect(tokens).to.equal(0);
     });
+
+    describe("Vote", async () => {});
   });
 });
