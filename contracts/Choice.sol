@@ -40,17 +40,8 @@ contract Choice {
     // transferPositions() and is returned by contribute().
     mapping(address => Contribution[]) public positionsByAddress;
 
-    event Withdrew(
-        address indexed addr,
-        uint256 positionIndex,
-        uint256 tokens,
-        uint256 shares
-    );
-    event Contributed(
-        address indexed addr,
-        uint256 positionIndex,
-        uint256 tokens
-    );
+    event Withdrew(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 shares);
+    event Contributed(address indexed addr, uint256 positionIndex, uint256 tokens);
     event PositionTransferred(
         address indexed sender,
         address indexed recipient,
@@ -202,9 +193,7 @@ contract Choice {
 
     /// Split the position equally into numSplits positions.
     function split(uint256 positionIndex, uint256 numSplits) external {
-        Contribution storage position = positionsByAddress[msg.sender][
-            positionIndex
-        ];
+        Contribution storage position = positionsByAddress[msg.sender][positionIndex];
         split(positionIndex, numSplits - 1, position.tokens / numSplits);
     }
 
@@ -218,10 +207,7 @@ contract Choice {
         positionExists(addr, positionIndex)
         returns (uint256 positionTokens, uint256 shares)
     {
-        (positionTokens, shares) = positionToLastStoredCycle(
-            addr,
-            positionIndex
-        );
+        (positionTokens, shares) = positionToLastStoredCycle(addr, positionIndex);
         shares += pendingShares(positionTokens);
     }
 
@@ -233,10 +219,7 @@ contract Choice {
 
         updateCyclesAddingAmount(0);
 
-        (uint256 positionTokens, uint256 shares) = positionToLastStoredCycle(
-            addr,
-            positionIndex
-        );
+        (uint256 positionTokens, uint256 shares) = positionToLastStoredCycle(addr, positionIndex);
 
         delete positionsByAddress[addr][positionIndex];
 
@@ -271,12 +254,7 @@ contract Choice {
             recipientPositionIndex = toPositions.length - 1;
         }
 
-        emit PositionTransferred(
-            sender,
-            recipient,
-            positionIndex,
-            recipientPositionIndex
-        );
+        emit PositionTransferred(sender, recipient, positionIndex, recipientPositionIndex);
     }
 
     /// Create numSplits new positions each containing amount tokens. Tokens to create the splits will be taken
@@ -316,13 +294,7 @@ contract Choice {
             firstNewPositionIndex = positions.length - numSplits;
         }
 
-        emit Split(
-            addr,
-            positionIndex,
-            numSplits,
-            firstNewPositionIndex,
-            amount
-        );
+        emit Split(addr, positionIndex, numSplits, firstNewPositionIndex, amount);
     }
 
     /// @param _tokens The token amount used to compute shares--either from the choice, or an individual position.
@@ -338,9 +310,7 @@ contract Choice {
         }
 
         return
-            (accrualRate *
-                (currentCycleNumber - lastStoredCycle.number) *
-                _tokens) / 10000;
+            accrualRate * (currentCycleNumber - lastStoredCycle.number) * _tokens / 10000;
     }
 
     function positionToLastStoredCycle(
@@ -364,11 +334,7 @@ contract Choice {
             Cycle storage cycle = cycles[i];
             Cycle storage prevStoredCycle = cycles[i - 1];
 
-            shares +=
-                (accrualRate *
-                    (cycle.number - prevStoredCycle.number) *
-                    positionTokens) /
-                10000;
+            shares += accrualRate * (cycle.number - prevStoredCycle.number) * positionTokens / 10000;
             uint256 earnedFees = (cycle.fees * shares) / cycle.shares;
             positionTokens += earnedFees;
 
@@ -418,10 +384,7 @@ contract Choice {
                 Cycle memory newCycle = Cycle({
                     number: currentCycleNumber,
                     shares: lastStoredCycle.shares +
-                        (accrualRate *
-                            (currentCycleNumber - lastStoredCycleNumber) *
-                            tokens) /
-                        10000,
+                        accrualRate * (currentCycleNumber - lastStoredCycleNumber) * tokens / 10000,
                     fees: fee,
                     hasContributions: amount > 0
                 });
