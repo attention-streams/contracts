@@ -328,7 +328,7 @@ contract Choice {
             Cycle storage prevStoredCycle = cycles[i - 1];
 
             shares += accrualRate * (cycle.number - prevStoredCycle.number) * positionTokens / 10000;
-            uint256 earnedFees = (cycle.fees * shares) / cycle.shares;
+            uint256 earnedFees = cycle.fees * shares / cycle.shares;
             positionTokens += earnedFees;
 
             unchecked {
