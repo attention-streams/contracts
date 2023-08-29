@@ -42,10 +42,23 @@ contract Choice {
 
     event Withdrew(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 shares);
     event Contributed(address indexed addr, uint256 positionIndex, uint256 tokens);
-    event PositionTransferred(address indexed sender, address indexed recipient, uint256 positionIndex);
+    event PositionTransferred(
+        address indexed sender,
+        address indexed recipient,
+        uint256 senderPositionIndex,
+        uint256 recipientPositionIndex
+    );
+    event Split(
+        address indexed addr,
+        uint256 splitPositionIndex,
+        uint256 numSplits,
+        uint256 firstNewPositionIndex,
+        uint256 amountPerSplit
+    );
 
     error PositionDoesNotExist();
     error NotOnlyPosition();
+    error SplitMoreThanAvailable();
 
     modifier singlePosition(address addr) {
         uint256 numPositions = positionsByAddress[addr].length;
@@ -57,6 +70,20 @@ contract Choice {
         if (numPositions > 1) {
             revert NotOnlyPosition();
         }
+
+        _;
+    }
+
+    modifier positionExists(address addr, uint256 positionIndex){
+        Contribution[] storage positions = positionsByAddress[addr];
+
+        unchecked{
+            if (positionIndex + 1 > positions.length) revert PositionDoesNotExist();
+        }
+
+        Contribution storage position = positions[positionIndex];
+
+        if (!position.exists) revert PositionDoesNotExist();
 
         _;
     }
@@ -77,7 +104,7 @@ contract Choice {
     /// Check the number of tokens and shares for an address with only one position.
     function checkPosition(
         address addr
-    ) external view singlePosition(addr) returns(uint256 positionTokens, uint256 shares) {
+    ) external view singlePosition(addr) returns (uint256 positionTokens, uint256 shares) {
         return checkPosition(addr, 0);
     }
 
@@ -118,10 +145,10 @@ contract Choice {
         emit Contributed(addr, positionIndex, originalAmount);
     }
 
-    /// Withdraw only position
+    /// Withdraw the only position
     function withdraw() external singlePosition(msg.sender) { withdraw(0); }
 
-    /// Transfer only position
+    /// Transfer the only position
     function transferPosition(address recipient) external singlePosition(msg.sender) {
         transferPosition(recipient, 0);
     }
@@ -136,7 +163,7 @@ contract Choice {
             lastIndex = positionIndexes.length - 1;
         }
 
-        for(uint256 i = 0; i <= lastIndex;){
+        for(uint256 i; i <= lastIndex;){
             transferPosition(recipient, positionIndexes[i]);
             unchecked{
                 ++i;
@@ -144,26 +171,45 @@ contract Choice {
         }
     }
 
+    /// Split the position equally into numSplits positions. Any extras will remain in the original position.
+    function split(uint256 positionIndex, uint256 numSplits) external positionExists(msg.sender, positionIndex) {
+        Contribution storage position = positionsByAddress[msg.sender][positionIndex];
+        split(positionIndex, numSplits - 1, position.tokens / numSplits);
+    }
+
     /// @param positionIndex The positionIndex returned by the contribute() function.
     function checkPosition(
         address addr,
         uint256 positionIndex
-    ) public view returns (uint256 positionTokens, uint256 shares) {
+    ) public view positionExists(addr, positionIndex) returns (uint256 positionTokens, uint256 shares) {
         (positionTokens, shares) = positionToLastStoredCycle(addr, positionIndex);
         shares += pendingShares(positionTokens);
     }
 
     /// @param positionIndex The positionIndex returned by the contribute() function.
-    function transferPosition(address recipient, uint256 positionIndex) public {
-        Contribution[] storage fromPositions = positionsByAddress[msg.sender];
+    function transferPosition(
+        address recipient,
+        uint256 positionIndex
+    ) public positionExists(msg.sender, positionIndex) {
+        address sender = msg.sender;
+
+        Contribution[] storage fromPositions = positionsByAddress[sender];
         Contribution[] storage toPositions = positionsByAddress[recipient];
 
         toPositions.push(fromPositions[positionIndex]);
         delete fromPositions[positionIndex];
+
+        uint256 recipientPositionIndex;
+
+        unchecked {
+            recipientPositionIndex = toPositions.length - 1;
+        }
+
+        emit PositionTransferred(sender, recipient, positionIndex, recipientPositionIndex);
     }
 
     /// @param positionIndex The positionIndex returned by the contribute() function.
-    function withdraw(uint256 positionIndex) public {
+    function withdraw(uint256 positionIndex) public positionExists(msg.sender, positionIndex) {
         address addr = msg.sender;
 
         updateCyclesAddingAmount(0);
@@ -184,7 +230,47 @@ contract Choice {
         emit Withdrew(addr, positionIndex, positionTokens, shares);
     }
 
-    /// @param _tokens The total number of tokens--either from the choice, or an individual position.
+    /// Create numSplits new positions each containing amount tokens. Tokens to create the splits will be taken
+    /// from the position at positionIndex.
+    function split(
+        uint256 positionIndex,
+        uint256 numSplits,
+        uint256 amount
+    ) public positionExists(msg.sender, positionIndex) {
+        address addr = msg.sender;
+        Contribution[] storage positions = positionsByAddress[addr];
+        Contribution storage position = positions[positionIndex];
+
+        uint256 deductAmount = amount * numSplits;
+        if (deductAmount > position.tokens) revert SplitMoreThanAvailable();
+
+        unchecked{
+            position.tokens -= amount;
+        }
+
+        for(uint256 i; i <= numSplits;){
+            positions.push(
+                Contribution({
+                    cycleIndex: position.cycleIndex,
+                    tokens: amount,
+                    exists: true
+                })
+            );
+            unchecked {
+                ++i;
+            }
+        }
+
+        uint256 firstNewPositionIndex;
+
+        unchecked {
+            firstNewPositionIndex = positions.length - numSplits;
+        }
+
+        emit Split(addr, positionIndex, numSplits, firstNewPositionIndex, amount);
+    }
+
+    /// @param _tokens The token amount used to compute shares--either from the choice, or an individual position.
     /// @return The number of shares that have not been added to the last stored cycle.
     /// These will be added to the last stored cycle when updateCyclesAddingAmount() is next called.
     function pendingShares(uint256 _tokens) internal view returns (uint256) {
@@ -202,16 +288,8 @@ contract Choice {
     function positionToLastStoredCycle(
         address addr,
         uint256 positionIndex
-    ) internal view returns (uint256 positionTokens, uint256 shares) {
-        Contribution[] storage positions = positionsByAddress[addr];
-
-        unchecked{
-            if (positionIndex + 1 > positions.length) revert PositionDoesNotExist();
-        }
-
-        Contribution storage position = positions[positionIndex];
-
-        if (!position.exists) revert PositionDoesNotExist();
+    ) internal view returns(uint256 positionTokens, uint256 shares) {
+        Contribution storage position = positionsByAddress[addr][positionIndex];
 
         positionTokens = position.tokens;
 
