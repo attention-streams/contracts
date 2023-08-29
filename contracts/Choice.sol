@@ -164,19 +164,14 @@ contract Choice {
     }
 
     /// Transfer the only position
-    function transferPosition(
-        address recipient
-    ) external singlePosition(msg.sender) {
+    function transferPosition(address recipient) external singlePosition(msg.sender) {
         transferPosition(recipient, 0);
     }
 
     /// @param recipient the recipient of all the positions to be transferred.
     /// @param positionIndexes an array of the position indexes that should be transferred.
     /// A position index is the number returned by contribute() when creating the position.
-    function transferPositions(
-        address recipient,
-        uint256[] calldata positionIndexes
-    ) external {
+    function transferPositions(address recipient, uint256[] calldata positionIndexes) external {
         uint256 lastIndex;
 
         unchecked {
@@ -212,9 +207,7 @@ contract Choice {
     }
 
     /// @param positionIndex The positionIndex returned by the contribute() function.
-    function withdraw(
-        uint256 positionIndex
-    ) public positionExists(msg.sender, positionIndex) {
+    function withdraw(uint256 positionIndex) public positionExists(msg.sender, positionIndex) {
         address addr = msg.sender;
 
         updateCyclesAddingAmount(0);
