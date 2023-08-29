@@ -171,7 +171,7 @@ contract Choice {
         }
     }
 
-    /// Split the position equally into numSplits positions. Any extras will remain in the original position.
+    /// Split the position equally into numSplits positions.
     function split(uint256 positionIndex, uint256 numSplits) external {
         Contribution storage position = positionsByAddress[msg.sender][positionIndex];
         split(positionIndex, numSplits - 1, position.tokens / numSplits);
