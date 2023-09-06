@@ -78,8 +78,7 @@ contract Choice {
         Contribution[] storage positions = positionsByAddress[addr];
 
         unchecked {
-            if (positionIndex + 1 > positions.length)
-                revert PositionDoesNotExist();
+            if (positionIndex + 1 > positions.length) revert PositionDoesNotExist();
         }
 
         Contribution storage position = positions[positionIndex];
@@ -105,12 +104,7 @@ contract Choice {
     /// Check the number of tokens and shares for an address with only one position.
     function checkPosition(
         address addr
-    )
-        external
-        view
-        singlePosition(addr)
-        returns (uint256 positionTokens, uint256 shares)
-    {
+    ) external view singlePosition(addr) returns (uint256 positionTokens, uint256 shares) {
         return checkPosition(addr, 0);
     }
 
@@ -119,9 +113,7 @@ contract Choice {
     }
 
     /// @return positionIndex will be reused as input to withdraw(), checkPosition(), and other functions
-    function contribute(
-        uint256 amount
-    ) external returns (uint256 positionIndex) {
+    function contribute(uint256 amount) external returns (uint256 positionIndex) {
         address addr = msg.sender;
         uint256 originalAmount = amount;
 
@@ -141,13 +133,7 @@ contract Choice {
             }
         }
 
-        positionsByAddress[addr].push(
-            Contribution({
-                cycleIndex: lastStoredCycleIndex,
-                tokens: amount,
-                exists: true
-            })
-        );
+        positionsByAddress[addr].push(Contribution({cycleIndex: lastStoredCycleIndex, tokens: amount, exists: true}));
 
         unchecked {
             positionIndex = positionsByAddress[addr].length - 1;
@@ -196,12 +182,7 @@ contract Choice {
     function checkPosition(
         address addr,
         uint256 positionIndex
-    )
-        public
-        view
-        positionExists(addr, positionIndex)
-        returns (uint256 positionTokens, uint256 shares)
-    {
+    ) public view positionExists(addr, positionIndex) returns (uint256 positionTokens, uint256 shares) {
         (positionTokens, shares) = positionToLastStoredCycle(addr, positionIndex);
         shares += pendingShares(positionTokens);
     }
@@ -269,13 +250,7 @@ contract Choice {
         }
 
         for (uint256 i = 1; i <= numSplits; ) {
-            positions.push(
-                Contribution({
-                    cycleIndex: position.cycleIndex,
-                    tokens: amount,
-                    exists: true
-                })
-            );
+            positions.push(Contribution({cycleIndex: position.cycleIndex, tokens: amount, exists: true}));
             unchecked {
                 ++i;
             }
@@ -302,8 +277,7 @@ contract Choice {
             lastStoredCycle = cycles[cycles.length - 1];
         }
 
-        return
-            accrualRate * (currentCycleNumber - lastStoredCycle.number) * _tokens / 10000;
+        return (accrualRate * (currentCycleNumber - lastStoredCycle.number) * _tokens) / 10000;
     }
 
     function positionToLastStoredCycle(
@@ -327,8 +301,8 @@ contract Choice {
             Cycle storage cycle = cycles[i];
             Cycle storage prevStoredCycle = cycles[i - 1];
 
-            shares += accrualRate * (cycle.number - prevStoredCycle.number) * positionTokens / 10000;
-            uint256 earnedFees = cycle.fees * shares / cycle.shares;
+            shares += (accrualRate * (cycle.number - prevStoredCycle.number) * positionTokens) / 10000;
+            uint256 earnedFees = (cycle.fees * shares) / cycle.shares;
             positionTokens += earnedFees;
 
             unchecked {
@@ -344,14 +318,7 @@ contract Choice {
 
         if (length == 0) {
             // Create the first cycle in the array using the first contribution.
-            cycles.push(
-                Cycle({
-                    number: currentCycleNumber,
-                    shares: 0,
-                    fees: 0,
-                    hasContributions: true
-                })
-            );
+            cycles.push(Cycle({number: currentCycleNumber, shares: 0, fees: 0, hasContributions: true}));
         } else {
             // Not the first contribution.
             uint256 lastStoredCycleIndex;
@@ -377,7 +344,8 @@ contract Choice {
                 Cycle memory newCycle = Cycle({
                     number: currentCycleNumber,
                     shares: lastStoredCycle.shares +
-                        accrualRate * (currentCycleNumber - lastStoredCycleNumber) * tokens / 10000,
+                        (accrualRate * (currentCycleNumber - lastStoredCycleNumber) * tokens) /
+                        10000,
                     fees: fee,
                     hasContributions: amount > 0
                 });
