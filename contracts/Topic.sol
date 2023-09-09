@@ -11,7 +11,10 @@ contract Topic is ITopic {
     uint256 public immutable totalCycles;
     uint256 public immutable accrualRate;
     uint256 public immutable contributorFee;
-    address public immutable token;
+    uint256 public immutable topicFee;
+    address public immutable funds;
+
+    address public immutable arena;
 
     address[] public choices;
 
@@ -21,14 +24,18 @@ contract Topic is ITopic {
         uint256 _totalCycles,
         uint256 _accrualRate,
         uint256 _contributorFee,
-        address _token
+        uint256 _topicFee,
+        address _funds,
+        address _arena
     ) {
         startTime = _startTime;
         cycleDuration = _cycleDuration;
         totalCycles = _totalCycles;
         accrualRate = _accrualRate;
         contributorFee = _contributorFee;
-        token = _token;
+        topicFee = _topicFee;
+        funds = _funds;
+        arena = _arena;
     }
 
     function deployChoice() external {
@@ -42,5 +49,4 @@ contract Topic is ITopic {
     function currentCycleNumber() external view returns (uint256) {
         return (block.timestamp - startTime) / cycleDuration;
     }
-
 }
