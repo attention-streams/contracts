@@ -138,11 +138,11 @@ contract Choice {
         amount -= _arenaAndTopicFees;
         unsettledFees += _arenaAndTopicFees;
 
-        uint256 _possibleContributorFee = (originalAmount * contributorFee) / 10000;
+        uint256 _contributorFee = (originalAmount * contributorFee) / 10000;
 
         tokens += amount;
 
-        updateCyclesAddingAmount(amount, _possibleContributorFee);
+        updateCyclesAddingAmount(amount, _contributorFee);
 
         uint256 lastStoredCycleIndex;
 
@@ -152,7 +152,7 @@ contract Choice {
 
             if (lastStoredCycleIndex > 0) {
                 // Contributor fees are only charged in cycles after the one in which the first contribution was made.
-                amount -= _possibleContributorFee;
+                amount -= _contributorFee;
             }
         }
 
@@ -350,7 +350,7 @@ contract Choice {
         }
     }
 
-    function updateCyclesAddingAmount(uint256 amount, uint256 possibleFee) internal {
+    function updateCyclesAddingAmount(uint256 amount, uint256 _contributorFee) internal {
         uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
 
         uint256 length = cycles.length;
@@ -369,15 +369,10 @@ contract Choice {
             Cycle storage lastStoredCycle = cycles[lastStoredCycleIndex];
             uint256 lastStoredCycleNumber = lastStoredCycle.number;
 
-            uint256 fee;
-
-            if (lastStoredCycleIndex > 0) {
-                // No contributor fees on the first cycle that has a contribution.
-                fee = possibleFee;
-            }
-
             if (lastStoredCycleNumber == currentCycleNumber) {
-                lastStoredCycle.fees += fee;
+                if(lastStoredCycleIndex != 0){
+                    lastStoredCycle.fees += _contributorFee;
+                }
             } else {
                 // Add a new cycle to the array using values from the previous one.
                 Cycle memory newCycle = Cycle({
@@ -385,7 +380,7 @@ contract Choice {
                     shares: lastStoredCycle.shares +
                         (accrualRate * (currentCycleNumber - lastStoredCycleNumber) * tokens) /
                         10000,
-                    fees: fee,
+                    fees: _contributorFee,
                     hasContributions: amount > 0
                 });
                 // We're only interested in adding cycles that have contributions, since we use the stored
