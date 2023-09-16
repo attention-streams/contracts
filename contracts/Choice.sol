@@ -15,7 +15,7 @@ struct Cycle {
     bool hasContributions;
 }
 
-struct Contribution {
+struct Position {
     uint256 cycleIndex;
     uint256 tokens;
     bool exists;
@@ -46,7 +46,7 @@ contract Choice {
     // Addresses can contribute multiple times to the same choice, so the value is an array of Contributions.
     // The index of a Contribution in this array is used in checkPosition(), withdraw(), split(), and
     // transferPositions() and is returned by contribute().
-    mapping(address => Contribution[]) public positionsByAddress;
+    mapping(address => Position[]) public positionsByAddress;
 
     event Withdrew(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 shares);
     event Contributed(address indexed addr, uint256 positionIndex, uint256 tokens);
@@ -84,13 +84,13 @@ contract Choice {
     }
 
     modifier positionExists(address addr, uint256 positionIndex) {
-        Contribution[] storage positions = positionsByAddress[addr];
+        Position[] storage positions = positionsByAddress[addr];
 
         unchecked {
             if (positionIndex + 1 > positions.length) revert PositionDoesNotExist();
         }
 
-        Contribution storage position = positions[positionIndex];
+        Position storage position = positions[positionIndex];
 
         if (!position.exists) revert PositionDoesNotExist();
 
@@ -156,7 +156,7 @@ contract Choice {
             }
         }
 
-        positionsByAddress[addr].push(Contribution({cycleIndex: lastStoredCycleIndex, tokens: amount, exists: true}));
+        positionsByAddress[addr].push(Position({cycleIndex: lastStoredCycleIndex, tokens: amount, exists: true}));
 
         unchecked {
             positionIndex = positionsByAddress[addr].length - 1;
@@ -213,7 +213,7 @@ contract Choice {
 
     /// Split the position equally into numSplits positions.
     function split(uint256 positionIndex, uint256 numSplits) external {
-        Contribution storage position = positionsByAddress[msg.sender][positionIndex];
+        Position storage position = positionsByAddress[msg.sender][positionIndex];
         split(positionIndex, numSplits - 1, position.tokens / numSplits);
     }
 
@@ -255,8 +255,8 @@ contract Choice {
     ) public positionExists(msg.sender, positionIndex) {
         address sender = msg.sender;
 
-        Contribution[] storage fromPositions = positionsByAddress[sender];
-        Contribution[] storage toPositions = positionsByAddress[recipient];
+        Position[] storage fromPositions = positionsByAddress[sender];
+        Position[] storage toPositions = positionsByAddress[recipient];
 
         toPositions.push(fromPositions[positionIndex]);
         delete fromPositions[positionIndex];
@@ -278,8 +278,8 @@ contract Choice {
         uint256 amount
     ) public positionExists(msg.sender, positionIndex) {
         address addr = msg.sender;
-        Contribution[] storage positions = positionsByAddress[addr];
-        Contribution storage position = positions[positionIndex];
+        Position[] storage positions = positionsByAddress[addr];
+        Position storage position = positions[positionIndex];
 
         uint256 deductAmount = amount * numSplits;
         if (deductAmount > position.tokens) revert SplitMoreThanAvailable();
@@ -289,7 +289,7 @@ contract Choice {
         }
 
         for (uint256 i = 1; i <= numSplits; ) {
-            positions.push(Contribution({cycleIndex: position.cycleIndex, tokens: amount, exists: true}));
+            positions.push(Position({cycleIndex: position.cycleIndex, tokens: amount, exists: true}));
             unchecked {
                 ++i;
             }
@@ -323,7 +323,7 @@ contract Choice {
         address addr,
         uint256 positionIndex
     ) internal view returns (uint256 positionTokens, uint256 shares) {
-        Contribution storage position = positionsByAddress[addr][positionIndex];
+        Position storage position = positionsByAddress[addr][positionIndex];
 
         positionTokens = position.tokens;
 
