@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./interfaces/ITopic.sol";
+import "./interfaces/IArena.sol";
 
 struct Cycle {
     uint256 number;
@@ -24,14 +25,21 @@ contract Choice {
     using SafeERC20 for IERC20;
 
     address public immutable topicAddress;
-    uint256 public immutable contributorFee; // scale 10000
-    uint256 public immutable accrualRate; // scale 10000
+
+    // scale 10000
+    uint256 public immutable contributorFee;
+    uint256 public immutable topicFee;
+    uint256 public immutable arenaFee;
+    uint256 public immutable arenaAndTopicFee; // arenaFee + topicFee
+    uint256 public immutable accrualRate;
 
     address public immutable token; // contribution token
 
     // The total number of tokens in this Choice. This should equal balanceOf(address(this)), but we don't want to have
     // to repeatedly call the token contract, so we keep track internally.
     uint256 public tokens;
+
+    uint256 public unsettledFees; // arena and topic fees to be settled
 
     Cycle[] public cycles;
 
@@ -55,6 +63,7 @@ contract Choice {
         uint256 firstNewPositionIndex,
         uint256 amountPerNewPosition
     );
+    event SettledFees(uint256 arenaFeeAmount, uint256 topicFeeAmount);
 
     error PositionDoesNotExist();
     error NotOnlyPosition();
@@ -89,10 +98,17 @@ contract Choice {
     }
 
     constructor(address topic) {
+        IArena _arena = IArena(ITopic(topic).arena());
+
         topicAddress = topic;
         contributorFee = ITopic(topic).contributorFee();
+        topicFee = ITopic(topic).topicFee();
         accrualRate = ITopic(topic).accrualRate();
-        token = ITopic(topic).token();
+
+        arenaFee = _arena.arenaFee();
+        token = _arena.token();
+
+        arenaAndTopicFee = arenaFee + topicFee;
     }
 
     /// @return The number of shares all contributors hold in this choice.
@@ -117,9 +133,16 @@ contract Choice {
         address addr = msg.sender;
         uint256 originalAmount = amount;
 
+        // take arena and topic fees
+        uint256 _arenaAndTopicFees = (originalAmount * (arenaAndTopicFee)) / 10000;
+        amount -= _arenaAndTopicFees;
+        unsettledFees += _arenaAndTopicFees;
+
+        uint256 _possibleContributorFee = (originalAmount * contributorFee) / 10000;
+
         tokens += amount;
 
-        updateCyclesAddingAmount(amount);
+        updateCyclesAddingAmount(amount, _possibleContributorFee);
 
         uint256 lastStoredCycleIndex;
 
@@ -129,7 +152,7 @@ contract Choice {
 
             if (lastStoredCycleIndex > 0) {
                 // Contributor fees are only charged in cycles after the one in which the first contribution was made.
-                amount -= (amount * contributorFee) / 10000;
+                amount -= _possibleContributorFee;
             }
         }
 
@@ -142,6 +165,22 @@ contract Choice {
         IERC20(token).safeTransferFrom(addr, address(this), originalAmount);
 
         emit Contributed(addr, positionIndex, originalAmount);
+    }
+
+    function settleFees() external {
+        uint256 _unsettledFees = unsettledFees;
+
+        if (_unsettledFees > 0) {
+            unsettledFees = 0;
+
+            uint256 arenaFeeAmount = (_unsettledFees * arenaFee) / arenaAndTopicFee;
+            uint256 topicFeeAmount = _unsettledFees - arenaFeeAmount;
+
+            IERC20(token).safeTransfer(ITopic(topicAddress).funds(), topicFeeAmount);
+            IERC20(token).safeTransfer(IArena(ITopic(topicAddress).arena()).funds(), arenaFeeAmount);
+
+            emit SettledFees(arenaFeeAmount, topicFeeAmount);
+        }
     }
 
     /// Withdraw the only position
@@ -191,7 +230,7 @@ contract Choice {
     function withdraw(uint256 positionIndex) public positionExists(msg.sender, positionIndex) {
         address addr = msg.sender;
 
-        updateCyclesAddingAmount(0);
+        updateCyclesAddingAmount(0, 0);
 
         (uint256 positionTokens, uint256 shares) = positionToLastStoredCycle(addr, positionIndex);
 
@@ -311,7 +350,7 @@ contract Choice {
         }
     }
 
-    function updateCyclesAddingAmount(uint256 amount) internal {
+    function updateCyclesAddingAmount(uint256 amount, uint256 possibleFee) internal {
         uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
 
         uint256 length = cycles.length;
@@ -334,7 +373,7 @@ contract Choice {
 
             if (lastStoredCycleIndex > 0) {
                 // No contributor fees on the first cycle that has a contribution.
-                fee = (amount * contributorFee) / 10000;
+                fee = possibleFee;
             }
 
             if (lastStoredCycleNumber == currentCycleNumber) {
