@@ -133,13 +133,15 @@ contract Choice {
         uint256 originalAmount = amount;
 
         // take arena and topic fees
-        uint256 _fees = (amount * (arenaAndTopicFee)) / 10000;
-        amount -= _fees;
-        unsettledFees += _fees;
+        uint256 _arenaAndTopicFees = (originalAmount * (arenaAndTopicFee)) / 10000;
+        amount -= _arenaAndTopicFees;
+        unsettledFees += _arenaAndTopicFees;
+
+        uint256 _possibleContributorFee = (originalAmount * contributorFee) / 10000;
 
         tokens += amount;
 
-        updateCyclesAddingAmount(amount);
+        updateCyclesAddingAmount(amount, _possibleContributorFee);
 
         uint256 lastStoredCycleIndex;
 
@@ -149,7 +151,7 @@ contract Choice {
 
             if (lastStoredCycleIndex > 0) {
                 // Contributor fees are only charged in cycles after the one in which the first contribution was made.
-                amount -= (amount * contributorFee) / 10000;
+                amount -= _possibleContributorFee;
             }
         }
 
@@ -225,7 +227,7 @@ contract Choice {
     function withdraw(uint256 positionIndex) public positionExists(msg.sender, positionIndex) {
         address addr = msg.sender;
 
-        updateCyclesAddingAmount(0);
+        updateCyclesAddingAmount(0, 0);
 
         (uint256 positionTokens, uint256 shares) = positionToLastStoredCycle(addr, positionIndex);
 
@@ -345,7 +347,7 @@ contract Choice {
         }
     }
 
-    function updateCyclesAddingAmount(uint256 amount) internal {
+    function updateCyclesAddingAmount(uint256 amount, uint256 possibleFee) internal {
         uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
 
         uint256 length = cycles.length;
@@ -368,7 +370,7 @@ contract Choice {
 
             if (lastStoredCycleIndex > 0) {
                 // No contributor fees on the first cycle that has a contribution.
-                fee = (amount * contributorFee) / 10000;
+                fee = possibleFee;
             }
 
             if (lastStoredCycleNumber == currentCycleNumber) {
