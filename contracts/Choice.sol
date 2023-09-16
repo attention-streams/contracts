@@ -63,6 +63,7 @@ contract Choice {
         uint256 firstNewPositionIndex,
         uint256 amountPerNewPosition
     );
+    event SettledFees(uint256 arenaFeeAmount, uint256 topicFeeAmount);
 
     error PositionDoesNotExist();
     error NotOnlyPosition();
@@ -177,6 +178,8 @@ contract Choice {
 
             IERC20(token).safeTransfer(ITopic(topicAddress).funds(), topicFeeAmount);
             IERC20(token).safeTransfer(IArena(ITopic(topicAddress).arena()).funds(), arenaFeeAmount);
+
+            emit SettledFees(arenaFeeAmount, topicFeeAmount);
         }
     }
 
