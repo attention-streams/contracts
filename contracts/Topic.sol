@@ -53,7 +53,12 @@ contract Topic is ITopic {
         return choices.length;
     }
 
-    function currentCycleNumber() external view returns (uint256) {
-        return (block.timestamp - startTime) / cycleDuration;
+    function currentCycleNumber() external view returns (uint256 cycle, bool isOver) {
+        cycle = (block.timestamp - startTime) / cycleDuration; // reverts if block.timestamp < startTime
+
+        if (cycle >= totalCycles) {
+            cycle = totalCycles - 1;
+            isOver = true;
+        }
     }
 }

@@ -67,6 +67,7 @@ contract Choice {
     error PositionDoesNotExist();
     error NotOnlyPosition();
     error SplitMoreThanAvailable();
+    error TopicIsOver();
 
     modifier singlePosition(address addr) {
         uint256 numPositions = positionsByAddress[addr].length;
@@ -127,6 +128,10 @@ contract Choice {
 
     /// @return positionIndex will be reused as input to withdraw(), checkPosition(), and other functions
     function contribute(uint256 amount) external returns (uint256 positionIndex) {
+        (uint256 currentCycleNumber, bool isOver) = ITopic(topicAddress).currentCycleNumber();
+
+        if (isOver) revert TopicIsOver();
+
         address addr = msg.sender;
         uint256 originalAmount = amount;
 
@@ -139,7 +144,7 @@ contract Choice {
 
         tokens += amount;
 
-        updateCyclesAddingAmount(amount, _contributorFee);
+        updateCyclesAddingAmount(currentCycleNumber, amount, _contributorFee);
 
         uint256 lastStoredCycleIndex;
 
@@ -227,7 +232,9 @@ contract Choice {
     function withdraw(uint256 positionIndex) public positionExists(msg.sender, positionIndex) {
         address addr = msg.sender;
 
-        updateCyclesAddingAmount(0, 0);
+        (uint256 currentCycleNumber, ) = ITopic(topicAddress).currentCycleNumber();
+
+        updateCyclesAddingAmount(currentCycleNumber, 0, 0);
 
         (uint256 positionTokens, uint256 shares) = positionToLastStoredCycle(addr, positionIndex);
 
@@ -305,7 +312,7 @@ contract Choice {
     /// @return The number of shares that have not been added to the last stored cycle.
     /// These will be added to the last stored cycle when updateCyclesAddingAmount() is next called.
     function pendingShares(uint256 _tokens) internal view returns (uint256) {
-        uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
+        (uint256 currentCycleNumber, ) = ITopic(topicAddress).currentCycleNumber();
 
         Cycle storage lastStoredCycle;
 
@@ -347,9 +354,7 @@ contract Choice {
         }
     }
 
-    function updateCyclesAddingAmount(uint256 amount, uint256 _contributorFee) internal {
-        uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
-
+    function updateCyclesAddingAmount(uint256 currentCycleNumber, uint256 amount, uint256 _contributorFee) internal {
         uint256 length = cycles.length;
 
         if (length == 0) {

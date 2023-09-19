@@ -21,5 +21,5 @@ interface ITopic {
 
     function arena() external view returns (address);
 
-    function currentCycleNumber() external view returns (uint256);
+    function currentCycleNumber() external view returns (uint256, bool); // cycle, isOver
 }
