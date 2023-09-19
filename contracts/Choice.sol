@@ -25,15 +25,14 @@ contract Choice {
     using SafeERC20 for IERC20;
 
     address public immutable topicAddress;
-
     // scale 10000
     uint256 public immutable contributorFee;
     uint256 public immutable topicFee;
     uint256 public immutable arenaFee;
     uint256 public immutable arenaAndTopicFee; // arenaFee + topicFee
     uint256 public immutable accrualRate;
-
     address public immutable token; // contribution token
+    string public metadataURI; // string cannot be marked as immutable, however it is never modified after construction
 
     // The total number of tokens in this Choice. This should equal balanceOf(address(this)), but we don't want to have
     // to repeatedly call the token contract, so we keep track internally.
@@ -97,17 +96,15 @@ contract Choice {
         _;
     }
 
-    constructor(address topic) {
+    constructor(address topic, string memory _metadataURI) {
         IArena _arena = IArena(ITopic(topic).arena());
-
         topicAddress = topic;
         contributorFee = ITopic(topic).contributorFee();
         topicFee = ITopic(topic).topicFee();
         accrualRate = ITopic(topic).accrualRate();
-
+        metadataURI = _metadataURI;
         arenaFee = _arena.arenaFee();
         token = _arena.token();
-
         arenaAndTopicFee = arenaFee + topicFee;
     }
 
@@ -370,7 +367,7 @@ contract Choice {
             uint256 lastStoredCycleNumber = lastStoredCycle.number;
 
             if (lastStoredCycleNumber == currentCycleNumber) {
-                if(lastStoredCycleIndex != 0){
+                if (lastStoredCycleIndex != 0) {
                     lastStoredCycle.fees += _contributorFee;
                 }
             } else {
