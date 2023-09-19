@@ -13,6 +13,8 @@ contract Arena is IArena {
 
     address[] public topics;
 
+    event TopicDeployed(address indexed topic, address indexed creator);
+
     error InvalidFee();
 
     constructor(uint256 _arenaFee, address _funds, address _token) {
@@ -37,20 +39,20 @@ contract Arena is IArena {
         address _funds
     ) external {
         if (_contributorFee + _topicFee + arenaFee > FEE_SCALE) revert InvalidFee();
-
-        topics.push(
-            address(
-                new Topic(
-                    _startTime,
-                    _cycleDuration,
-                    _totalCycles,
-                    _accrualRate,
-                    _contributorFee,
-                    _topicFee,
-                    _funds,
-                    address(this)
-                )
+        address newTopic = address(
+            new Topic(
+                _startTime,
+                _cycleDuration,
+                _totalCycles,
+                _accrualRate,
+                _contributorFee,
+                _topicFee,
+                _funds,
+                address(this)
             )
         );
+        topics.push(newTopic);
+
+        emit TopicDeployed(newTopic, msg.sender);
     }
 }

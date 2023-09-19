@@ -18,6 +18,8 @@ contract Topic is ITopic {
 
     address[] public choices;
 
+    event ChoiceDeployed(address indexed choice, address indexed creator);
+
     constructor(
         uint256 _startTime,
         uint256 _cycleDuration,
@@ -39,7 +41,10 @@ contract Topic is ITopic {
     }
 
     function deployChoice() external {
-        choices.push(address(new Choice(address(this))));
+        address newChoice = address(new Choice(address(this)));
+        choices.push(newChoice);
+
+        emit ChoiceDeployed(newChoice, msg.sender);
     }
 
     function choicesLength() public view returns (uint256) {
