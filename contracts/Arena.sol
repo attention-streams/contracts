@@ -30,7 +30,6 @@ contract Arena is IArena {
     function deployTopic(
         uint256 _startTime,
         uint256 _cycleDuration,
-        uint256 _totalCycles,
         uint256 _accrualRate,
         uint256 _contributorFee,
         uint256 _topicFee,
@@ -43,7 +42,6 @@ contract Arena is IArena {
                 new Topic(
                     _startTime,
                     _cycleDuration,
-                    _totalCycles,
                     _accrualRate,
                     _contributorFee,
                     _topicFee,

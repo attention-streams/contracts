@@ -7,8 +7,6 @@ interface ITopic {
 
     function cycleDuration() external view returns (uint256);
 
-    function totalCycles() external view returns (uint256);
-
     function accrualRate() external view returns (uint256);
 
     /// @notice The contributor fee % for all choices in this topic. Uses 4 digits of precision; e.g. 10.25% = 1025.

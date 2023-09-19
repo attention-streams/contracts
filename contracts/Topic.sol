@@ -8,7 +8,6 @@ import "./Choice.sol";
 contract Topic is ITopic {
     uint256 public immutable startTime;
     uint256 public immutable cycleDuration;
-    uint256 public immutable totalCycles;
     uint256 public immutable accrualRate;
     uint256 public immutable contributorFee;
     uint256 public immutable topicFee;
@@ -21,7 +20,6 @@ contract Topic is ITopic {
     constructor(
         uint256 _startTime,
         uint256 _cycleDuration,
-        uint256 _totalCycles,
         uint256 _accrualRate,
         uint256 _contributorFee,
         uint256 _topicFee,
@@ -30,7 +28,6 @@ contract Topic is ITopic {
     ) {
         startTime = _startTime;
         cycleDuration = _cycleDuration;
-        totalCycles = _totalCycles;
         accrualRate = _accrualRate;
         contributorFee = _contributorFee;
         topicFee = _topicFee;
