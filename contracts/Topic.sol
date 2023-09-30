@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 
 import "./interfaces/ITopic.sol";
 import "./Choice.sol";
+import "./interfaces/IChoice.sol";
 
 contract Topic is ITopic {
     uint256 public immutable startTime;
@@ -13,9 +14,11 @@ contract Topic is ITopic {
     uint256 public immutable topicFee;
     address public immutable funds;
     address public immutable arena;
+    uint32 public immutable snapshotDuration; // in terms of cycles
     string public metadataURI; // string cannot be marked as immutable, however it is never modified after construction
 
     address[] public choices;
+    mapping(address => bool) isChoice;
 
     event ChoiceDeployed(address indexed choice, address indexed creator);
 
@@ -27,6 +30,7 @@ contract Topic is ITopic {
         uint256 _topicFee,
         address _funds,
         address _arena,
+        uint32 _snapshotDuration,
         string memory _metadataURI
     ) {
         startTime = _startTime;
@@ -36,12 +40,14 @@ contract Topic is ITopic {
         topicFee = _topicFee;
         funds = _funds;
         arena = _arena;
+        snapshotDuration = _snapshotDuration;
         metadataURI = _metadataURI;
     }
 
     function deployChoice(string memory _metadataURI) external {
         address newChoice = address(new Choice(address(this), _metadataURI));
         choices.push(newChoice);
+        isChoice[newChoice] = true;
 
         emit ChoiceDeployed(newChoice, msg.sender);
     }

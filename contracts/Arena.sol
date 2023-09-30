@@ -38,6 +38,7 @@ contract Arena is IArena {
         uint256 _contributorFee,
         uint256 _topicFee,
         address _funds,
+        uint32 snapshotDuration,
         string memory _metadataURI
     ) external {
         if (_contributorFee + _topicFee + arenaFee > FEE_SCALE) revert InvalidFee();
@@ -50,21 +51,11 @@ contract Arena is IArena {
                 _topicFee,
                 _funds,
                 address(this),
+                snapshotDuration,
                 _metadataURI
-
-        topics.push(
-            address(
-                new Topic(
-                    _startTime,
-                    _cycleDuration,
-                    _accrualRate,
-                    _contributorFee,
-                    _topicFee,
-                    _funds,
-                    address(this)
-                )
             )
         );
+
         topics.push(newTopic);
 
         emit TopicDeployed(newTopic, msg.sender);

@@ -7,6 +7,8 @@ interface ITopic {
 
     function cycleDuration() external view returns (uint256);
 
+    function snapshotDuration() external view returns (uint32);
+
     function accrualRate() external view returns (uint256);
 
     /// @notice The contributor fee % for all choices in this topic. Uses 4 digits of precision; e.g. 10.25% = 1025.
