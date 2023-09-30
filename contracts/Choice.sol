@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./interfaces/ITopic.sol";
 import "./interfaces/IArena.sol";
+import "./interfaces/IChoice.sol";
 
 struct Cycle {
     uint256 number;
@@ -21,11 +22,13 @@ struct Position {
     bool exists;
 }
 
-contract Choice {
+contract Choice is IChoice {
     using SafeERC20 for IERC20;
 
     address public immutable topicAddress;
-    // scale 10000
+    uint256 public immutable startTime;
+    uint256 public immutable cycleDuration;
+    uint256 public immutable snapshotDuration;
     uint256 public immutable contributorFee;
     uint256 public immutable topicFee;
     uint256 public immutable arenaFee;
@@ -98,6 +101,9 @@ contract Choice {
 
     constructor(address topic, string memory _metadataURI) {
         IArena _arena = IArena(ITopic(topic).arena());
+        startTime = ITopic(topic).startTime();
+        cycleDuration = ITopic(topic).cycleDuration();
+        snapshotDuration = ITopic(topic).snapshotDuration();
         topicAddress = topic;
         contributorFee = ITopic(topic).contributorFee();
         topicFee = ITopic(topic).topicFee();
@@ -108,10 +114,14 @@ contract Choice {
         arenaAndTopicFee = arenaFee + topicFee;
     }
 
+    function currentCycleNumber() public view returns (uint256) {
+        return (block.timestamp - startTime) / cycleDuration;
+    }
+
     /// @return The number of shares all contributors hold in this choice.
     /// The total shares can be compared between two choices to see which has more support.
     function totalShares() external view returns (uint256) {
-        return cycles[cycles.length - 1].shares + pendingShares(tokens);
+        return cycles[cycles.length - 1].shares + pendingShares(currentCycleNumber(), tokens);
     }
 
     /// Check the number of tokens and shares for an address with only one position.
@@ -158,6 +168,8 @@ contract Choice {
         unchecked {
             positionIndex = positionsByAddress[addr].length - 1;
         }
+
+        // update snapshot
 
         IERC20(token).safeTransferFrom(addr, address(this), originalAmount);
 
@@ -220,7 +232,7 @@ contract Choice {
         uint256 positionIndex
     ) public view positionExists(addr, positionIndex) returns (uint256 positionTokens, uint256 shares) {
         (positionTokens, shares) = positionToLastStoredCycle(addr, positionIndex);
-        shares += pendingShares(positionTokens);
+        shares += pendingShares(currentCycleNumber(), positionTokens);
     }
 
     /// @param positionIndex The positionIndex returned by the contribute() function.
@@ -302,18 +314,17 @@ contract Choice {
     }
 
     /// @param _tokens The token amount used to compute shares--either from the choice, or an individual position.
+    /// @param _cycleNumber The cycle number to compute shares for.
     /// @return The number of shares that have not been added to the last stored cycle.
     /// These will be added to the last stored cycle when updateCyclesAddingAmount() is next called.
-    function pendingShares(uint256 _tokens) internal view returns (uint256) {
-        uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
-
+    function pendingShares(uint256 _cycleNumber, uint256 _tokens) public view returns (uint256) {
         Cycle storage lastStoredCycle;
 
         unchecked {
             lastStoredCycle = cycles[cycles.length - 1];
         }
 
-        return (accrualRate * (currentCycleNumber - lastStoredCycle.number) * _tokens) / 10000;
+        return (accrualRate * (_cycleNumber - lastStoredCycle.number) * _tokens) / 10000;
     }
 
     function positionToLastStoredCycle(
@@ -347,14 +358,14 @@ contract Choice {
         }
     }
 
-    function updateCyclesAddingAmount(uint256 amount, uint256 _contributorFee) internal {
-        uint256 currentCycleNumber = ITopic(topicAddress).currentCycleNumber();
+    function updateCyclesAddingAmount(uint256 _amount, uint256 _contributorFee) internal {
+        uint256 currentCycleNumber_ = currentCycleNumber();
 
         uint256 length = cycles.length;
 
         if (length == 0) {
             // Create the first cycle in the array using the first contribution.
-            cycles.push(Cycle({number: currentCycleNumber, shares: 0, fees: 0, hasContributions: true}));
+            cycles.push(Cycle({number: currentCycleNumber_, shares: 0, fees: 0, hasContributions: true}));
         } else {
             // Not the first contribution.
             uint256 lastStoredCycleIndex;
@@ -366,19 +377,19 @@ contract Choice {
             Cycle storage lastStoredCycle = cycles[lastStoredCycleIndex];
             uint256 lastStoredCycleNumber = lastStoredCycle.number;
 
-            if (lastStoredCycleNumber == currentCycleNumber) {
+            if (lastStoredCycleNumber == currentCycleNumber_) {
                 if (lastStoredCycleIndex != 0) {
                     lastStoredCycle.fees += _contributorFee;
                 }
             } else {
                 // Add a new cycle to the array using values from the previous one.
                 Cycle memory newCycle = Cycle({
-                    number: currentCycleNumber,
+                    number: currentCycleNumber_,
                     shares: lastStoredCycle.shares +
-                        (accrualRate * (currentCycleNumber - lastStoredCycleNumber) * tokens) /
+                        (accrualRate * (currentCycleNumber_ - lastStoredCycleNumber) * tokens) /
                         10000,
                     fees: _contributorFee,
-                    hasContributions: amount > 0
+                    hasContributions: _amount > 0
                 });
                 // We're only interested in adding cycles that have contributions, since we use the stored
                 // cycles to compute fees at withdrawal time.
