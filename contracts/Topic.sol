@@ -2,18 +2,27 @@
 
 pragma solidity ^0.8.9;
 
-import "./interfaces/ITopic.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "./Choice.sol";
+import "./interfaces/IArena.sol";
+import "./interfaces/ITopic.sol";
 import "./interfaces/IChoice.sol";
 
 contract Topic is ITopic {
+    using SafeERC20 for IERC20;
+
     uint256 public immutable startTime;
     uint256 public immutable cycleDuration;
     uint256 public immutable accrualRate;
     uint256 public immutable contributorFee;
     uint256 public immutable topicFee;
+    uint256 public immutable choiceCreationFee; // to prevent spam
+    address public immutable arenaFunds;
     address public immutable funds;
     address public immutable arena;
+    address public immutable token;
     uint32 public immutable snapshotDuration; // in terms of cycles
     string public metadataURI; // string cannot be marked as immutable, however it is never modified after construction
 
@@ -33,11 +42,16 @@ contract Topic is ITopic {
         uint32 _snapshotDuration,
         string memory _metadataURI
     ) {
+        IArena arena_ = IArena(_arena);
+
         startTime = _startTime;
         cycleDuration = _cycleDuration;
         accrualRate = _accrualRate;
         contributorFee = _contributorFee;
         topicFee = _topicFee;
+        choiceCreationFee = arena_.choiceCreationFee();
+        arenaFunds = arena_.funds();
+        token = arena_.token();
         funds = _funds;
         arena = _arena;
         snapshotDuration = _snapshotDuration;
@@ -49,6 +63,7 @@ contract Topic is ITopic {
         choices.push(newChoice);
         isChoice[newChoice] = true;
 
+        IERC20(token).safeTransferFrom(msg.sender, arenaFunds, choiceCreationFee);
         emit ChoiceDeployed(newChoice, msg.sender);
     }
 
