@@ -48,6 +48,15 @@ contract Arena is IArena {
         return topics.length;
     }
 
+    /// @notice deploys a new topic
+    /// @param _startTime : timestamp of the first cycle
+    /// @param _cycleDuration : duration of each cycle
+    /// @param _accrualRate : rate at which the shares grow inside the topic, check the docs for more info
+    /// @param _contributorFee : fee taken from the contributor's vote and sent to the previous contributor
+    /// @param _topicFee : fee taken from the contributor's vote and sent to the topic
+    /// @param _funds: address of the funds contract
+    /// @param snapshotDuration: duration of the snapshot window
+    /// @param _metadataURI: metadata URI of the topic, pass an empty string to use the default URI
     function deployTopic(
         uint256 _startTime,
         uint256 _cycleDuration,

@@ -99,7 +99,9 @@ contract Choice is IChoice {
         _;
     }
 
-    constructor(address topic, string memory _metadataURI) {
+    /// @param _metadataURI: The URI for the metadata of this choice. pass empty string if no metadata.
+    constructor(string memory _metadataURI) {
+        address topic = msg.sender;
         IArena _arena = IArena(ITopic(topic).arena());
         startTime = ITopic(topic).startTime();
         cycleDuration = ITopic(topic).cycleDuration();
