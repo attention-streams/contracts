@@ -55,7 +55,6 @@ contract Arena is IArena {
     /// @param _contributorFee : fee taken from the contributor's vote and sent to the previous contributor
     /// @param _topicFee : fee taken from the contributor's vote and sent to the topic
     /// @param _funds: address of the funds contract
-    /// @param snapshotDuration: duration of the snapshot window
     /// @param _metadataURI: metadata URI of the topic, pass an empty string to use the default URI
     function deployTopic(
         uint256 _startTime,
@@ -64,7 +63,6 @@ contract Arena is IArena {
         uint256 _contributorFee,
         uint256 _topicFee,
         address _funds,
-        uint32 snapshotDuration,
         string memory _metadataURI
     ) external {
         if (_contributorFee + _topicFee + arenaFee > FEE_SCALE) revert InvalidFee();
@@ -77,7 +75,6 @@ contract Arena is IArena {
                 _topicFee,
                 _funds,
                 address(this),
-                snapshotDuration,
                 _metadataURI
             )
         );

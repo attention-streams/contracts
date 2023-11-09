@@ -23,7 +23,6 @@ contract Topic is ITopic {
     address public immutable funds;
     address public immutable arena;
     address public immutable token;
-    uint32 public immutable snapshotDuration; // in terms of cycles
     string public metadataURI; // string cannot be marked as immutable, however it is never modified after construction
 
     address[] public choices;
@@ -39,7 +38,6 @@ contract Topic is ITopic {
         uint256 _topicFee,
         address _funds,
         address _arena,
-        uint32 _snapshotDuration,
         string memory _metadataURI
     ) {
         IArena arena_ = IArena(_arena);
@@ -54,7 +52,6 @@ contract Topic is ITopic {
         token = arena_.token();
         funds = _funds;
         arena = _arena;
-        snapshotDuration = _snapshotDuration;
         metadataURI = _metadataURI;
     }
 

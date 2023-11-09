@@ -28,7 +28,6 @@ contract Choice is IChoice {
     address public immutable topicAddress;
     uint256 public immutable startTime;
     uint256 public immutable cycleDuration;
-    uint256 public immutable snapshotDuration;
     uint256 public immutable contributorFee;
     uint256 public immutable topicFee;
     uint256 public immutable arenaFee;
@@ -105,7 +104,6 @@ contract Choice is IChoice {
         IArena _arena = IArena(ITopic(topic).arena());
         startTime = ITopic(topic).startTime();
         cycleDuration = ITopic(topic).cycleDuration();
-        snapshotDuration = ITopic(topic).snapshotDuration();
         topicAddress = topic;
         contributorFee = ITopic(topic).contributorFee();
         topicFee = ITopic(topic).topicFee();
