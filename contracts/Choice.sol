@@ -121,7 +121,17 @@ contract Choice is IChoice {
     /// @return The number of shares all contributors hold in this choice.
     /// The total shares can be compared between two choices to see which has more support.
     function totalShares() external view returns (uint256) {
-        return cycles[cycles.length - 1].shares + pendingShares(currentCycleNumber(), tokens);
+        return totalSharesAtCycle(currentCycleNumber());
+    }
+
+    /// @param cycleNumber The cycle number to compute shares for.
+    function totalSharesAtCycle(uint256 cycleNumber) public view returns (uint256) {
+        Cycle storage lastStoredCycle = cycles[cycles.length];
+        uint256 _currentCycleNumber = currentCycleNumber();
+
+        require(cycleNumber >= _currentCycleNumber, "INVALID_CYCLE");
+
+        return lastStoredCycle.shares + pendingShares(cycleNumber, tokens);
     }
 
     /// Check the number of tokens and shares for an address with only one position.
@@ -135,9 +145,16 @@ contract Choice is IChoice {
         return positionsByAddress[addr].length;
     }
 
-    /// @return positionIndex will be reused as input to withdraw(), checkPosition(), and other functions
     function contribute(uint256 amount) external returns (uint256 positionIndex) {
-        address addr = msg.sender;
+        return contributeFor(amount, msg.sender);
+    }
+
+    /// @notice Contribute tokens to this choice, the tokens are always transferred from msg.sender
+    /// @param receiver The address that will receive the tokens and shares.
+    /// @param amount The amount of tokens to contribute
+    /// @return positionIndex will be reused as input to withdraw(), checkPosition(), and other functions
+    function contributeFor(uint256 amount, address receiver) public returns (uint256 positionIndex) {
+        address addr = receiver;
         uint256 originalAmount = amount;
 
         // take arena and topic fees
@@ -169,9 +186,7 @@ contract Choice is IChoice {
             positionIndex = positionsByAddress[addr].length - 1;
         }
 
-        // update snapshot
-
-        IERC20(token).safeTransferFrom(addr, address(this), originalAmount);
+        IERC20(token).safeTransferFrom(msg.sender, address(this), originalAmount);
 
         emit Contributed(addr, positionIndex, originalAmount);
     }
