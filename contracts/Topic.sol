@@ -59,7 +59,7 @@ contract Topic is ITopic {
     }
 
     function deployChoice(string memory _metadataURI) external {
-        address newChoice = address(new Choice(address(this), _metadataURI));
+        address newChoice = address(new Choice(_metadataURI));
         choices.push(newChoice);
         isChoice[newChoice] = true;
 
