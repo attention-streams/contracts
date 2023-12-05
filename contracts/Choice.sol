@@ -126,7 +126,7 @@ contract Choice is IChoice {
 
     /// @param cycleNumber The cycle number to compute shares for.
     function totalSharesAtCycle(uint256 cycleNumber) public view returns (uint256) {
-        Cycle storage lastStoredCycle = cycles[cycles.length];
+        Cycle storage lastStoredCycle = cycles[cycles.length - 1];
         uint256 _currentCycleNumber = currentCycleNumber();
 
         require(cycleNumber >= _currentCycleNumber, "INVALID_CYCLE");
