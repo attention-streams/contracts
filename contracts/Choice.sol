@@ -121,18 +121,16 @@ contract Choice is IChoice {
     /// @return The number of shares all contributors hold in this choice.
     /// The total shares can be compared between two choices to see which has more support.
     function totalShares() external view returns (uint256) {
-        if (cycles.length == 0) return 0;
-        
         return totalSharesAtCycle(currentCycleNumber());
     }
 
     /// @param cycleNumber The cycle number to compute shares for.
     function totalSharesAtCycle(uint256 cycleNumber) public view returns (uint256) {
+        Cycle storage lastStoredCycle = cycles[cycles.length - 1];
         uint256 _currentCycleNumber = currentCycleNumber();
 
         require(cycleNumber >= _currentCycleNumber, "INVALID_CYCLE");
-        
-        Cycle storage lastStoredCycle = cycles[cycles.length - 1];
+
         return lastStoredCycle.shares + pendingShares(cycleNumber, tokens);
     }
 
