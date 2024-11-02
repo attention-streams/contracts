@@ -26,7 +26,7 @@ contract Topic is ITopic {
     string public metadataURI; // string cannot be marked as immutable, however it is never modified after construction
 
     address[] public choices;
-    mapping(address => bool) public isChoice;
+    mapping(address => bool) isChoice;
 
     event ChoiceDeployed(address indexed choice, address indexed creator);
 
@@ -69,10 +69,6 @@ contract Topic is ITopic {
     }
 
     function currentCycleNumber() external view returns (uint256) {
-        return cycleNumberAt(block.timestamp);
-    }
-
-    function cycleNumberAt(uint256 timestamp) public view returns (uint256) {
-        return (timestamp - startTime) / cycleDuration;
+        return (block.timestamp - startTime) / cycleDuration;
     }
 }

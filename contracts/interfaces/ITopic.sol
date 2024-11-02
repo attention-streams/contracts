@@ -20,10 +20,4 @@ interface ITopic {
     function arena() external view returns (address);
 
     function currentCycleNumber() external view returns (uint256);
-
-    function cycleNumberAt(uint256) external view returns (uint256);
-
-    function isChoice(address) external view returns (bool);
-
-    function token() external view returns (address);
 }
