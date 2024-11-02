@@ -16,9 +16,9 @@ struct ChoiceData {
 contract Competition {
     using SafeERC20 for IERC20;
 
-    address public immutable topic;
-    address public immutable token;
-    uint256 public immutable snapshotCycle;
+    address immutable topic;
+    address immutable token;
+    uint256 immutable snapshotCycle;
 
     mapping(address => ChoiceData) public choiceData; // choice => ChoiceData
 
