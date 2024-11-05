@@ -49,8 +49,8 @@ contract Choice is IChoice {
     // transferPositions() and is returned by contribute().
     mapping(address => Position[]) public positionsByAddress;
 
-    event Withdrew(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 shares);
-    event Contributed(address indexed addr, uint256 positionIndex, uint256 tokens);
+    event Withdrew(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 shares, uint256 totalShares);
+    event Contributed(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 totalShares);
     event PositionTransferred(
         address indexed sender,
         address indexed recipient,
@@ -118,12 +118,6 @@ contract Choice is IChoice {
         return (block.timestamp - startTime) / cycleDuration;
     }
 
-    /// @return The number of shares all contributors hold in this choice.
-    /// The total shares can be compared between two choices to see which has more support.
-    function totalShares() external view returns (uint256) {
-        return cycles[cycles.length - 1].shares + pendingShares(currentCycleNumber(), tokens);
-    }
-
     /// Check the number of tokens and shares for an address with only one position.
     function checkPosition(
         address addr
@@ -173,7 +167,7 @@ contract Choice is IChoice {
 
         IERC20(token).safeTransferFrom(addr, address(this), originalAmount);
 
-        emit Contributed(addr, positionIndex, originalAmount);
+        emit Contributed(addr, positionIndex, originalAmount, totalShares());
     }
 
     function settleFees() external {
@@ -226,6 +220,12 @@ contract Choice is IChoice {
         split(positionIndex, numSplits - 1, position.tokens / numSplits);
     }
 
+    /// @return The number of shares all contributors hold in this choice.
+    /// The total shares can be compared between two choices to see which has more support.
+    function totalShares() public view returns (uint256) {
+        return cycles[cycles.length - 1].shares + pendingShares(currentCycleNumber(), tokens);
+    }
+
     /// @param positionIndex The positionIndex returned by the contribute() function.
     function checkPosition(
         address addr,
@@ -254,7 +254,7 @@ contract Choice is IChoice {
 
         IERC20(token).safeTransfer(addr, positionTokens);
 
-        emit Withdrew(addr, positionIndex, positionTokens, shares);
+        emit Withdrew(addr, positionIndex, positionTokens, shares, totalShares());
     }
 
     /// @param positionIndex The positionIndex returned by the contribute() function.
