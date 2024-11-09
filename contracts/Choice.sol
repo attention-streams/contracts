@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./interfaces/ITopic.sol";
 import "./interfaces/IArena.sol";
-import "./interfaces/IChoice.sol";
 
 struct Cycle {
     uint256 number;
@@ -22,7 +21,7 @@ struct Position {
     bool exists;
 }
 
-contract Choice is IChoice {
+contract Choice {
     using SafeERC20 for IERC20;
 
     address public immutable topicAddress;
