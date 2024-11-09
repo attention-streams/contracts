@@ -8,7 +8,7 @@ interface ICrowdFund {
     /// Define how many decimal points of precision to use for percentages.
     /// The value supplied is defined to equal 100% for values using percentages.
     /// So, if `PERCENT_SCALE` = 1000000 then 1000000 would represent 100% and 253412 would represent 25.3412%
-    function PERCENT_SCALE() public view returns (uint256);
+    function percentScale() public view returns (uint256);
 
     /// @dev The duration of a cycle for Ideas and Solutions in seconds.
     function cycleLength() public view returns (uint256);
@@ -26,5 +26,4 @@ interface ICrowdFund {
     /// `minFee` is the minimum fee (in `feeToken`) paid for creating or contributing to an idea,
     /// and the only fee paid for creating solutions and updating profiles.
     function minFee() public view returns (uint256);
-
 }

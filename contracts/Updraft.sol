@@ -4,29 +4,17 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import {ICrowdFund} from "./interfaces/ICrowdFund.sol";
 
-contract Updraft is Ownable {
+contract Updraft is Ownable, ICrowdFund {
     using SafeERC20 for IERC20;
 
-    /// Allow 4 decimal places for percentages.
-    /// Examples: 1000000 = 100%, 253400 = 25.34%
-    uint256 public constant PERCENT_SCALE = 1000000;
+    uint256 public constant percentScale = 1000000;
 
     IERC20 public feeToken;
-
-    /// `minFee` is the minimum fee (in `feeToken`) paid for creating or contributing to an idea,
-    /// and the only fee paid for creating solutions and updating profiles.
     uint256 public minFee;
-
-    /// `percentFee` is the percentage used to calculate the feed paid for creating or contributing to an Idea.
-    /// It's multiplied by the contribution amount and the fee paid is the greater of the result and `minFee`.
-    /// It uses `PERCENT_SCALE` for precision.
     uint256 public percentFee;
-
-    /// @dev The rate at which shares of Ideas and Solutions increase every cycle. Uses `PERCENT_SCALE` for precision.
     uint256 public accrualRate;
-
-    /// @dev The duration of a cycle for Ideas and Solutions in seconds.
     uint256 public cycleLength;
 
     event ProfileUpdated(address indexed owner, bytes32 data);
@@ -50,18 +38,32 @@ contract Updraft is Ownable {
         bytes32 data
     );
 
-    constructor(IERC20 feeToken_, minFee_, percentFee_){
+    constructor(IERC20 feeToken_, minFee_, percentFee_, cycleLength_, accrualRate_){
         feeToken = feeToken_;
         minFee = minFee_;
         percentFee = percentFee_;
+        cycleLength = cycleLength_;
+        accrualRate = accrualRate_;
     }
 
-    function setMinFee(uint256 amount) external onlyOwner {
-        minFee = amount;
+    function setFeeToken(IERC20 token) external onlyOwner {
+        feeToken = token;
     }
 
-    function setPercentFee(uint256 amount) external onlyOwner {
-        percentFee = amount;
+    function setMinFee(uint256 fee) external onlyOwner {
+        minFee = fee;
+    }
+
+    function setPercentFee(uint256 fee) external onlyOwner {
+        percentFee = fee;
+    }
+
+    function setCycleLength(uint256 length) external onlyOwner {
+        cycleLength = length;
+    }
+
+    function setAccrualRate(uint256 rate) external onlyOwner {
+        accrualRate = rate;
     }
 
     /// Create or update a profile. It will be associated with the caller's address.
