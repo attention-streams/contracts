@@ -8,9 +8,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract Updraft is Ownable {
     using SafeERC20 for IERC20;
 
-    /// Allow 2 decimal places for percentages.
-    /// Examples: 100% = 10000 , 25.34% = 2534
-    uint256 public constant PERCENT_SCALE = 100;
+    /// Allow 4 decimal places for percentages.
+    /// Examples: 1000000 = 100%, 253400 = 25.34%
+    uint256 public constant PERCENT_SCALE = 1000000;
 
     IERC20 public feeToken;
 
@@ -18,10 +18,16 @@ contract Updraft is Ownable {
     /// and the only fee paid for creating solutions and updating profiles.
     uint256 public minFee;
 
-    /// `percentFee` is the percentage used to calculate the feed paid for creating or contributing to an idea.
+    /// `percentFee` is the percentage used to calculate the feed paid for creating or contributing to an Idea.
     /// It's multiplied by the contribution amount and the fee paid is the greater of the result and `minFee`.
     /// It uses `PERCENT_SCALE` for precision.
     uint256 public percentFee;
+
+    /// @dev The rate at which shares of Ideas and Solutions increase every cycle. Uses `PERCENT_SCALE` for precision.
+    uint256 public accrualRate;
+
+    /// @dev The duration of a cycle for Ideas and Solutions in seconds.
+    uint256 public cycleLength;
 
     event ProfileUpdated(address indexed owner, bytes32 data);
     event IdeaCreated(
