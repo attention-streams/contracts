@@ -4,7 +4,8 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import {ICrowdFund} from "./interfaces/ICrowdFund.sol";
+import {ICrowdFund} from "interfaces/ICrowdFund.sol";
+import {Idea} from "Idea.sol";
 
 contract Updraft is Ownable, ICrowdFund {
     using SafeERC20 for IERC20;
@@ -73,7 +74,9 @@ contract Updraft is Ownable, ICrowdFund {
     }
 
     function createIdea(uint256 contributorFee, uint256 contribution, bytes calldata ideaData) external {
-
+        Idea idea = new Idea(contributorFee);
+        idea.contribute(contribution);
+        emit IdeaCreated(address(idea), msg.sender, contributorFee, contribution, ideaData);
     }
 
     function createSolution() external {
@@ -81,13 +84,24 @@ contract Updraft is Ownable, ICrowdFund {
     }
 
     /// Create or update a profile while creating an idea, to avoid paying the updraft anti-spam fee twice.
-    function createIdeaWithProfile(bytes calldata profileData) external {
+    /// @dev This code isn't DRY, but we want to use calldata to save gas.
+    function createIdeaWithProfile(
+        uint256 contributorFee,
+        uint256 contribution,
+        bytes calldata ideaData,
+        bytes calldata profileData
+    ) external {
+        Idea idea = new Idea(contributorFee);
+        idea.contribute(contribution);
+        emit IdeaCreated(address(idea), msg.sender, contributorFee, contribution, ideaData);
         emit ProfileUpdated(msg.sender, profileData);
     }
 
     /// Create or update a profile while creating a solution, to avoid paying `minFee` twice.
+    /// @dev This code isn't DRY, but we want to use calldata to save gas.
     function createSolutionWithProfile(bytes calldata profileData) external {
         feeToken.safeTransferFrom(msg.sender, address(0), minFee);
+        emit ProfileUpdated(msg.sender, profileData);
     }
 
 }
