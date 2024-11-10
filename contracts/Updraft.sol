@@ -103,7 +103,9 @@ contract Updraft is Ownable, ICrowdFund {
             contributorFee,
             solutionData
         );
-        solution.addStake(stake);
+        if (stake > 0){
+            solution.addStake(stake);
+        }
     }
 
     /// Create or update a profile while creating an idea to avoid paying the updraft anti-spam fee twice.
@@ -146,7 +148,9 @@ contract Updraft is Ownable, ICrowdFund {
             contributorFee,
             solutionData
         );
-        solution.addStake(stake);
+        if (stake > 0){
+            solution.addStake(stake);
+        }
         emit ProfileUpdated(msg.sender, profileData);
     }
 }
