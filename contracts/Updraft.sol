@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import {ICrowdFund} from "interfaces/ICrowdFund.sol";
 import {Idea} from "Idea.sol";
+import {Solution} from "Solution.sol";
 
 contract Updraft is Ownable, ICrowdFund {
     using SafeERC20 for IERC20;
@@ -31,11 +32,11 @@ contract Updraft is Ownable, ICrowdFund {
         address indexed solution,
         address indexed creator,
         string ideaId,
-        uint256 deadline,
-        uint256 goal,
-        uint256 contributorFee,
-        uint256 stake,
         address token,
+        uint256 stake,
+        uint256 goal,
+        uint256 deadline,
+        uint256 contributorFee,
         bytes32 data
     );
 
@@ -79,11 +80,32 @@ contract Updraft is Ownable, ICrowdFund {
         emit IdeaCreated(address(idea), msg.sender, contributorFee, contribution, ideaData);
     }
 
-    function createSolution() external {
+    function createSolution(
+        string calldata ideaId,
+        IERC20 token,
+        uint256 stake,
+        uint256 goal,
+        uint256 deadline,
+        uint256 contributorFee,
+        bytes calldata solutionData
+    ) external {
         feeToken.safeTransferFrom(msg.sender, address(0), minFee);
+        Solution solution = new Solution(token, stake, goal, deadline, contributorFee);
+        emit SolutionCreated(
+            ideaId,
+            solution,
+            msg.sender,
+            ideaId,
+            token,
+            stake,
+            goal,
+            deadline,
+            contributorFee,
+            solutionData
+        );
     }
 
-    /// Create or update a profile while creating an idea, to avoid paying the updraft anti-spam fee twice.
+    /// Create or update a profile while creating an idea to avoid paying the updraft anti-spam fee twice.
     /// @dev This code isn't DRY, but we want to use calldata to save gas.
     function createIdeaWithProfile(
         uint256 contributorFee,
@@ -97,11 +119,32 @@ contract Updraft is Ownable, ICrowdFund {
         emit ProfileUpdated(msg.sender, profileData);
     }
 
-    /// Create or update a profile while creating a solution, to avoid paying `minFee` twice.
+    /// Create or update a profile while creating a solution to avoid paying `minFee` twice.
     /// @dev This code isn't DRY, but we want to use calldata to save gas.
-    function createSolutionWithProfile(bytes calldata profileData) external {
+    function createSolutionWithProfile(
+        string calldata ideaId,
+        IERC20 token,
+        uint256 stake,
+        uint256 goal,
+        uint256 deadline,
+        uint256 contributorFee,
+        bytes calldata solutionData,
+        bytes calldata profileData
+    ) external {
         feeToken.safeTransferFrom(msg.sender, address(0), minFee);
+        Solution solution = new Solution(token, stake, goal, deadline, contributorFee);
+        emit SolutionCreated(
+            ideaId,
+            solution,
+            msg.sender,
+            ideaId,
+            token,
+            stake,
+            goal,
+            deadline,
+            contributorFee,
+            solutionData
+        );
         emit ProfileUpdated(msg.sender, profileData);
     }
-
 }

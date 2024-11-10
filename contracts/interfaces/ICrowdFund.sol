@@ -23,7 +23,7 @@ interface ICrowdFund {
     /// Uses `PERCENT_SCALE` to represent a percentage value.
     function percentFee() public view returns (uint256);
 
-    /// `minFee` is the minimum fee (in `feeToken`) paid for creating or contributing to an idea,
-    /// and the only fee paid for creating solutions and updating profiles.
+    /// `minFee` is the minimum fee (in `feeToken`) paid for creating or contributing to an Idea,
+    /// and the only fee paid for creating Solutions and updating Profiles.
     function minFee() public view returns (uint256);
 }
