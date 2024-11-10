@@ -30,22 +30,30 @@ contract Choice {
     uint256 public immutable contributorFee;
     uint256 public immutable topicFee;
     uint256 public immutable arenaFee;
-    uint256 public immutable arenaAndTopicFee; // arenaFee + topicFee
-    uint256 public immutable accrualRate;
-    address public immutable token; // contribution token
-    string public metadataURI; // string cannot be marked as immutable, however it is never modified after construction
 
-    // The total number of tokens in this Choice. This should equal balanceOf(address(this)), but we don't want to have
-    // to repeatedly call the token contract, so we keep track internally.
+    /// arenaFee + topicFee
+    uint256 public immutable arenaAndTopicFee;
+    uint256 public immutable accrualRate;
+
+    /// contribution token
+    address public immutable token;
+
+    /// @dev string cannot be marked as immutable, however it is never modified after construction
+    string public metadataURI;
+
+    /// @notice The total number of tokens in this Choice.
+    /// @dev This should equal balanceOf(address(this)),
+    /// but we don't want to have to repeatedly call the token contract, so we keep track internally.
     uint256 public tokens;
 
-    uint256 public unsettledFees; // arena and topic fees to be settled
+    /// arena and topic fees to be settled
+    uint256 public unsettledFees;
 
     Cycle[] public cycles;
 
-    // Addresses can contribute multiple times to the same choice, so the value is an array of Contributions.
-    // The index of a Contribution in this array is used in checkPosition(), withdraw(), split(), and
-    // transferPositions() and is returned by contribute().
+    /// Addresses can contribute multiple times to the same choice, so we use an array of Positions.
+    /// The index of a Position in this array is used in checkPosition(), withdraw(), split(), and
+    /// transferPositions() and is returned by contribute().
     mapping(address => Position[]) public positionsByAddress;
 
     event Withdrew(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 shares, uint256 totalShares);
