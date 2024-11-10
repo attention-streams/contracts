@@ -172,7 +172,7 @@ contract Solution is Ownable {
     function addStake(uint256 amount) external{
         address addr = msg.sender;
         stake += amount;
-        stakes[address] += amount;
+        stakes[addr] += amount;
 
         token.safeTransferFrom(addr, address(this), amount);
         emit StakeAdded(addr,amount, stake);
