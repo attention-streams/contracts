@@ -30,11 +30,11 @@ contract Solution is Ownable {
     uint256 public immutable accrualRate;
     uint256 public immutable percentScale;
     uint256 public immutable contributorFee;
-    uint256 public immutable stake;
-    uint256 public immutable fundingGoal;
 
     uint256 public tokensContributed;
     uint256 public tokensWithdrawn;
+    uint256 public stake;
+    uint256 public fundingGoal;
 
     Cycle[] public cycles;
 
@@ -46,6 +46,7 @@ contract Solution is Ownable {
     event FeesCollected(address indexed addr, uint256 positionIndex, uint256 tokens);
     event Contributed(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 totalShares);
     event FundsWithdrawn(address to, uint256 amount);
+    event StakeAdded(address indexed addr, uint256 amount, uint256 totalStake);
     event SolutionUpdated(bytes32 data);
     event PositionTransferred(
         address indexed sender,
@@ -96,18 +97,16 @@ contract Solution is Ownable {
     }
 
     constructor(
-        address creator,
+        address owner,
         IERC20 token_,
-        uint256 stake_,
         uint256 goal,
         uint256 deadline_,
         uint256 contributorFee_
-    ) Ownable(creator){
+    ) Ownable(owner){
         crowdFund = msg.sender;
         startTime = block.timestamp;
 
         token = token_;
-        stake = stake_;
         fundingGoal = goal;
         deadline = deadline_;
         contributorFee = contributorFee_;
@@ -166,6 +165,14 @@ contract Solution is Ownable {
 
         token.safeTransferFrom(addr, address(this), originalAmount);
         emit Contributed(addr, positionIndex, originalAmount, totalShares());
+    }
+
+    function addStake(uint256 amount) external{
+        address addr = msg.sender;
+        stake += amount;
+
+        token.safeTransferFrom(addr, address(this), amount);
+        emit StakeAdded(addr,amount, stake);
     }
 
     // TODO: set up streaming and clawback

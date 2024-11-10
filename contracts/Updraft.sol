@@ -76,8 +76,8 @@ contract Updraft is Ownable, ICrowdFund {
 
     function createIdea(uint256 contributorFee, uint256 contribution, bytes calldata ideaData) external {
         Idea idea = new Idea(contributorFee);
-        idea.contribute(contribution);
         emit IdeaCreated(address(idea), msg.sender, contributorFee, contribution, ideaData);
+        idea.contribute(contribution);
     }
 
     function createSolution(
@@ -90,7 +90,7 @@ contract Updraft is Ownable, ICrowdFund {
         bytes calldata solutionData
     ) external {
         feeToken.safeTransferFrom(msg.sender, address(0), minFee);
-        Solution solution = new Solution(msg.sender,token, stake, goal, deadline, contributorFee);
+        Solution solution = new Solution(msg.sender,token, goal, deadline, contributorFee);
         emit SolutionCreated(
             ideaId,
             solution,
@@ -103,6 +103,7 @@ contract Updraft is Ownable, ICrowdFund {
             contributorFee,
             solutionData
         );
+        solution.addStake(stake);
     }
 
     /// Create or update a profile while creating an idea to avoid paying the updraft anti-spam fee twice.
@@ -132,7 +133,7 @@ contract Updraft is Ownable, ICrowdFund {
         bytes calldata profileData
     ) external {
         feeToken.safeTransferFrom(msg.sender, address(0), minFee);
-        Solution solution = new Solution(msg.sender,token, stake, goal, deadline, contributorFee);
+        Solution solution = new Solution(msg.sender,token, goal, deadline, contributorFee);
         emit SolutionCreated(
             ideaId,
             solution,
@@ -145,6 +146,7 @@ contract Updraft is Ownable, ICrowdFund {
             contributorFee,
             solutionData
         );
+        solution.addStake(stake);
         emit ProfileUpdated(msg.sender, profileData);
     }
 }
