@@ -6,25 +6,26 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import {ICrowdFund} from "interfaces/ICrowdFund.sol";
 
-    struct Cycle {
-        uint256 number;
-        uint256 shares;
-        uint256 fees;
-        bool hasContributions;
-    }
+struct Cycle {
+    uint256 number;
+    uint256 shares;
+    uint256 fees;
+    bool hasContributions;
+}
 
-    struct Position {
-        uint256 contribution;
-        uint256 startCycleIndex;
-        uint256 lastCollectedCycleIndex;
-        bool exists;
-    }
+struct Position {
+    uint256 contribution;
+    uint256 startCycleIndex;
+    uint256 lastCollectedCycleIndex;
+    bool exists;
+}
 
 contract Solution is Ownable {
     using SafeERC20 for IERC20;
 
     ICrowdFund public immutable crowdFund;
-    IERC20 public immutable token;
+    IERC20 public immutable fundingToken;
+    IERC20 public immutable stakingToken;
     uint256 public immutable startTime;
     uint256 public immutable cycleLength;
     uint256 public immutable accrualRate;
@@ -49,6 +50,7 @@ contract Solution is Ownable {
     event Contributed(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 totalShares);
     event FundsWithdrawn(address to, uint256 amount);
     event StakeAdded(address indexed addr, uint256 amount, uint256 totalStake);
+    event StakeRemoved(address indexed addr, uint256 amount, uint256 totalStake);
     event SolutionUpdated(bytes32 data);
     event PositionTransferred(
         address indexed sender,
@@ -68,6 +70,7 @@ contract Solution is Ownable {
     error NotOnlyPosition();
     error SplitAmountSpecifiedMoreThanAvailable();
     error GoalNotReached();
+    error GoalFailed();
     error WithdrawMoreThanAvailable();
 
     modifier singlePosition(address addr) {
@@ -100,7 +103,8 @@ contract Solution is Ownable {
 
     constructor(
         address owner,
-        IERC20 token_,
+        IERC20 fundingToken,
+        IERC20 stakingToken,
         uint256 goal,
         uint256 deadline_,
         uint256 contributorFee_
@@ -108,7 +112,7 @@ contract Solution is Ownable {
         crowdFund = msg.sender;
         startTime = block.timestamp;
 
-        token = token_;
+        fundingToken = fundingToken;
         fundingGoal = goal;
         deadline = deadline_;
         contributorFee = contributorFee_;
@@ -165,26 +169,40 @@ contract Solution is Ownable {
             positionIndex = positionsByAddress[addr].length - 1;
         }
 
-        token.safeTransferFrom(addr, address(this), originalAmount);
+        fundingToken.safeTransferFrom(addr, address(this), originalAmount);
         emit Contributed(addr, positionIndex, originalAmount, totalShares());
     }
 
     function addStake(uint256 amount) external{
+        if (failed()) revert GoalFailed();
+
         address addr = msg.sender;
         stake += amount;
         stakes[addr] += amount;
 
-        token.safeTransferFrom(addr, address(this), amount);
+        stakingToken.safeTransferFrom(addr, address(this), amount);
         emit StakeAdded(addr,amount, stake);
     }
 
-    // TODO: set up streaming and clawback
+    function removeStake(uint256 amount){
+        if (suceeded()){
+            address addr = msg.sender;
+            stake -= amount;
+            stakes[addr] -= amount;
+
+            stakingToken.safeTransfer(addr, amount);
+            emit StakeRemoved(addr,amount, stake);
+        } else {
+            revert GoalNotReached();
+        }
+    }
+
     function withdrawFunds(address to, uint256 amount) external onlyOwner {
-        if (tokensContributed >= fundingGoal) {
+        if (suceeded()) {
             uint256 tokensLeft = tokensContributed - tokensWithdrawn;
             if (tokensLeft >= amount) {
                 tokensWithdrawn += amount;
-                token.safeTransfer(to, amount);
+                fundingToken.safeTransfer(to, amount);
                 emit FundsWithdrawn(to, amount);
             } else {
                 revert WithdrwMoreThanAvailable();
@@ -242,6 +260,16 @@ contract Solution is Ownable {
         return (block.timestamp - startTime) / cycleLength;
     }
 
+    /// Did this Solution reach its goal?
+    function suceeded() public view returns (bool) {
+        return tokensContributed >= fundingGoal;
+    }
+
+    /// Did this Solution fail to reach its goal before the deadline?
+    function failed() public view returns (bool) {
+        return block.timestamp > deadline && tokensContributed < fundingGoal;
+    }
+
     /// @param positionIndex The positionIndex returned by the contribute() function.
     function checkPosition(
         address addr,
@@ -261,7 +289,7 @@ contract Solution is Ownable {
 
         (uint256 feesEarned, uint256 shares) = positionToLastStoredCycle(addr, positionIndex);
 
-        token.safeTransfer(addr, feesEarned);
+        fundingToken.safeTransfer(addr, feesEarned);
         emit FeesCollected(addr, positionIndex, feesEarned);
     }
 
