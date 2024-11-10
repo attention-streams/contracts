@@ -205,7 +205,7 @@ contract Solution is Ownable {
                 fundingToken.safeTransfer(to, amount);
                 emit FundsWithdrawn(to, amount);
             } else {
-                revert WithdrwMoreThanAvailable();
+                revert WithdrawMoreThanAvailable();
             }
         } else {
             revert GoalNotReached();
