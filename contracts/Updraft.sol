@@ -90,7 +90,7 @@ contract Updraft is Ownable, ICrowdFund {
         bytes calldata solutionData
     ) external {
         feeToken.safeTransferFrom(msg.sender, address(0), minFee);
-        Solution solution = new Solution(token, stake, goal, deadline, contributorFee);
+        Solution solution = new Solution(msg.sender,token, stake, goal, deadline, contributorFee);
         emit SolutionCreated(
             ideaId,
             solution,
@@ -132,7 +132,7 @@ contract Updraft is Ownable, ICrowdFund {
         bytes calldata profileData
     ) external {
         feeToken.safeTransferFrom(msg.sender, address(0), minFee);
-        Solution solution = new Solution(token, stake, goal, deadline, contributorFee);
+        Solution solution = new Solution(msg.sender,token, stake, goal, deadline, contributorFee);
         emit SolutionCreated(
             ideaId,
             solution,
