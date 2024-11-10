@@ -106,10 +106,6 @@ contract Idea {
         percentFee = crowdFund.percentFee();
     }
 
-    function currentCycleNumber() public view returns (uint256) {
-        return (block.timestamp - startTime) / cycleLength;
-    }
-
     /// Check the number of tokens and shares for an address with only one position.
     function checkPosition(
         address addr
@@ -201,6 +197,10 @@ contract Idea {
     /// The total shares can be compared between two choices to see which has more support.
     function totalShares() public view returns (uint256) {
         return cycles[cycles.length - 1].shares + pendingShares(currentCycleNumber(), tokens);
+    }
+
+    function currentCycleNumber() public view returns (uint256) {
+        return (block.timestamp - startTime) / cycleLength;
     }
 
     /// @param positionIndex The positionIndex returned by the contribute() function.
