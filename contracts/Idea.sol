@@ -19,7 +19,7 @@ struct Position {
     bool exists;
 }
 
-contract Choice {
+contract Idea {
     using SafeERC20 for IERC20;
 
     ICrowdFund public immutable crowdFund;
@@ -29,6 +29,8 @@ contract Choice {
     uint256 public immutable contributorFee;
     uint256 public immutable accrualRate;
     uint256 public immutable percentScale;
+    uint256 public immutable minFee;
+    uint256 public immutable percentFee;
 
     // The total number of tokens in this Choice. This should equal balanceOf(address(this)), but we don't want to have
     // to repeatedly call the token contract, so we keep track internally.
@@ -57,9 +59,10 @@ contract Choice {
         uint256 amountPerNewPosition
     );
 
+    error ContributionLessThanMinFee();
     error PositionDoesNotExist();
     error NotOnlyPosition();
-    error SplitMoreThanAvailable();
+    error SplitAmountSpecifiedMoreThanAvailable();
 
     modifier singlePosition(address addr) {
         uint256 numPositions = positionsByAddress[addr].length;
@@ -99,6 +102,8 @@ contract Choice {
         accrualRate = crowdFund.accrualRate();
         token = crowdFund.feeToken();
         percentScale = crowdFund.percentScale();
+        minFee = crowdFund.minFee();
+        percentFee = crowdFund.percentFee();
     }
 
     function currentCycleNumber() public view returns (uint256) {
@@ -118,15 +123,20 @@ contract Choice {
 
     /// @return positionIndex will be reused as input to withdraw(), checkPosition(), and other functions
     function contribute(uint256 amount) external returns (uint256 positionIndex) {
+        if (amount < minFee) revert ContributionLessThanMinFee();
+
         address addr = msg.sender;
-        uint256 originalAmount = amount;
 
-        uint256 _contributorFee = (originalAmount * contributorFee) / percentScale;
-
+        // Anti-spam fee
+        uint256 fee = max(minFee, amount * percentFee / percentScale);
+        amount -= fee;
         tokens += amount;
+
+        uint256 _contributorFee = amount * contributorFee / percentScale;
 
         updateCyclesAddingAmount(amount, _contributorFee);
 
+        uint256 originalAmount = amount;
         uint256 lastStoredCycleIndex;
 
         unchecked {
@@ -145,9 +155,10 @@ contract Choice {
             positionIndex = positionsByAddress[addr].length - 1;
         }
 
-        // update snapshot
+        token.safeTransferFrom(addr, address(this), originalAmount);
 
-        IERC20(token).safeTransferFrom(addr, address(this), originalAmount);
+        // Burn the anti-spam fee
+        token.safeTransferFrom(address(this), address(0), fee);
 
         emit Contributed(addr, positionIndex, originalAmount, totalShares());
     }
@@ -218,7 +229,7 @@ contract Choice {
             cycles[lastStoredCycleIndex].shares -= shares;
         }
 
-        IERC20(token).safeTransfer(addr, positionTokens);
+        token.safeTransfer(addr, positionTokens);
 
         emit Withdrew(addr, positionIndex, positionTokens, shares, totalShares());
     }
@@ -257,7 +268,7 @@ contract Choice {
         Position storage position = positions[positionIndex];
 
         uint256 deductAmount = amount * numSplits;
-        if (deductAmount > position.tokens) revert SplitMoreThanAvailable();
+        if (deductAmount > position.tokens) revert SplitAmountSpecifiedMoreThanAvailable();
 
         unchecked {
             position.tokens -= deductAmount;

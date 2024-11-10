@@ -73,9 +73,6 @@ contract Updraft is Ownable, ICrowdFund {
     }
 
     function createIdea(uint256 contributorFee, uint256 contribution, bytes calldata ideaData) external {
-        uint256 fee = max(minFee, contribution * percentFee / PERCENT_SCALE);
-
-        feeToken.safeTransferFrom(msg.sender, address(0), fee);
 
     }
 
