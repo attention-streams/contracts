@@ -45,6 +45,7 @@ contract Solution is Ownable {
 
     event FeesCollected(address indexed addr, uint256 positionIndex, uint256 tokens);
     event Contributed(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 totalShares);
+    event FundsWithdrawn(address to, uint256 amount);
     event SolutionUpdated(bytes32 data);
     event PositionTransferred(
         address indexed sender,
@@ -174,7 +175,7 @@ contract Solution is Ownable {
             if (tokensLeft >= amount) {
                 tokensWithdrawn += amount;
                 token.safeTransfer(to, amount);
-                emit FundsWithdrawn();
+                emit FundsWithdrawn(to, amount);
             } else {
                 revert WithdrwMoreThanAvailable();
             }
