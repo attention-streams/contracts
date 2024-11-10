@@ -121,10 +121,6 @@ contract Choice {
         arenaAndTopicFee = arenaFee + topicFee;
     }
 
-    function currentCycleNumber() public view returns (uint256) {
-        return (block.timestamp - startTime) / cycleDuration;
-    }
-
     /// Check the number of tokens and shares for an address with only one position.
     function checkPosition(
         address addr
@@ -231,6 +227,10 @@ contract Choice {
     /// The total shares can be compared between two choices to see which has more support.
     function totalShares() public view returns (uint256) {
         return cycles[cycles.length - 1].shares + pendingShares(currentCycleNumber(), tokens);
+    }
+
+    function currentCycleNumber() public view returns (uint256) {
+        return (block.timestamp - startTime) / cycleDuration;
     }
 
     /// @param positionIndex The positionIndex returned by the contribute() function.
