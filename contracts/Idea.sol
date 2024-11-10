@@ -31,15 +31,16 @@ contract Idea {
     uint256 public immutable minFee;
     uint256 public immutable percentFee;
 
-    // The total number of tokens in this Choice. This should equal balanceOf(address(this)), but we don't want to have
-    // to repeatedly call the token contract, so we keep track internally.
+    /// @notice The total number of tokens in this Choice.
+    /// @dev This should equal balanceOf(address(this)),
+    /// but we don't want to have to repeatedly call the token contract, so we keep track internally.
     uint256 public tokens;
 
     Cycle[] public cycles;
 
-    // Addresses can contribute multiple times to the same choice, so the value is an array of Contributions.
-    // The index of a Contribution in this array is used in checkPosition(), withdraw(), split(), and
-    // transferPositions() and is returned by contribute().
+    /// Addresses can contribute multiple times to the same choice, so we use an array of Positions.
+    /// The index of a Position in this array is used in checkPosition(), withdraw(), split(), and
+    /// transferPositions() and is returned by contribute().
     mapping(address => Position[]) public positionsByAddress;
 
     event Withdrew(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 shares, uint256 totalShares);
