@@ -43,6 +43,8 @@ contract Solution is Ownable {
     /// transferPositions() and is returned by contribute().
     mapping(address => Position[]) public positionsByAddress;
 
+    mapping(address => uint256) public stakes;
+
     event FeesCollected(address indexed addr, uint256 positionIndex, uint256 tokens);
     event Contributed(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 totalShares);
     event FundsWithdrawn(address to, uint256 amount);
@@ -170,6 +172,7 @@ contract Solution is Ownable {
     function addStake(uint256 amount) external{
         address addr = msg.sender;
         stake += amount;
+        stakes[address] += amount;
 
         token.safeTransferFrom(addr, address(this), amount);
         emit StakeAdded(addr,amount, stake);
