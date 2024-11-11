@@ -200,6 +200,8 @@ contract Solution is Ownable {
 
     function removeStake(uint256 amount) goalReached {
         address addr = msg.sender;
+        if(stakes[addr] < amount) revert WithdrawMoreThanAvailable();
+
         stake -= amount;
         stakes[addr] -= amount;
 
