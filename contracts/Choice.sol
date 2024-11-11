@@ -18,7 +18,6 @@ struct Cycle {
 struct Position {
     uint256 cycleIndex;
     uint256 tokens;
-    bool exists;
 }
 
 contract Choice {
@@ -100,7 +99,7 @@ contract Choice {
 
         Position storage position = positions[positionIndex];
 
-        if (!position.exists) revert PositionDoesNotExist();
+        if (position.tokens == 0) revert PositionDoesNotExist();
 
         _;
     }
@@ -160,7 +159,7 @@ contract Choice {
             }
         }
 
-        positionsByAddress[addr].push(Position({cycleIndex: lastStoredCycleIndex, tokens: amount, exists: true}));
+        positionsByAddress[addr].push(Position({cycleIndex: lastStoredCycleIndex, tokens: amount}));
 
         unchecked {
             positionIndex = positionsByAddress[addr].length - 1;
@@ -305,7 +304,7 @@ contract Choice {
         }
 
         for (uint256 i = 1; i <= numSplits; ) {
-            positions.push(Position({cycleIndex: position.cycleIndex, tokens: amount, exists: true}));
+            positions.push(Position({cycleIndex: position.cycleIndex, tokens: amount}));
             unchecked {
                 ++i;
             }
