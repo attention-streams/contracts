@@ -52,6 +52,7 @@ contract Solution is Ownable {
     event StakeAdded(address indexed addr, uint256 amount, uint256 totalStake);
     event StakeRemoved(address indexed addr, uint256 amount, uint256 totalStake);
     event SolutionUpdated(bytes32 data);
+    event GoalExtended(uint256 goal, uint256 deadline);
     event PositionTransferred(
         address indexed sender,
         address indexed recipient,
@@ -71,6 +72,9 @@ contract Solution is Ownable {
     error SplitAmountSpecifiedMoreThanAvailable();
     error GoalNotReached();
     error GoalFailed();
+    error GoalNotFailed();
+    error GoalMustIncrease();
+    error MustSetDeadlineInFuture();
     error WithdrawMoreThanAvailable();
 
     modifier singlePosition(address addr) {
@@ -174,7 +178,7 @@ contract Solution is Ownable {
     }
 
     function addStake(uint256 amount) external{
-        if (failed()) revert GoalFailed();
+        if (goalFailed()) revert GoalFailed();
 
         address addr = msg.sender;
         stake += amount;
@@ -185,7 +189,7 @@ contract Solution is Ownable {
     }
 
     function removeStake(uint256 amount){
-        if (suceeded()){
+        if (goalReached()){
             address addr = msg.sender;
             stake -= amount;
             stakes[addr] -= amount;
@@ -198,7 +202,7 @@ contract Solution is Ownable {
     }
 
     function withdrawFunds(address to, uint256 amount) external onlyOwner {
-        if (suceeded()) {
+        if (goalReached()) {
             uint256 tokensLeft = tokensContributed - tokensWithdrawn;
             if (tokensLeft >= amount) {
                 tokensWithdrawn += amount;
@@ -207,6 +211,48 @@ contract Solution is Ownable {
             } else {
                 revert WithdrawMoreThanAvailable();
             }
+        } else {
+            revert GoalNotReached();
+        }
+    }
+
+    /// Extend the goal, keeping the deadline the same.
+    function extendGoal(uint256 goal) external onlyOwner {
+        if (goalReached()) {
+            if (goal <= fundingGoal) revert GoalMustIncrease();
+            if (deadline <= block.timestamp) revert MustSetDeadlineInFuture();
+
+            fundingGoal = goal;
+            emit GoalExtended(goal, deadline);
+        } else {
+            revert GoalNotReached();
+        }
+    }
+
+    /// Extend the goal and the deadline.
+    function extendGoal(uint256 goal, uint256 deadline_) external onlyOwner {
+        if (goalReached()) {
+            if (goal <= fundingGoal) revert GoalMustIncrease();
+            if (deadline_ <= block.timestamp) revert MustSetDeadlineInFuture();
+
+            fundingGoal = goal;
+            deadline = deadline_;
+            emit GoalExtended(goal, deadline);
+        } else {
+            revert GoalNotReached();
+        }
+    }
+
+    /// Extend the goal and the deadline. Also update the Solution data.
+    function extendGoal(uint256 goal, uint256 deadline_, bytes solutionData) external onlyOwner {
+        if (goalReached()) {
+            if (goal <= fundingGoal) revert GoalMustIncrease();
+            if (deadline_ <= block.timestamp) revert MustSetDeadlineInFuture();
+
+            fundingGoal = goal;
+            deadline = deadline_;
+            emit GoalExtended(goal, deadline);
+            emit SolutionUpdated(data);
         } else {
             revert GoalNotReached();
         }
@@ -261,12 +307,12 @@ contract Solution is Ownable {
     }
 
     /// Did this Solution reach its goal?
-    function suceeded() public view returns (bool) {
+    function goalReached() public view returns (bool) {
         return tokensContributed >= fundingGoal;
     }
 
     /// Did this Solution fail to reach its goal before the deadline?
-    function failed() public view returns (bool) {
+    function goalFailed() public view returns (bool) {
         return block.timestamp > deadline && tokensContributed < fundingGoal;
     }
 
