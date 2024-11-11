@@ -17,7 +17,7 @@ struct Position {
     uint256 contribution;
     uint256 startCycleIndex;
     uint256 lastCollectedCycleIndex;
-    bool exists;
+    bool refunded;
 }
 
 contract Solution is Ownable {
@@ -83,6 +83,7 @@ contract Solution is Ownable {
     error GoalMustIncrease();
     error MustSetDeadlineInFuture();
     error WithdrawMoreThanAvailable();
+    error AlreadyRefunded();
 
     modifier singlePosition(address addr) {
         uint256 numPositions = positionsByAddress[addr].length;
@@ -104,10 +105,6 @@ contract Solution is Ownable {
         unchecked {
             if (positionIndex + 1 > positions.length) revert PositionDoesNotExist();
         }
-
-        Position storage position = positions[positionIndex];
-
-        if (!position.exists) revert PositionDoesNotExist();
 
         _;
     }
@@ -152,6 +149,7 @@ contract Solution is Ownable {
 
     /// @return positionIndex will be reused as input to collectFees(), checkPosition(), and other functions
     function contribute(uint256 amount) external returns (uint256 positionIndex) {
+        if (goalFailed()) revert GoalFailed();
         address addr = msg.sender;
 
         uint256 _contributorFee = amount * contributorFee / percentScale;
@@ -177,8 +175,7 @@ contract Solution is Ownable {
             Position({
                 contribution: amount,
                 startCycleIndex: lastStoredCycleIndex,
-                lastCollectedCycleIndex: lastStoredCycleIndex,
-                exists: true
+                lastCollectedCycleIndex: lastStoredCycleIndex
             })
         );
 
@@ -251,18 +248,14 @@ contract Solution is Ownable {
             emit SolutionUpdated(data);
     }
 
-    /// Get a refund and stake award after the goal fails.
-    function refund() external {
-        if (goalFailed()){
-
-        } else {
-            revert GoalNotFailed();
-        }
-    }
-
     /// Collect fees for the only position
     function collectFees() external singlePosition(msg.sender) {
         collectFees(0);
+    }
+
+    /// Get a refund and stake award after the goal fails for the only position.
+    function refund() external singlePosition(msg.sender) {
+        refund(0);
     }
 
     function updateSolution(bytes calldata data) external onlyOwner {
@@ -336,6 +329,22 @@ contract Solution is Ownable {
         emit FeesCollected(addr, positionIndex, feesEarned);
     }
 
+    /// Get a refund and stake award after the goal fails.
+    /// @param positionIndex The positionIndex returned by the contribute() function.
+    function refund(uint256 positionIndex) public positionExists(msg.sender, positionIndex) {
+        address addr = msg.sender;
+        Position storage position = positionsByAddress[addr][positionIndex];
+        if (position.refunded) revert AlreadyRefunded();
+        if (goalFailed()) {
+
+            positionsByAddress[addr][positionIndex].refund = true;
+
+
+        } else {
+            revert GoalNotFailed();
+        }
+    }
+
     /// @param positionIndex The positionIndex returned by the contribute() function.
     function transferPosition(
         address recipient,
@@ -381,8 +390,7 @@ contract Solution is Ownable {
                 Position({
                     contribution: amount,
                     startCycleIndex: position.startCycleIndex,
-                    lastCollectedCycleIndex: position.lastCollectedCycleIndex,
-                    exists: true
+                    lastCollectedCycleIndex: position.lastCollectedCycleIndex
                 })
             );
             unchecked {
