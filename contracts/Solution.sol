@@ -46,13 +46,19 @@ contract Solution is Ownable {
 
     mapping(address => uint256) public stakes;
 
-    event FeesCollected(address indexed addr, uint256 positionIndex, uint256 tokens);
-    event Contributed(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 totalShares);
+    event FeesCollected(address indexed addr, uint256 positionIndex, uint256 amount);
     event FundsWithdrawn(address to, uint256 amount);
     event StakeAdded(address indexed addr, uint256 amount, uint256 totalStake);
     event StakeRemoved(address indexed addr, uint256 amount, uint256 totalStake);
     event SolutionUpdated(bytes32 data);
     event GoalExtended(uint256 goal, uint256 deadline);
+    event Contributed(
+        address indexed addr,
+        uint256 positionIndex,
+        uint256 amount,
+        uint256 totalTokensContributed,
+        uint256 totalShares
+    );
     event PositionTransferred(
         address indexed sender,
         address indexed recipient,
@@ -174,7 +180,7 @@ contract Solution is Ownable {
         }
 
         fundingToken.safeTransferFrom(addr, address(this), originalAmount);
-        emit Contributed(addr, positionIndex, originalAmount, totalShares());
+        emit Contributed(addr, positionIndex, originalAmount, tokensContributed, totalShares());
     }
 
     function addStake(uint256 amount) external{

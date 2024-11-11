@@ -43,8 +43,8 @@ contract Idea {
     /// transferPositions() and is returned by contribute().
     mapping(address => Position[]) public positionsByAddress;
 
-    event Withdrew(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 shares, uint256 totalShares);
-    event Contributed(address indexed addr, uint256 positionIndex, uint256 tokens, uint256 totalShares);
+    event Withdrew(address indexed addr, uint256 positionIndex, uint256 amount, uint256 shares, uint256 totalShares);
+    event Contributed(address indexed addr, uint256 positionIndex, uint256 amount, uint256 totalShares);
     event PositionTransferred(
         address indexed sender,
         address indexed recipient,
