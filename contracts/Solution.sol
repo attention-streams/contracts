@@ -321,9 +321,9 @@ contract Solution is Ownable {
 
         updateCyclesAddingAmount(0, 0);
 
-        positionsByAddress[addr][positionIndex].lastCollectedCycleIndex = cycles.length - 1;
-
         (uint256 feesEarned, uint256 shares) = positionToLastStoredCycle(addr, positionIndex);
+
+        positionsByAddress[addr][positionIndex].lastCollectedCycleIndex = cycles.length - 1;
 
         fundingToken.safeTransfer(addr, feesEarned);
         emit FeesCollected(addr, positionIndex, feesEarned);
@@ -336,8 +336,7 @@ contract Solution is Ownable {
         Position storage position = positionsByAddress[addr][positionIndex];
         if (position.refunded) revert AlreadyRefunded();
         if (goalFailed()) {
-
-            positionsByAddress[addr][positionIndex].refund = true;
+            position.refunded = true;
 
 
         } else {
