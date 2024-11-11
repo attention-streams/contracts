@@ -50,7 +50,7 @@ contract Solution is Ownable {
     event FundsWithdrawn(address to, uint256 amount);
     event StakeAdded(address indexed addr, uint256 amount, uint256 totalStake);
     event StakeRemoved(address indexed addr, uint256 amount, uint256 totalStake);
-    event RefundIssued(address indexed addr, uint256 amount, uint256 stakeAwarded);
+    event Refunded(address indexed addr, uint256 amount, uint256 stakeAwarded);
     event SolutionUpdated(bytes32 data);
     event GoalExtended(uint256 goal, uint256 deadline);
     event Contributed(
@@ -337,8 +337,13 @@ contract Solution is Ownable {
         if (position.refunded) revert AlreadyRefunded();
         if (goalFailed()) {
             position.refunded = true;
+            positionShares = accrualRate * position.contribution
+                * (currentCycleNumber() - cycles[position.startCycleIndex].number) / percentScale;
+            uint256 stakeAward = stake * positionShares / totalShares();
 
-
+            fundingToken.safeTransfer(addr, position.contribution);
+            stakingToken.safeTransfer(addr, stakeAward);
+            emit Refunded(addr, position.contribution, stakeAward);
         } else {
             revert GoalNotFailed();
         }
